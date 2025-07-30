@@ -125,7 +125,7 @@ function slicingToExtensions(slicingElement: any): any {
   for (const [sliceName, slice] of Object.entries(slicingElement.slicing.slices)) {
     const { match, schema, ...sliceProps } = slice as any;
     // Clean up schema properties
-    const { index, slicing, elements, type, min, ...cleanSchema } = schema || {};
+    const { slicing, elements, type, min, ...cleanSchema } = schema || {};
     
     const extension: any = {};
     if (match?.url) {
@@ -170,8 +170,8 @@ function addElement(elementName: string, parent: any, child: any): any {
   // Determine actual element name (handle choiceOf)
   const actualElementName = child.choiceOf || elementName;
   
-  // Remove internal _required and index flags before adding
-  const { _required, index, ...cleanChild } = child;
+  // Remove internal _required flag before adding
+  const { _required, ...cleanChild } = child;
   updated.elements[elementName] = cleanChild;
   
   // Add to required array if needed

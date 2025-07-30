@@ -40,7 +40,7 @@ export function expandChoiceElement(element: StructureDefinitionElement): Struct
   const parentElement: StructureDefinitionElement = {
     ...restElement,
     path: basePath,
-    choices: choices.sort() // Sort choices for consistent output
+    choices: choices // Preserve original order
   };
   expanded.push(parentElement);
   

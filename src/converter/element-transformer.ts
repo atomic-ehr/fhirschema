@@ -261,7 +261,6 @@ function clearElement(element: any): any {
     definition,
     requirements,
     extension,
-    index,
     ...rest
   } = element;
   

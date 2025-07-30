@@ -15,36 +15,37 @@ import { applyActions } from './stack-processor';
 function buildResourceHeader(
   structureDefinition: StructureDefinition,
   context?: ConversionContext
-): FHIRSchema {
-  // Build header with specific field order
+): any {
+  // Build header following Clojure's select-keys order
+  // From Clojure: (select-keys structure-definition [:name :type :url :version :description :package_name :package_version :package_id :kind :derivation])
   const header: any = {};
   
-  // Always include these fields in order
-  if (structureDefinition.description) header.description = structureDefinition.description;
-  if (structureDefinition.derivation) header.derivation = structureDefinition.derivation;
   header.name = structureDefinition.name;
   header.type = structureDefinition.type;
-  
-  // Conditionally include other fields
   if (structureDefinition.url) header.url = structureDefinition.url;
   if (structureDefinition.version) header.version = structureDefinition.version;
+  if (structureDefinition.description) header.description = structureDefinition.description;
+  if (structureDefinition.package_name) header.package_name = structureDefinition.package_name;
+  if (structureDefinition.package_version) header.package_version = structureDefinition.package_version;
+  if (structureDefinition.package_id) header.package_id = structureDefinition.package_id;
   header.kind = structureDefinition.kind;
+  if (structureDefinition.derivation) header.derivation = structureDefinition.derivation;
   
-  // Include base for all except Element itself
+  // Then add base if present (and not Element itself)
   if (structureDefinition.baseDefinition && structureDefinition.type !== 'Element') {
     header.base = structureDefinition.baseDefinition;
   }
   
+  // Then abstract if true
   if (structureDefinition.abstract) header.abstract = structureDefinition.abstract;
+  
+  // Then class (computed field)
   header.class = determineClass(structureDefinition);
   
   // Package metadata
-  if (structureDefinition.package_name) header.package_name = structureDefinition.package_name;
-  if (structureDefinition.package_version) header.package_version = structureDefinition.package_version;
-  if (structureDefinition.package_id) header.package_id = structureDefinition.package_id;
   if (context?.package_meta) header.package_meta = context.package_meta;
   
-  return header as FHIRSchema;
+  return header;
 }
 
 function determineClass(structureDefinition: StructureDefinition): string {
@@ -68,13 +69,36 @@ function getDifferential(structureDefinition: StructureDefinition): StructureDef
   return elements.filter(e => e.path.includes('.'));
 }
 
+function sortElementsByIndex(elements: Record<string, any>): Record<string, any> {
+  // Get all entries and sort by index
+  const entries = Object.entries(elements);
+  const sorted = entries.sort((a, b) => {
+    const indexA = a[1].index ?? Infinity;
+    const indexB = b[1].index ?? Infinity;
+    return indexA - indexB;
+  });
+  
+  // Rebuild object in sorted order
+  const result: Record<string, any> = {};
+  for (const [key, value] of sorted) {
+    // Recursively sort nested elements
+    if (value.elements) {
+      result[key] = {
+        ...value,
+        elements: sortElementsByIndex(value.elements)
+      };
+    } else {
+      result[key] = value;
+    }
+  }
+  
+  return result;
+}
+
+
 function normalizeSchema(schema: any, visited = new WeakSet()): any {
   if (Array.isArray(schema)) {
-    // Sort arrays of strings/primitives
-    if (schema.length > 0 && typeof schema[0] !== 'object') {
-      return schema.sort();
-    }
-    // Keep object arrays as-is (they have index order)
+    // Don't sort arrays - preserve their original order
     return schema.map(item => normalizeSchema(item, visited));
   }
   
@@ -86,10 +110,19 @@ function normalizeSchema(schema: any, visited = new WeakSet()): any {
     visited.add(schema);
     
     const normalized: any = {};
-    const keys = Object.keys(schema).sort();
+    // Preserve original key order instead of sorting
+    const keys = Object.keys(schema);
     
     for (const key of keys) {
-      normalized[key] = normalizeSchema(schema[key], visited);
+      if (key === 'elements' && schema[key]) {
+        // Sort elements by index
+        normalized[key] = sortElementsByIndex(normalizeSchema(schema[key], visited));
+      } else if (key === 'required' && Array.isArray(schema[key])) {
+        // Sort required array (Clojure uses sets which get sorted when converted)
+        normalized[key] = [...schema[key]].sort();
+      } else {
+        normalized[key] = normalizeSchema(schema[key], visited);
+      }
     }
     
     return normalized;
@@ -125,6 +158,7 @@ export function translate(
     if (isChoiceElement(element)) {
       const expanded = expandChoiceElement(element);
       elementQueue.unshift(...expanded);
+      index++; // Increment index for the original choice element
       continue;
     }
     

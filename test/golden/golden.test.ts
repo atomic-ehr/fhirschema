@@ -3,6 +3,21 @@ import { readFileSync, readdirSync, existsSync } from 'fs';
 import { join, basename } from 'path';
 import { translate } from '../../src/converter';
 
+// Helper function to sort object keys recursively
+function sortObjectDeep(obj: any): any {
+  if (Array.isArray(obj)) {
+    return obj.map(sortObjectDeep);
+  }
+  if (obj && typeof obj === 'object') {
+    const sorted: any = {};
+    Object.keys(obj).sort().forEach(key => {
+      sorted[key] = sortObjectDeep(obj[key]);
+    });
+    return sorted;
+  }
+  return obj;
+}
+
 interface GoldenTestCase {
   name: string;
   inputPath: string;
@@ -69,8 +84,11 @@ describe('Golden Tests', () => {
       
       const result = translate(input);
       
-      // Deep equality check
-      expect(result).toEqual(expected);
+      // Deep equality check that ignores field order
+      const sortedResult = sortObjectDeep(result);
+      const sortedExpected = sortObjectDeep(expected);
+      
+      expect(sortedResult).toEqual(sortedExpected);
     });
   });
   

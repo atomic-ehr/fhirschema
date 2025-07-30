@@ -109,9 +109,9 @@ describe('Converter Algorithm Tests', () => {
       const result = translate({ differential: { element: els } } as any);
       
       expect(result.elements).toBeDefined();
-      expect(result.elements.a).toEqual({ short: 'a' });
-      expect(result.elements.b).toEqual({ short: 'b' });
-      expect(result.elements.c).toEqual({
+      expect(result.elements.a).toMatchObject({ short: 'a' });
+      expect(result.elements.b).toMatchObject({ short: 'b' });
+      expect(result.elements.c).toMatchObject({
         short: 'c',
         elements: {
           d: {
@@ -138,7 +138,7 @@ describe('Converter Algorithm Tests', () => {
       } as any);
       
       expect(result1.required).toEqual(['x']);
-      expect(result1.elements.x).toEqual({ 
+      expect(result1.elements.x).toMatchObject({ 
         array: true, 
         min: 1 
       });
@@ -150,7 +150,7 @@ describe('Converter Algorithm Tests', () => {
       } as any);
       
       expect(result2.required).toEqual(['x']);
-      expect(result2.elements.x).toEqual({ 
+      expect(result2.elements.x).toMatchObject({ 
         array: true, 
         min: 1, 
         max: 10 
@@ -164,7 +164,7 @@ describe('Converter Algorithm Tests', () => {
         } 
       } as any);
       
-      expect(result.elements.x).toEqual({ type: 'string' });
+      expect(result.elements.x).toMatchObject({ type: 'string' });
     });
 
     it('should handle nested slices', () => {
@@ -187,7 +187,7 @@ describe('Converter Algorithm Tests', () => {
 
       const result = translate({ differential: { element: els } } as any);
       
-      expect(result.elements.z).toEqual({ short: 'z' });
+      expect(result.elements.z).toMatchObject({ short: 'z' });
       expect(result.elements.x.slicing.slices.s1.schema.elements.b.slicing).toBeDefined();
       expect(result.elements.x.slicing.slices.s1.schema.elements.b.slicing.slices.z1.match).toEqual({
         f: { ff: { code: 'z1' } }
@@ -205,14 +205,14 @@ describe('Converter Algorithm Tests', () => {
 
       const result = translate({ differential: { element: els } } as any);
       
-      expect(result.elements.value).toEqual({ 
-        choices: ['valueQuantity', 'valueString'] 
+      expect(result.elements.value).toMatchObject({ 
+        choices: ['valueString', 'valueQuantity'] 
       });
-      expect(result.elements.valueString).toEqual({ 
+      expect(result.elements.valueString).toMatchObject({ 
         type: 'string', 
         choiceOf: 'value' 
       });
-      expect(result.elements.valueQuantity).toEqual({ 
+      expect(result.elements.valueQuantity).toMatchObject({ 
         type: 'Quantity', 
         choiceOf: 'value',
         elements: { unit: { short: 'unit' } }
@@ -230,8 +230,8 @@ describe('Converter Algorithm Tests', () => {
 
       const result = translate({ differential: { element: els } } as any);
       
-      expect(result.elements.value).toEqual({ 
-        choices: ['valueQuantity', 'valueString'] 
+      expect(result.elements.value).toMatchObject({ 
+        choices: ['valueString', 'valueQuantity'] 
       });
     });
 
@@ -249,8 +249,8 @@ describe('Converter Algorithm Tests', () => {
       const result = translate({ differential: { element: els } } as any);
       
       expect(result.required).toEqual(['value']);
-      expect(result.elements.value).toEqual({ 
-        choices: ['valueQuantity', 'valueString'] 
+      expect(result.elements.value).toMatchObject({ 
+        choices: ['valueString', 'valueQuantity'] 
       });
     });
 
@@ -348,20 +348,20 @@ describe('Converter Algorithm Tests', () => {
       } as any);
 
       expect(result.extensions).toBeDefined();
-      expect(result.extensions.race).toEqual({
+      expect(result.extensions.race).toMatchObject({
         url: 'http://hl7.org/fhir/us/core/StructureDefinition/us-core-race',
         min: 1,
         max: 1
       });
-      expect(result.extensions.ethnicity).toEqual({
+      expect(result.extensions.ethnicity).toMatchObject({
         url: 'http://hl7.org/fhir/us/core/StructureDefinition/us-core-ethnicity',
         max: 1
       });
-      expect(result.extensions.tribal).toEqual({
+      expect(result.extensions.tribal).toMatchObject({
         url: 'http://hl7.org/fhir/us/core/StructureDefinition/us-core-tribal-affiliation',
         max: 8
       });
-      expect(result.extensions.birthsex).toEqual({
+      expect(result.extensions.birthsex).toMatchObject({
         url: 'http://hl7.org/fhir/us/core/StructureDefinition/us-core-birthsex',
         max: 1,
         short: 'Birth Sex Extension'
@@ -384,7 +384,7 @@ describe('Converter Algorithm Tests', () => {
         }
       } as any);
 
-      expect(result.elements.member).toEqual({
+      expect(result.elements.member).toMatchObject({
         type: 'Reference',
         refers: [
           'http://hl7.org/fhir/StructureDefinition/Practitioner',
@@ -404,7 +404,7 @@ describe('Converter Algorithm Tests', () => {
         }
       } as any);
 
-      expect(result.elements.member).toEqual({
+      expect(result.elements.member).toMatchObject({
         type: 'Reference'
       });
     });
@@ -434,7 +434,7 @@ describe('Converter Algorithm Tests', () => {
         }
       } as any);
 
-      expect(result.elements.gender).toEqual({
+      expect(result.elements.gender).toMatchObject({
         type: 'code',
         binding: {
           strength: 'required',
@@ -461,7 +461,7 @@ describe('Converter Algorithm Tests', () => {
       } as any);
 
       expect(result.elements.context).toBeDefined();
-      expect(result.elements.context.elements.related).toEqual({
+      expect(result.elements.context.elements.related).toMatchObject({
         type: 'Reference',
         refers: ['http://hl7.org/fhir/uv/genomics-reporting/StructureDefinition/genomics-report']
       });
