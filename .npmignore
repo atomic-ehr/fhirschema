@@ -1,0 +1,35 @@
+# Source files (we include src/ in files array)
+# Tests
+test/
+*.test.ts
+
+# Config files
+tsconfig.json
+tsconfig.build.json
+.gitignore
+.github/
+
+# Development files
+adr/
+tasks/
+spec/
+scripts/
+CLAUDE.md
+
+# Build artifacts
+*.tsbuildinfo
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor directories
+.vscode/
+.idea/
+
+# Temporary files
+*.tmp
+*.temp

@@ -1,14 +1,51 @@
 {
-  "name": "fhirschema",
+  "name": "@atomic-ehr/fhirschema",
   "version": "0.0.1",
-  "description": "FHIRSchema converter and validator",
-  "main": "src/index.ts",
+  "description": "TypeScript implementation of FHIRSchema converter and validator",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
   "scripts": {
     "test": "bun test",
-    "typecheck": "bun tsc --noEmit"
+    "typecheck": "bunx tsc --noEmit",
+    "build": "bun run build:clean && bun run build:types",
+    "build:clean": "rm -rf dist",
+    "build:types": "bunx tsc -p tsconfig.build.json",
+    "prepublishOnly": "bun run build"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/atomic-ehr/fhirschema.git"
+  },
+  "keywords": [
+    "fhir",
+    "fhirschema",
+    "healthcare",
+    "validation",
+    "converter",
+    "typescript"
+  ],
+  "author": "Atomic EHR",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/atomic-ehr/fhirschema/issues"
+  },
+  "homepage": "https://github.com/atomic-ehr/fhirschema#readme",
   "devDependencies": {
     "@types/bun": "latest",
     "typescript": "^5.0.0"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
   }
 }

@@ -14,10 +14,53 @@ This project provides:
 ## Installation
 
 ```bash
-bun install
+npm install @atomic-ehr/fhirschema
+```
+
+Or install the latest canary version:
+
+```bash
+npm install @atomic-ehr/fhirschema@canary
 ```
 
 ## Usage
+
+### Converting StructureDefinition to FHIRSchema
+
+```typescript
+import { translate } from '@atomic-ehr/fhirschema';
+
+const structureDefinition = {
+  resourceType: 'StructureDefinition',
+  name: 'Patient',
+  // ... rest of the StructureDefinition
+};
+
+const fhirSchema = translate(structureDefinition);
+```
+
+### Validating FHIR Resources
+
+```typescript
+import { validate } from '@atomic-ehr/fhirschema';
+
+const resource = {
+  resourceType: 'Patient',
+  // ... patient data
+};
+
+const schema = { /* FHIRSchema */ };
+const context = { schemas: { Patient: schema } };
+
+const result = validate(context, schema, resource);
+if (result.valid) {
+  console.log('Resource is valid');
+} else {
+  console.log('Validation errors:', result.errors);
+}
+```
+
+## Development
 
 ### Running Tests
 
@@ -29,6 +72,12 @@ bun test
 
 ```bash
 bun run typecheck
+```
+
+### Building
+
+```bash
+bun run build
 ```
 
 ## Project Structure
