@@ -1,15 +1,14 @@
 {
   "name": "fhirschema",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "FHIRSchema converter and validator",
   "main": "src/index.ts",
   "scripts": {
     "test": "bun test",
-    "test:unit": "bun test test/unit",
-    "test:golden": "bun test test/golden",
     "typecheck": "bun tsc --noEmit"
   },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "typescript": "^5.0.0"
   }
 }

@@ -1,0 +1,38 @@
+name: Type Check
+
+on:
+  push:
+    paths:
+      - '**.ts'
+      - 'tsconfig.json'
+      - 'package.json'
+      - '.github/workflows/typecheck.yml'
+  pull_request:
+    paths:
+      - '**.ts'
+      - 'tsconfig.json'
+      - 'package.json'
+      - '.github/workflows/typecheck.yml'
+
+jobs:
+  typecheck:
+    name: TypeScript Type Check
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@v1
+      with:
+        bun-version: latest
+        
+    - name: Install dependencies
+      run: bun install
+      
+    - name: Run TypeScript compiler
+      run: bun run typecheck
+      
+    - name: Run strict type check
+      run: bun tsc --noEmit --strict
