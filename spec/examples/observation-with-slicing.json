@@ -1,0 +1,198 @@
+{
+  "url": "http://hl7.org/fhir/us/core/StructureDefinition/us-core-blood-pressure",
+  "version": "5.0.1",
+  "name": "USCoreBloodPressureProfile",
+  "type": "Observation",
+  "kind": "resource",
+  "derivation": "constraint",
+  "base": "http://hl7.org/fhir/StructureDefinition/bp",
+  "class": "profile",
+  "description": "US Core Blood Pressure Profile",
+  "elements": {
+    "code": {
+      "short": "Blood Pressure",
+      "pattern": {
+        "type": "CodeableConcept",
+        "value": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "85354-9"
+            }
+          ]
+        }
+      },
+      "mustSupport": true
+    },
+    "subject": {
+      "type": "Reference",
+      "refers": ["http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient"],
+      "mustSupport": true
+    },
+    "effective": {
+      "choices": ["effectiveDateTime", "effectivePeriod"],
+      "mustSupport": true
+    },
+    "effectiveDateTime": {
+      "type": "dateTime",
+      "choiceOf": "effective",
+      "mustSupport": true
+    },
+    "effectivePeriod": {
+      "type": "Period",
+      "choiceOf": "effective",
+      "mustSupport": true
+    },
+    "component": {
+      "slicing": {
+        "discriminator": [
+          {
+            "type": "pattern",
+            "path": "code"
+          }
+        ],
+        "rules": "open",
+        "ordered": false,
+        "slices": {
+          "systolic": {
+            "min": 1,
+            "max": 1,
+            "match": {
+              "code": {
+                "coding": [
+                  {
+                    "system": "http://loinc.org",
+                    "code": "8480-6"
+                  }
+                ]
+              }
+            },
+            "schema": {
+              "short": "Systolic Blood Pressure",
+              "mustSupport": true,
+              "elements": {
+                "code": {
+                  "short": "Systolic Blood Pressure Code",
+                  "pattern": {
+                    "type": "CodeableConcept",
+                    "value": {
+                      "coding": [
+                        {
+                          "system": "http://loinc.org",
+                          "code": "8480-6",
+                          "display": "Systolic blood pressure"
+                        }
+                      ]
+                    }
+                  }
+                },
+                "valueQuantity": {
+                  "type": "Quantity",
+                  "short": "Systolic Blood Pressure Value",
+                  "elements": {
+                    "value": {
+                      "min": 0,
+                      "max": 1000,
+                      "mustSupport": true
+                    },
+                    "unit": {
+                      "pattern": {
+                        "type": "string",
+                        "value": "mm[Hg]"
+                      },
+                      "mustSupport": true
+                    },
+                    "system": {
+                      "pattern": {
+                        "type": "uri",
+                        "value": "http://unitsofmeasure.org"
+                      },
+                      "mustSupport": true
+                    },
+                    "code": {
+                      "pattern": {
+                        "type": "code",
+                        "value": "mm[Hg]"
+                      },
+                      "mustSupport": true
+                    }
+                  }
+                }
+              },
+              "required": ["code", "valueQuantity"]
+            }
+          },
+          "diastolic": {
+            "min": 1,
+            "max": 1,
+            "match": {
+              "code": {
+                "coding": [
+                  {
+                    "system": "http://loinc.org",
+                    "code": "8462-4"
+                  }
+                ]
+              }
+            },
+            "schema": {
+              "short": "Diastolic Blood Pressure",
+              "mustSupport": true,
+              "elements": {
+                "code": {
+                  "short": "Diastolic Blood Pressure Code",
+                  "pattern": {
+                    "type": "CodeableConcept",
+                    "value": {
+                      "coding": [
+                        {
+                          "system": "http://loinc.org",
+                          "code": "8462-4",
+                          "display": "Diastolic blood pressure"
+                        }
+                      ]
+                    }
+                  }
+                },
+                "valueQuantity": {
+                  "type": "Quantity",
+                  "short": "Diastolic Blood Pressure Value",
+                  "elements": {
+                    "value": {
+                      "min": 0,
+                      "max": 1000,
+                      "mustSupport": true
+                    },
+                    "unit": {
+                      "pattern": {
+                        "type": "string",
+                        "value": "mm[Hg]"
+                      },
+                      "mustSupport": true
+                    },
+                    "system": {
+                      "pattern": {
+                        "type": "uri",
+                        "value": "http://unitsofmeasure.org"
+                      },
+                      "mustSupport": true
+                    },
+                    "code": {
+                      "pattern": {
+                        "type": "code",
+                        "value": "mm[Hg]"
+                      },
+                      "mustSupport": true
+                    }
+                  }
+                }
+              },
+              "required": ["code", "valueQuantity"]
+            }
+          }
+        }
+      }
+    }
+  },
+  "required": ["code", "subject", "effective", "component"]
+}

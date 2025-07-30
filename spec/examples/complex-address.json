@@ -1,0 +1,81 @@
+{
+  "url": "http://hl7.org/fhir/StructureDefinition/Address",
+  "version": "4.0.1",
+  "name": "Address",
+  "type": "Address",
+  "kind": "complex-type",
+  "derivation": "specialization",
+  "base": "http://hl7.org/fhir/StructureDefinition/Element",
+  "class": "type",
+  "description": "An address expressed using postal conventions (as opposed to GPS or other location definition formats)",
+  "elements": {
+    "use": {
+      "type": "code",
+      "short": "home | work | temp | old | billing - purpose of this address",
+      "isModifier": true,
+      "isModifierReason": "This is labeled as \"Is Modifier\" because applications should not mistake a temporary or old address etc.for a current/permanent one",
+      "isSummary": true,
+      "binding": {
+        "strength": "required",
+        "valueSet": "http://hl7.org/fhir/ValueSet/address-use"
+      }
+    },
+    "type": {
+      "type": "code",
+      "short": "postal | physical | both",
+      "isSummary": true,
+      "binding": {
+        "strength": "required",
+        "valueSet": "http://hl7.org/fhir/ValueSet/address-type"
+      }
+    },
+    "text": {
+      "type": "string",
+      "short": "Text representation of the address",
+      "isSummary": true
+    },
+    "line": {
+      "type": "string",
+      "array": true,
+      "short": "Street name, number, direction & P.O. Box etc.",
+      "isSummary": true
+    },
+    "city": {
+      "type": "string",
+      "short": "Name of city, town etc.",
+      "isSummary": true
+    },
+    "district": {
+      "type": "string",
+      "short": "District name (aka county)",
+      "isSummary": true
+    },
+    "state": {
+      "type": "string",
+      "short": "Sub-unit of country (abbreviations ok)",
+      "isSummary": true
+    },
+    "postalCode": {
+      "type": "string",
+      "short": "Postal code for area",
+      "isSummary": true
+    },
+    "country": {
+      "type": "string",
+      "short": "Country (e.g. can be ISO 3166 2 or 3 letter code)",
+      "isSummary": true
+    },
+    "period": {
+      "type": "Period",
+      "short": "Time period when address was/is in use",
+      "isSummary": true
+    }
+  },
+  "constraint": {
+    "ele-1": {
+      "human": "All FHIR elements must have a @value or children",
+      "severity": "error",
+      "expression": "hasValue() or (children().count() > id.count())"
+    }
+  }
+}

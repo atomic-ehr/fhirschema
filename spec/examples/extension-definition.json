@@ -1,0 +1,177 @@
+{
+  "url": "http://hl7.org/fhir/us/core/StructureDefinition/us-core-race",
+  "version": "5.0.1",
+  "name": "USCoreRaceExtension",
+  "type": "Extension",
+  "kind": "complex-type",
+  "derivation": "constraint",
+  "base": "http://hl7.org/fhir/StructureDefinition/Extension",
+  "class": "extension",
+  "description": "Concepts classifying the person into a named category of humans sharing common history, traits, geographical origin or nationality.",
+  "elements": {
+    "extension": {
+      "slicing": {
+        "discriminator": [
+          {
+            "type": "value",
+            "path": "url"
+          }
+        ],
+        "rules": "open",
+        "slices": {
+          "ombCategory": {
+            "min": 0,
+            "max": 5,
+            "match": {
+              "url": "ombCategory"
+            },
+            "schema": {
+              "type": "Extension",
+              "elements": {
+                "url": {
+                  "type": "uri",
+                  "pattern": {
+                    "type": "uri",
+                    "value": "ombCategory"
+                  }
+                },
+                "valueCoding": {
+                  "type": "Coding",
+                  "short": "American Indian or Alaska Native|Asian|Black or African American|Native Hawaiian or Other Pacific Islander|White",
+                  "binding": {
+                    "strength": "required",
+                    "valueSet": "http://hl7.org/fhir/us/core/ValueSet/omb-race-category"
+                  }
+                }
+              },
+              "required": ["url", "valueCoding"]
+            }
+          },
+          "detailed": {
+            "min": 0,
+            "match": {
+              "url": "detailed"
+            },
+            "schema": {
+              "type": "Extension",
+              "elements": {
+                "url": {
+                  "type": "uri",
+                  "pattern": {
+                    "type": "uri",
+                    "value": "detailed"
+                  }
+                },
+                "valueCoding": {
+                  "type": "Coding",
+                  "binding": {
+                    "strength": "required",
+                    "valueSet": "http://hl7.org/fhir/us/core/ValueSet/detailed-race"
+                  }
+                }
+              },
+              "required": ["url", "valueCoding"]
+            }
+          },
+          "text": {
+            "min": 1,
+            "max": 1,
+            "match": {
+              "url": "text"
+            },
+            "schema": {
+              "type": "Extension",
+              "short": "Race Text",
+              "elements": {
+                "url": {
+                  "type": "uri",
+                  "pattern": {
+                    "type": "uri",
+                    "value": "text"
+                  }
+                },
+                "valueString": {
+                  "type": "string"
+                }
+              },
+              "required": ["url", "valueString"]
+            }
+          }
+        }
+      }
+    },
+    "url": {
+      "type": "uri",
+      "pattern": {
+        "type": "uri",
+        "value": "http://hl7.org/fhir/us/core/StructureDefinition/us-core-race"
+      }
+    }
+  },
+  "required": ["extension"],
+  "extensions": {
+    "ombCategory": {
+      "url": "ombCategory",
+      "type": "Extension",
+      "min": 0,
+      "max": 5,
+      "elements": {
+        "url": {
+          "type": "uri",
+          "pattern": {
+            "type": "uri",
+            "value": "ombCategory"
+          }
+        },
+        "valueCoding": {
+          "type": "Coding",
+          "binding": {
+            "strength": "required",
+            "valueSet": "http://hl7.org/fhir/us/core/ValueSet/omb-race-category"
+          }
+        }
+      },
+      "required": ["url", "valueCoding"]
+    },
+    "detailed": {
+      "url": "detailed",
+      "type": "Extension",
+      "elements": {
+        "url": {
+          "type": "uri",
+          "pattern": {
+            "type": "uri",
+            "value": "detailed"
+          }
+        },
+        "valueCoding": {
+          "type": "Coding",
+          "binding": {
+            "strength": "required",
+            "valueSet": "http://hl7.org/fhir/us/core/ValueSet/detailed-race"
+          }
+        }
+      },
+      "required": ["url", "valueCoding"]
+    },
+    "text": {
+      "url": "text",
+      "type": "Extension",
+      "min": 1,
+      "max": 1,
+      "elements": {
+        "url": {
+          "type": "uri",
+          "pattern": {
+            "type": "uri",
+            "value": "text"
+          }
+        },
+        "valueString": {
+          "type": "string"
+        }
+      },
+      "required": ["url", "valueString"]
+    }
+  }
+}

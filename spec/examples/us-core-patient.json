@@ -1,0 +1,190 @@
+{
+  "url": "http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient",
+  "version": "5.0.1",
+  "name": "USCorePatientProfile",
+  "type": "Patient",
+  "kind": "resource",
+  "derivation": "constraint",
+  "base": "http://hl7.org/fhir/StructureDefinition/Patient",
+  "class": "profile",
+  "description": "The US Core Patient Profile meets the U.S. Core Data for Interoperability (USCDI) v2 'Patient Demographics' requirements.",
+  "elements": {
+    "extension": {
+      "slicing": {
+        "discriminator": [
+          {
+            "type": "value",
+            "path": "url"
+          }
+        ],
+        "rules": "open",
+        "slices": {
+          "race": {
+            "min": 0,
+            "max": 1,
+            "match": {
+              "url": "http://hl7.org/fhir/us/core/StructureDefinition/us-core-race"
+            },
+            "schema": {
+              "type": "Extension",
+              "mustSupport": true
+            }
+          },
+          "ethnicity": {
+            "min": 0,
+            "max": 1,
+            "match": {
+              "url": "http://hl7.org/fhir/us/core/StructureDefinition/us-core-ethnicity"
+            },
+            "schema": {
+              "type": "Extension",
+              "mustSupport": true
+            }
+          },
+          "birthsex": {
+            "min": 0,
+            "max": 1,
+            "match": {
+              "url": "http://hl7.org/fhir/us/core/StructureDefinition/us-core-birthsex"
+            },
+            "schema": {
+              "type": "Extension",
+              "mustSupport": true
+            }
+          }
+        }
+      }
+    },
+    "identifier": {
+      "mustSupport": true,
+      "slicing": {
+        "discriminator": [
+          {
+            "type": "pattern",
+            "path": "system"
+          }
+        ],
+        "rules": "open",
+        "slices": {
+          "ssn": {
+            "min": 0,
+            "max": 1,
+            "match": {
+              "system": "http://hl7.org/fhir/sid/us-ssn"
+            },
+            "schema": {
+              "type": "Identifier",
+              "elements": {
+                "system": {
+                  "pattern": {
+                    "type": "uri",
+                    "value": "http://hl7.org/fhir/sid/us-ssn"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "name": {
+      "mustSupport": true,
+      "constraint": {
+        "us-core-6": {
+          "human": "At least name.given and/or name.family are present or, if neither is available, the Data Absent Reason Extension is present.",
+          "severity": "error",
+          "expression": "(family.exists() or given.exists()) xor extension.where(url='http://hl7.org/fhir/StructureDefinition/data-absent-reason').exists()"
+        }
+      },
+      "elements": {
+        "family": {
+          "mustSupport": true
+        },
+        "given": {
+          "mustSupport": true
+        }
+      }
+    },
+    "telecom": {
+      "mustSupport": true,
+      "elements": {
+        "system": {
+          "mustSupport": true,
+          "binding": {
+            "strength": "required",
+            "valueSet": "http://hl7.org/fhir/ValueSet/contact-point-system"
+          }
+        },
+        "value": {
+          "mustSupport": true
+        },
+        "use": {
+          "mustSupport": true,
+          "binding": {
+            "strength": "required",
+            "valueSet": "http://hl7.org/fhir/us/core/ValueSet/simple-telecom-use"
+          }
+        }
+      }
+    },
+    "gender": {
+      "mustSupport": true,
+      "binding": {
+        "strength": "required",
+        "valueSet": "http://hl7.org/fhir/ValueSet/administrative-gender"
+      }
+    },
+    "birthDate": {
+      "mustSupport": true
+    },
+    "address": {
+      "mustSupport": true,
+      "elements": {
+        "line": {
+          "mustSupport": true
+        },
+        "city": {
+          "mustSupport": true
+        },
+        "state": {
+          "mustSupport": true,
+          "binding": {
+            "strength": "extensible",
+            "valueSet": "http://hl7.org/fhir/us/core/ValueSet/us-core-usps-state"
+          }
+        },
+        "postalCode": {
+          "mustSupport": true
+        },
+        "period": {
+          "mustSupport": true
+        }
+      }
+    },
+    "communication": {
+      "elements": {
+        "language": {
+          "mustSupport": true
+        }
+      }
+    }
+  },
+  "required": ["identifier", "name"],
+  "extensions": {
+    "race": {
+      "url": "http://hl7.org/fhir/us/core/StructureDefinition/us-core-race",
+      "type": "Extension",
+      "mustSupport": true
+    },
+    "ethnicity": {
+      "url": "http://hl7.org/fhir/us/core/StructureDefinition/us-core-ethnicity",
+      "type": "Extension",
+      "mustSupport": true
+    },
+    "birthsex": {
+      "url": "http://hl7.org/fhir/us/core/StructureDefinition/us-core-birthsex",
+      "type": "Extension",
+      "mustSupport": true
+    }
+  }
+}

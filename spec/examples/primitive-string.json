@@ -1,0 +1,24 @@
+{
+  "url": "http://hl7.org/fhir/StructureDefinition/string",
+  "version": "4.0.1",
+  "name": "string",
+  "type": "string",
+  "kind": "primitive-type",
+  "derivation": "specialization",
+  "base": "http://hl7.org/fhir/StructureDefinition/Element",
+  "class": "type",
+  "description": "A sequence of Unicode characters",
+  "elements": {
+    "value": {
+      "type": "http://hl7.org/fhirpath/System.String",
+      "short": "Primitive value for string"
+    }
+  },
+  "constraint": {
+    "ele-1": {
+      "human": "All FHIR elements must have a @value or children",
+      "severity": "error",
+      "expression": "hasValue() or (children().count() > id.count())"
+    }
+  }
+}

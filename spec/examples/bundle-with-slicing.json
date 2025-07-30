@@ -1,0 +1,205 @@
+{
+  "url": "http://hl7.org/fhir/StructureDefinition/Bundle",
+  "version": "4.0.1",
+  "name": "Bundle",
+  "type": "Bundle",
+  "kind": "resource",
+  "derivation": "specialization",
+  "base": "http://hl7.org/fhir/StructureDefinition/Resource",
+  "class": "resource",
+  "description": "A container for a collection of resources.",
+  "elements": {
+    "identifier": {
+      "type": "Identifier",
+      "short": "Persistent identifier for the bundle",
+      "isSummary": true
+    },
+    "type": {
+      "type": "code",
+      "short": "document | message | transaction | transaction-response | batch | batch-response | history | searchset | collection",
+      "isSummary": true,
+      "binding": {
+        "strength": "required",
+        "valueSet": "http://hl7.org/fhir/ValueSet/bundle-type"
+      }
+    },
+    "timestamp": {
+      "type": "instant",
+      "short": "When the bundle was assembled",
+      "isSummary": true
+    },
+    "total": {
+      "type": "unsignedInt",
+      "short": "If search, the total number of matches",
+      "isSummary": true
+    },
+    "link": {
+      "array": true,
+      "short": "Links related to this Bundle",
+      "isSummary": true,
+      "elements": {
+        "relation": {
+          "type": "string",
+          "short": "See http://www.iana.org/assignments/link-relations/link-relations.xhtml#link-relations-1",
+          "isSummary": true
+        },
+        "url": {
+          "type": "uri",
+          "short": "Reference details for the link",
+          "isSummary": true
+        }
+      },
+      "required": ["relation", "url"]
+    },
+    "entry": {
+      "array": true,
+      "short": "Entry in the bundle - will have a resource or information",
+      "isSummary": true,
+      "elements": {
+        "link": {
+          "elementReference": ["http://hl7.org/fhir/StructureDefinition/Bundle", "elements", "link"],
+          "short": "Links related to this entry",
+          "isSummary": true
+        },
+        "fullUrl": {
+          "type": "uri",
+          "short": "URI for resource (Absolute URL server address or URI for UUID/OID)",
+          "isSummary": true
+        },
+        "resource": {
+          "type": "Resource",
+          "short": "A resource in the bundle",
+          "isSummary": true
+        },
+        "search": {
+          "short": "Search related information",
+          "isSummary": true,
+          "elements": {
+            "mode": {
+              "type": "code",
+              "short": "match | include | outcome - why this is in the result set",
+              "isSummary": true,
+              "binding": {
+                "strength": "required",
+                "valueSet": "http://hl7.org/fhir/ValueSet/search-entry-mode"
+              }
+            },
+            "score": {
+              "type": "decimal",
+              "short": "Search ranking (between 0 and 1)",
+              "isSummary": true
+            }
+          }
+        },
+        "request": {
+          "short": "Additional execution information (transaction/batch/history)",
+          "isSummary": true,
+          "elements": {
+            "method": {
+              "type": "code",
+              "short": "GET | HEAD | POST | PUT | DELETE | PATCH",
+              "isSummary": true,
+              "binding": {
+                "strength": "required",
+                "valueSet": "http://hl7.org/fhir/ValueSet/http-verb"
+              }
+            },
+            "url": {
+              "type": "uri",
+              "short": "URL for HTTP equivalent of this entry",
+              "isSummary": true
+            },
+            "ifNoneMatch": {
+              "type": "string",
+              "short": "For managing cache currency",
+              "isSummary": true
+            },
+            "ifModifiedSince": {
+              "type": "instant",
+              "short": "For managing cache currency",
+              "isSummary": true
+            },
+            "ifMatch": {
+              "type": "string",
+              "short": "For managing update contention",
+              "isSummary": true
+            },
+            "ifNoneExist": {
+              "type": "string",
+              "short": "For conditional creates",
+              "isSummary": true
+            }
+          },
+          "required": ["method", "url"]
+        },
+        "response": {
+          "short": "Results of execution (transaction/batch/history)",
+          "isSummary": true,
+          "elements": {
+            "status": {
+              "type": "string",
+              "short": "Status response code (text optional)",
+              "isSummary": true
+            },
+            "location": {
+              "type": "uri",
+              "short": "The location (if the operation returns a location)",
+              "isSummary": true
+            },
+            "etag": {
+              "type": "string",
+              "short": "The Etag for the resource (if relevant)",
+              "isSummary": true
+            },
+            "lastModified": {
+              "type": "instant",
+              "short": "Server's date time modified",
+              "isSummary": true
+            },
+            "outcome": {
+              "type": "Resource",
+              "short": "OperationOutcome with hints and warnings (for batch/transaction)",
+              "isSummary": true
+            }
+          },
+          "required": ["status"]
+        }
+      },
+      "constraint": {
+        "bdl-8": {
+          "human": "fullUrl cannot be a version specific reference",
+          "severity": "error",
+          "expression": "fullUrl.contains('/_history/').not()"
+        }
+      }
+    },
+    "signature": {
+      "type": "Signature",
+      "short": "Digital Signature",
+      "isSummary": true
+    }
+  },
+  "required": ["type"],
+  "constraint": {
+    "bdl-1": {
+      "human": "total only when a search or history",
+      "severity": "error",
+      "expression": "total.empty() or (type = 'searchset') or (type = 'history')"
+    },
+    "bdl-2": {
+      "human": "entry.search only when a search",
+      "severity": "error",
+      "expression": "entry.search.empty() or (type = 'searchset')"
+    },
+    "bdl-3": {
+      "human": "entry.request mandatory for batch/transaction/history, prohibited for other types",
+      "severity": "error",
+      "expression": "entry.all(request.exists() = (%resource.type = 'batch' or %resource.type = 'transaction' or %resource.type = 'history'))"
+    },
+    "bdl-4": {
+      "human": "entry.response mandatory for batch-response/transaction-response/history, prohibited for other types",
+      "severity": "error",
+      "expression": "entry.all(response.exists() = (%resource.type = 'batch-response' or %resource.type = 'transaction-response' or %resource.type = 'history'))"
+    }
+  }
+}

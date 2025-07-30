@@ -1,0 +1,210 @@
+{
+  "url": "http://hl7.org/fhir/StructureDefinition/Patient",
+  "version": "4.0.1",
+  "name": "Patient",
+  "type": "Patient",
+  "kind": "resource",
+  "derivation": "specialization",
+  "abstract": false,
+  "base": "http://hl7.org/fhir/StructureDefinition/DomainResource",
+  "class": "resource",
+  "description": "Demographics and other administrative information about an individual or animal receiving care or other health-related services.",
+  "elements": {
+    "identifier": {
+      "type": "Identifier",
+      "array": true,
+      "short": "An identifier for this patient",
+      "isSummary": true
+    },
+    "active": {
+      "type": "boolean",
+      "short": "Whether this patient's record is in active use",
+      "isModifier": true,
+      "isModifierReason": "This element is labeled as a modifier because it may be used to mark that the resource was created in error",
+      "isSummary": true
+    },
+    "name": {
+      "type": "HumanName",
+      "array": true,
+      "short": "A name associated with the patient",
+      "isSummary": true
+    },
+    "telecom": {
+      "type": "ContactPoint",
+      "array": true,
+      "short": "A contact detail for the individual",
+      "isSummary": true
+    },
+    "gender": {
+      "type": "code",
+      "short": "male | female | other | unknown",
+      "isSummary": true,
+      "binding": {
+        "strength": "required",
+        "valueSet": "http://hl7.org/fhir/ValueSet/administrative-gender"
+      }
+    },
+    "birthDate": {
+      "type": "date",
+      "short": "The date of birth for the individual",
+      "isSummary": true
+    },
+    "deceased": {
+      "choices": ["deceasedBoolean", "deceasedDateTime"]
+    },
+    "deceasedBoolean": {
+      "type": "boolean",
+      "choiceOf": "deceased",
+      "short": "Indicates if the individual is deceased or not",
+      "isModifier": true,
+      "isModifierReason": "This element is labeled as a modifier because once a patient is marked as deceased, the actions that are appropriate to perform on the patient may be significantly different.",
+      "isSummary": true
+    },
+    "deceasedDateTime": {
+      "type": "dateTime",
+      "choiceOf": "deceased",
+      "short": "Indicates if the individual is deceased or not",
+      "isModifier": true,
+      "isModifierReason": "This element is labeled as a modifier because once a patient is marked as deceased, the actions that are appropriate to perform on the patient may be significantly different.",
+      "isSummary": true
+    },
+    "address": {
+      "type": "Address",
+      "array": true,
+      "short": "An address for the individual",
+      "isSummary": true
+    },
+    "maritalStatus": {
+      "type": "CodeableConcept",
+      "short": "Marital (civil) status of a patient",
+      "binding": {
+        "strength": "extensible",
+        "valueSet": "http://hl7.org/fhir/ValueSet/marital-status"
+      }
+    },
+    "multipleBirth": {
+      "choices": ["multipleBirthBoolean", "multipleBirthInteger"]
+    },
+    "multipleBirthBoolean": {
+      "type": "boolean",
+      "choiceOf": "multipleBirth",
+      "short": "Whether patient is part of a multiple birth"
+    },
+    "multipleBirthInteger": {
+      "type": "integer",
+      "choiceOf": "multipleBirth",
+      "short": "Whether patient is part of a multiple birth"
+    },
+    "photo": {
+      "type": "Attachment",
+      "array": true,
+      "short": "Image of the patient"
+    },
+    "contact": {
+      "array": true,
+      "short": "A contact party (e.g. guardian, partner, friend) for the patient",
+      "elements": {
+        "relationship": {
+          "type": "CodeableConcept",
+          "array": true,
+          "short": "The kind of relationship",
+          "binding": {
+            "strength": "extensible",
+            "valueSet": "http://hl7.org/fhir/ValueSet/patient-contactrelationship"
+          }
+        },
+        "name": {
+          "type": "HumanName",
+          "short": "A name associated with the contact person"
+        },
+        "telecom": {
+          "type": "ContactPoint",
+          "array": true,
+          "short": "A contact detail for the person"
+        },
+        "address": {
+          "type": "Address",
+          "short": "Address for the contact person"
+        },
+        "gender": {
+          "type": "code",
+          "short": "male | female | other | unknown",
+          "binding": {
+            "strength": "required",
+            "valueSet": "http://hl7.org/fhir/ValueSet/administrative-gender"
+          }
+        },
+        "organization": {
+          "type": "Reference",
+          "refers": ["http://hl7.org/fhir/StructureDefinition/Organization"],
+          "short": "Organization that is associated with the contact"
+        },
+        "period": {
+          "type": "Period",
+          "short": "The period during which this contact person or organization is valid to be contacted relating to this patient"
+        }
+      },
+      "constraint": {
+        "pat-1": {
+          "human": "SHALL at least contain a contact's details or a reference to an organization",
+          "severity": "error",
+          "expression": "name.exists() or telecom.exists() or address.exists() or organization.exists()"
+        }
+      }
+    },
+    "communication": {
+      "array": true,
+      "short": "A language which may be used to communicate with the patient about his or her health",
+      "elements": {
+        "language": {
+          "type": "CodeableConcept",
+          "short": "The language which can be used to communicate with the patient about his or her health",
+          "binding": {
+            "strength": "preferred",
+            "valueSet": "http://hl7.org/fhir/ValueSet/languages"
+          }
+        },
+        "preferred": {
+          "type": "boolean",
+          "short": "Language preference indicator"
+        }
+      }
+    },
+    "generalPractitioner": {
+      "type": "Reference",
+      "array": true,
+      "refers": ["http://hl7.org/fhir/StructureDefinition/Organization", "http://hl7.org/fhir/StructureDefinition/Practitioner", "http://hl7.org/fhir/StructureDefinition/PractitionerRole"],
+      "short": "Patient's nominated primary care provider"
+    },
+    "managingOrganization": {
+      "type": "Reference",
+      "refers": ["http://hl7.org/fhir/StructureDefinition/Organization"],
+      "short": "Organization that is the custodian of the patient record",
+      "isSummary": true
+    },
+    "link": {
+      "array": true,
+      "short": "Link to another patient resource that concerns the same actual person",
+      "isModifier": true,
+      "isModifierReason": "This element is labeled as a modifier because it may not be the main Patient resource, and the referenced patient should be used instead of this Patient record. This is when the link.type value is 'replaced-by'",
+      "elements": {
+        "other": {
+          "type": "Reference",
+          "refers": ["http://hl7.org/fhir/StructureDefinition/Patient", "http://hl7.org/fhir/StructureDefinition/RelatedPerson"],
+          "short": "The other patient or related person resource that the link refers to",
+          "isSummary": true
+        },
+        "type": {
+          "type": "code",
+          "short": "replaced-by | replaces | refer | seealso",
+          "isSummary": true,
+          "binding": {
+            "strength": "required",
+            "valueSet": "http://hl7.org/fhir/ValueSet/link-type"
+          }
+        }
+      },
+      "required": ["other", "type"]
+    }
+  }
+}
