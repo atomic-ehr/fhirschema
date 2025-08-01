@@ -52,7 +52,7 @@ const resource = {
 const schema = { /* FHIRSchema */ };
 const context = { schemas: { Patient: schema } };
 
-const result = validate(context, schema, resource);
+const result = validate(context, [], resource);
 if (result.valid) {
   console.log('Resource is valid');
 } else {
