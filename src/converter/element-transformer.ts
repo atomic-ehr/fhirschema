@@ -1,4 +1,4 @@
-import { StructureDefinitionElement, StructureDefinition, FHIRSchemaElement } from './types';
+import { StructureDefinitionElement, StructureDefinition, FHIRSchemaElement } from './types.js';
 
 const BINDING_NAME_EXT = "http://hl7.org/fhir/StructureDefinition/elementdefinition-bindingName";
 const DEFAULT_TYPE_EXT = "http://hl7.org/fhir/StructureDefinition/elementdefinition-defaulttype";

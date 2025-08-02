@@ -1,4 +1,4 @@
-import { StructureDefinitionElement, PathComponent } from './types';
+import { StructureDefinitionElement, PathComponent } from './types.js';
 
 export function parsePath(element: StructureDefinitionElement): PathComponent[] {
   const pathParts = element.path.split('.');

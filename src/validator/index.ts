@@ -1,4 +1,4 @@
-import type { ValidationContext, FHIRSchema, ValidationResult, ValidationError } from './types';
+import type { ValidationContext, FHIRSchema, ValidationResult, ValidationError } from './types.js';
 
 export function validate(
   ctx: ValidationContext, 
@@ -374,4 +374,4 @@ function getParentData(path: (string | number)[]): any {
   return parent;
 }
 
-export type { ValidationContext, FHIRSchema, ValidationResult, ValidationError } from './types';
+export type { ValidationContext, FHIRSchema, ValidationResult, ValidationError } from './types.js';

@@ -1,5 +1,5 @@
-import { PathComponent, Action } from './types';
-import { getCommonPath } from './path-parser';
+import { PathComponent, Action } from './types.js';
+import { getCommonPath } from './path-parser.js';
 
 function sliceChanged(prevItem: PathComponent, newItem: PathComponent): boolean {
   return !!(prevItem.sliceName && newItem.sliceName && prevItem.sliceName !== newItem.sliceName);

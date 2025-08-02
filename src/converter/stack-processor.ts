@@ -1,4 +1,4 @@
-import { Action, FHIRSchemaElement } from './types';
+import { Action, FHIRSchemaElement } from './types.js';
 
 function popAndUpdate(stack: any[], updateFn: (parent: any, child: any) => any): any[] {
   const child = stack[stack.length - 1];

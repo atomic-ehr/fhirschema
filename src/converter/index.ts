@@ -5,12 +5,12 @@ import {
   ConversionContext,
   PathComponent,
   Action
-} from './types';
-import { parsePath, enrichPath } from './path-parser';
-import { calculateActions } from './action-calculator';
-import { transformElement } from './element-transformer';
-import { isChoiceElement, expandChoiceElement } from './choice-handler';
-import { applyActions } from './stack-processor';
+} from './types.js';
+import { parsePath, enrichPath } from './path-parser.js';
+import { calculateActions } from './action-calculator.js';
+import { transformElement } from './element-transformer.js';
+import { isChoiceElement, expandChoiceElement } from './choice-handler.js';
+import { applyActions } from './stack-processor.js';
 
 function buildResourceHeader(
   structureDefinition: StructureDefinition,
@@ -192,8 +192,8 @@ export function translate(
 }
 
 // Export all modules for testing
-export { parsePath, enrichPath, getCommonPath } from './path-parser';
-export { calculateActions } from './action-calculator';
-export { transformElement } from './element-transformer';
-export { isChoiceElement, expandChoiceElement } from './choice-handler';
-export { applyActions } from './stack-processor';
+export { parsePath, enrichPath, getCommonPath } from './path-parser.js';
+export { calculateActions } from './action-calculator.js';
+export { transformElement } from './element-transformer.js';
+export { isChoiceElement, expandChoiceElement } from './choice-handler.js';
+export { applyActions } from './stack-processor.js';

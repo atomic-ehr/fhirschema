@@ -1,4 +1,4 @@
-import { StructureDefinitionElement } from './types';
+import { StructureDefinitionElement } from './types.js';
 
 export function isChoiceElement(element: StructureDefinitionElement): boolean {
   if (element.path.endsWith('[x]')) {
