@@ -1,6 +1,6 @@
 {
   "name": "@atomic-ehr/fhirschema",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "TypeScript implementation of FHIRSchema converter and validator",
   "type": "module",
   "main": "./dist/index.js",
