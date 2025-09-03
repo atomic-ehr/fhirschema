@@ -33,7 +33,18 @@ const schemas: Record<string, FHIRSchema> = {
       valueString: { choiceOf: "value" },
       valueInteger: { choiceOf: "value" },
     },
-  }
+  },
+  "SchemaA": {
+    elements: {
+      a: { type: "integer" },
+    },
+  },
+  "SchemaB": {
+    base: "SchemaA",
+    elements: {
+      b: { type: "string" },
+    },
+  },
 };
 
 let ctx: AtomicContext = {
@@ -41,7 +52,7 @@ let ctx: AtomicContext = {
 };
 
 function resolveSchema(ctx: AtomicContext, url: string) {
-  console.log(`Resolve schema: ${url}`);
+  // console.log(`Resolve schema: ${url}`);
   return schemas[url];
 }
 
@@ -113,6 +124,20 @@ describe("validator", () => {
       resource: { resourceType: "Child", id: "1", name: "John" },
     });
     expect(res0.errors).toEqual([]);
+  });
+
+  it("multiple schemas", () => {
+    let res0 = validateSchema(ctx, {
+      schemaUrls: ["SchemaA", "SchemaB"],
+      resource: { a: 1, b: "string" },
+    });
+    expect(res0.errors).toEqual([]);
+
+    let res1 = validateSchema(ctx, {
+      schemaUrls: ["SchemaA", "SchemaB"],
+      resource: { ups: "Ups" },
+    });
+    expect(res1.errors).toMatchObject([{code: FHIRSchemaErrorCode.UnknownElement, path: '.ups'}]);
   });
 
 });

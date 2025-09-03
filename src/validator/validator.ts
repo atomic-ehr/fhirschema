@@ -3,6 +3,7 @@ export enum FHIRSchemaErrorCode {
   UnknownSchema = "FS002",
   ExpectedArray = "FS003",
   UnexpectedArray = "FS004",
+  UnknownKeyword = "FS005",
 }
 
 export interface AtomicContext {
@@ -29,13 +30,15 @@ export interface FHIRschemaElement {
   choiceOf?: string;
 }
 
-export interface FHIRSchema {
+export interface FHIRSchemaBase {
   base?: string;
   type?: string;
   isArray?: boolean;
   elements?: Record<string, FHIRschemaElement>;
   choices?: Record<string, string[]>;
 }
+
+export type FHIRSchema = FHIRSchemaBase | FHIRschemaElement;
 
 export interface ValidationContext {
   path: string;
@@ -69,14 +72,61 @@ function isObject(data: any): boolean {
   return typeof data === "object" && data !== null && !Array.isArray(data);
 }
 
-function validateValueRules(vctx: ValidationContext, data: any) {}
+const TYPE_VALIDATORS: Record<string, (vctx: ValidationContext, rules: any[], data: any) => void> = {
+  'string': (vctx: ValidationContext, rules: any[], data: any) => {
+    console.log("validateString", rules, data);
+  },
+  'integer': (vctx: ValidationContext, rules: any[], data: any) => {
+    console.log("validateInteger", rules, data);
+  },
+}
+
+
+function validateType(vctx: ValidationContext, rules: string[],  data: any): void {
+  let validator = TYPE_VALIDATORS[rules[0]];
+  if(validator) {
+    validator(vctx, rules, data);
+  }
+}
+
+const VALIDATORS: Record<string, (vctx: ValidationContext, rules: any[], data: any) => void> = {
+  'type': validateType,
+} 
+
+function validateValueRules(vctx: ValidationContext, data: any) {
+  let rules: Record<string, any[]> = {};
+  let schemas: Record<string, any[]> = {};
+  for (const sch of vctx.schemaSet) {
+    for(const [key, value] of Object.entries(sch)) {
+      if(key !== "elements" && key !== "choiceOf" && key !== "choices" && key !== "base") {
+        rules[key] ||= [];
+        schemas[key] ||= []
+        rules[key].push(value);
+        schemas[key].push(sch);
+      }
+    }
+  }
+  for(const [ruleName, item] of Object.entries(rules)) {
+    let validator = VALIDATORS[ruleName];
+    if(validator) {
+      validator(vctx, item, data);
+    } else {
+      vctx.errors.push({
+        code: FHIRSchemaErrorCode.UnknownKeyword,
+        message: `Validator ${ruleName} not found`,
+        path: vctx.path,
+      });
+    }
+  }
+}
 
 function addSchema(vctx: ValidationContext, url: string) {
   let sch = vctx.ctx.resolveSchema(vctx.ctx, url);
   if (sch) {
     vctx.schemaSet.add(sch);
-    if (sch.base !== undefined) {
-      addSchema(vctx, sch.base);
+    let base = (sch as FHIRSchemaBase).base;
+    if (base !== undefined) {
+      addSchema(vctx, base);
     }
   } else {
     vctx.errors.push({
@@ -153,7 +203,7 @@ function validateElement(vctx: ValidationContext, data: any) {
  }
 }
 
-function validateInternal(vctx: ValidationContext, data: any) {
+function validateInternal(vctx: ValidationContext, data: any, primitiveExtensions?: any) {
   addSchemas(vctx, data);
   validateValueRules(vctx, data);
   if (isObject(data)) {
