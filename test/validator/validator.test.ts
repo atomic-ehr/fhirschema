@@ -45,6 +45,25 @@ const schemas: Record<string, FHIRSchema> = {
       b: { type: "string" },
     },
   },
+  "PrimitiveExtensions": {
+    elements: {
+      a: { type: "integer" },
+      b: { type: "string" },
+    },
+  },
+  "Extension": {
+    elements: {
+      url: { type: "string" },
+      value: { choices: ["valueString", "valueInteger"] },
+      valueString: { type: "string" },
+    },
+  },
+  "exta": {
+    base: "Extension",
+    elements: {
+      value: { choices: ["valueString"] }
+    },
+  },
 };
 
 let ctx: AtomicContext = {
@@ -138,6 +157,14 @@ describe("validator", () => {
       resource: { ups: "Ups" },
     });
     expect(res1.errors).toMatchObject([{code: FHIRSchemaErrorCode.UnknownElement, path: '.ups'}]);
+  });
+
+  it("primitive extensions", () => {
+    let res0 = validateSchema(ctx, {
+      schemaUrls: [],
+      resource: { resourceType: "PrimitiveExtensions", _a: {extension: [{url: "exta", valueString: "string"}]}},
+    });
+    expect(res0.errors).toEqual([]);
   });
 
 });

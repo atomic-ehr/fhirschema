@@ -203,7 +203,7 @@ function validateElement(vctx: ValidationContext, data: any) {
  }
 }
 
-function validateInternal(vctx: ValidationContext, data: any, primitiveExtensions?: any) {
+function validateInternal(vctx: ValidationContext, data: any) {
   addSchemas(vctx, data);
   validateValueRules(vctx, data);
   if (isObject(data)) {
