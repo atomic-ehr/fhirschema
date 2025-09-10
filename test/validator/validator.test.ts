@@ -64,6 +64,21 @@ const schemas: Record<string, FHIRSchema> = {
       value: { choices: ["valueString"] }
     },
   },
+  "BackboneElement": {
+    elements: {
+      extension: { type: "Extension", isArray: true },
+    },
+  },
+  "WithBackbone": {
+    elements: {
+      a: { 
+        type: "BackboneElement",
+        elements: {
+          b: { type: "integer" },
+        },
+      },
+    },
+  },
 };
 
 let ctx: AtomicContext = {
@@ -162,9 +177,46 @@ describe("validator", () => {
   it("primitive extensions", () => {
     let res0 = validateSchema(ctx, {
       schemaUrls: [],
-      resource: { resourceType: "PrimitiveExtensions", _a: {extension: [{url: "exta", valueString: "string"}]}},
+      resource: { 
+        resourceType: "PrimitiveExtensions", 
+        _a: {extension: [{url: "exta", valueString: "string"}]}
+      },
     });
     expect(res0.errors).toEqual([]);
+
+    let res1 = validateSchema(ctx, {
+      schemaUrls: [],
+      resource: { 
+        resourceType: "PrimitiveExtensions", 
+        a: 1,
+        _a: {extension: [{url: "exta", valueString: "string"}]}
+      },
+    });
+    expect(res1.errors).toEqual([]);
+  });
+
+  it("backbone element", () => {
+    let res0 = validateSchema(ctx, {
+      schemaUrls: [],
+      resource: { resourceType: "WithBackbone", a: { b: 1 } },
+    });
+    expect(res0.errors).toEqual([]);
+    let res1 = validateSchema(ctx, {
+      schemaUrls: [],
+      resource: { resourceType: "WithBackbone", a: { b: 1, extension: [{url: "exta", valueString: "string"}] } },
+    });
+    expect(res1.errors).toEqual([]);
+
+    let res2 = validateSchema(ctx, {
+      schemaUrls: [],
+      resource: { resourceType: "WithBackbone", a: { b: 1, ups: "ups" } },
+    });
+    expect(res2.errors).toMatchObject([
+      {
+        code: "FS001",
+        path: "WithBackbone.a.ups",
+      },
+    ]);
   });
 
 });

@@ -120,13 +120,13 @@ function validateValueRules(vctx: ValidationContext, data: any) {
   }
 }
 
-function addSchema(vctx: ValidationContext, url: string) {
+function addSchemaToSet(vctx: ValidationContext, schemas: Set<FHIRSchema>, url: string) {
   let sch = vctx.ctx.resolveSchema(vctx.ctx, url);
   if (sch) {
-    vctx.schemaSet.add(sch);
+    schemas.add(sch);
     let base = (sch as FHIRSchemaBase).base;
     if (base !== undefined) {
-      addSchema(vctx, base);
+      addSchemaToSet(vctx, schemas, base);
     }
   } else {
     vctx.errors.push({
@@ -136,7 +136,18 @@ function addSchema(vctx: ValidationContext, url: string) {
     });
   }
 }
+
+function addSchema(vctx: ValidationContext, url: string) {
+  addSchemaToSet(vctx, vctx.schemaSet, url);
+}
 function addSchemas(vctx: ValidationContext, data: any) {}
+
+// TODO: i'm not sure about this map
+const PRIMITIVE_TYPES = {
+  "string": true,
+  "integer": true,
+  "boolean": true,
+};
 
 function getElementSchemas(
   vctx: ValidationContext,
@@ -150,18 +161,13 @@ function getElementSchemas(
         schemas = new Set();
       }
       schemas.add(elSch);
+      if ( elSch.type !== undefined && !PRIMITIVE_TYPES[elSch.type as keyof typeof PRIMITIVE_TYPES]) {
+        addSchemaToSet(vctx, schemas, elSch.type);
+      }
     }
   }
   return schemas;
 }
-
-function addError(vctx: ValidationContext, key: string, code: string) {
-  vctx.errors.push({
-    code: code,
-    path: `${vctx.path}.${key}`,
-  } as ValidationError);
-}
-
 
 function isElementArray(vctx: ValidationContext) {
   for (const sch of vctx.schemaSet) {
@@ -173,7 +179,7 @@ function isElementArray(vctx: ValidationContext) {
 }
 
 
-function validateElement(vctx: ValidationContext, data: any) {
+function validateElement(vctx: ValidationContext, data: any, primitiveExtension: any) {
  if(isElementArray(vctx)) {
   if(Array.isArray(data)) {
     for (let i = 0; i++; i < data.length) {
@@ -207,8 +213,22 @@ function validateInternal(vctx: ValidationContext, data: any) {
   addSchemas(vctx, data);
   validateValueRules(vctx, data);
   if (isObject(data)) {
-    for (const [key, value] of Object.entries(data)) {
+    for (let [key, value] of Object.entries(data)) {
+      let primitiveExtension = null;
       if (key == "resourceType") continue;
+      if(key.startsWith("_")) {
+        let normKey = key.substring(1);
+        // will be handled by next with normal element key
+        if(data[normKey] !== undefined) {
+          continue;
+        } else {
+          key = normKey;
+          primitiveExtension = value;
+          value = null;
+        }
+      } else {
+        primitiveExtension = data[`_${key}`] || null;
+      }
       let elSchemas = getElementSchemas(vctx, key);
       if (elSchemas) {
         // save the current schema set and path
@@ -216,7 +236,7 @@ function validateInternal(vctx: ValidationContext, data: any) {
         let prevPath = vctx.path;
         vctx.path = `${vctx.path}.${key}`;
         vctx.schemaSet = elSchemas;
-        validateElement(vctx, value);
+        validateElement(vctx, value, primitiveExtension);
         // restore the previous schema set and path
         vctx.schemaSet = prevSchemas;
         vctx.path = prevPath;
