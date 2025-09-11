@@ -98,7 +98,7 @@ function validateValueRules(vctx: ValidationContext, data: any) {
   let schemas: Record<string, FHIRSchema> = {};
   for (const sch of Object.values(vctx.schemas)) {
     for(const [key, value] of Object.entries(sch)) {
-      if(key !== "elements" && key !== "choiceOf" && key !== "choices" && key !== "base") {
+      if(key !== "elements" && key !== "choiceOf" && key !== "choices" && key !== "base" && key !== "isArray") {
         rules[key] ||= [];
         schemas[key] ||= {} as FHIRSchema;
         rules[key].push(value);
@@ -171,15 +171,15 @@ function isElementArray(vctx: ValidationContext) {
     if (sch.isArray) {
       return true;
     }
-    return false
   }
+  return false;
 }
 
 
 function validateElement(vctx: ValidationContext, data: any, primitiveExtension: any) {
  if(isElementArray(vctx)) {
   if(Array.isArray(data)) {
-    for (let i = 0; i++; i < data.length) {
+    for (let i = 0; i < data.length; i++) {
       let item = data[i]
       let prevPath = vctx.path;
       vctx.path = `${vctx.path}.${i}`;

@@ -79,6 +79,16 @@ const schemas: Record<string, FHIRSchema> = {
       },
     },
   },
+  "ArrayOfObjects": {
+    elements: {
+      a: {
+        isArray: true,
+        elements: {
+          b: { type: "integer" },
+        },
+      },
+    },
+  },
 };
 
 let ctx: AtomicContext = {
@@ -215,6 +225,19 @@ describe("validator", () => {
       {
         code: "FS001",
         path: "WithBackbone.a.ups",
+      },
+    ]);
+  });
+
+  it("validates elements inside arrays", () => {
+    const res = validateSchema(ctx, {
+      schemaUrls: [],
+      resource: { resourceType: "ArrayOfObjects", a: [ { b: 1 }, { ups: 2 } ] },
+    });
+    expect(res.errors).toMatchObject([
+      {
+        code: FHIRSchemaErrorCode.UnknownElement,
+        path: "ArrayOfObjects.a.1.ups",
       },
     ]);
   });
