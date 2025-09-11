@@ -41,8 +41,8 @@ export interface FHIRSchemaBase {
 export type FHIRSchema = FHIRSchemaBase | FHIRschemaElement;
 
 export interface ValidationContext {
+  schemas: Record<string, FHIRSchema>;
   path: string;
-  schemaSet: Set<FHIRSchema>;
   errors: ValidationError[];
   ctx: AtomicContext;
 }
@@ -61,7 +61,7 @@ function createContext(
 ): ValidationContext {
   let vctx: ValidationContext = {
     path: opts?.resource?.resourceType,
-    schemaSet: new Set(),
+    schemas: {},
     errors: [],
     ctx: ctx,
   };
@@ -95,14 +95,14 @@ const VALIDATORS: Record<string, (vctx: ValidationContext, rules: any[], data: a
 
 function validateValueRules(vctx: ValidationContext, data: any) {
   let rules: Record<string, any[]> = {};
-  let schemas: Record<string, any[]> = {};
-  for (const sch of vctx.schemaSet) {
+  let schemas: Record<string, FHIRSchema> = {};
+  for (const sch of Object.values(vctx.schemas)) {
     for(const [key, value] of Object.entries(sch)) {
       if(key !== "elements" && key !== "choiceOf" && key !== "choices" && key !== "base") {
         rules[key] ||= [];
-        schemas[key] ||= []
+        schemas[key] ||= {} as FHIRSchema;
         rules[key].push(value);
-        schemas[key].push(sch);
+        schemas[key] = sch;
       }
     }
   }
@@ -120,10 +120,11 @@ function validateValueRules(vctx: ValidationContext, data: any) {
   }
 }
 
-function addSchemaToSet(vctx: ValidationContext, schemas: Set<FHIRSchema>, url: string) {
+function addSchemaToSet(vctx: ValidationContext, schemas: Record<string, FHIRSchema>, url: string) {
+  if(schemas[url]) { return; }
   let sch = vctx.ctx.resolveSchema(vctx.ctx, url);
-  if (sch) {
-    schemas.add(sch);
+  if (sch && schemas) {
+    schemas[url] = sch;
     let base = (sch as FHIRSchemaBase).base;
     if (base !== undefined) {
       addSchemaToSet(vctx, schemas, base);
@@ -137,10 +138,6 @@ function addSchemaToSet(vctx: ValidationContext, schemas: Set<FHIRSchema>, url: 
   }
 }
 
-function addSchema(vctx: ValidationContext, url: string) {
-  addSchemaToSet(vctx, vctx.schemaSet, url);
-}
-function addSchemas(vctx: ValidationContext, data: any) {}
 
 // TODO: i'm not sure about this map
 const PRIMITIVE_TYPES = {
@@ -152,15 +149,15 @@ const PRIMITIVE_TYPES = {
 function getElementSchemas(
   vctx: ValidationContext,
   key: string,
-): Set<FHIRSchema> | false {
-  let schemas: Set<FHIRSchema> | false = false;
-  for (const s of vctx.schemaSet) {
+): Record<string, FHIRSchema> | false {
+  let schemas: Record<string, FHIRSchema> | false = false;
+  for (const [schemaPath, s] of Object.entries(vctx.schemas)) {
     let elSch = s.elements && s.elements[key];
     if (elSch) {
       if (!schemas) {
-        schemas = new Set();
+        schemas = {} as Record<string, FHIRSchema>;
       }
-      schemas.add(elSch);
+      schemas[`${schemaPath}.${key}`] = elSch;
       if ( elSch.type !== undefined && !PRIMITIVE_TYPES[elSch.type as keyof typeof PRIMITIVE_TYPES]) {
         addSchemaToSet(vctx, schemas, elSch.type);
       }
@@ -170,7 +167,7 @@ function getElementSchemas(
 }
 
 function isElementArray(vctx: ValidationContext) {
-  for (const sch of vctx.schemaSet) {
+  for (const sch of Object.values(vctx.schemas)) {
     if (sch.isArray) {
       return true;
     }
@@ -210,7 +207,6 @@ function validateElement(vctx: ValidationContext, data: any, primitiveExtension:
 }
 
 function validateInternal(vctx: ValidationContext, data: any) {
-  addSchemas(vctx, data);
   validateValueRules(vctx, data);
   if (isObject(data)) {
     for (let [key, value] of Object.entries(data)) {
@@ -232,13 +228,13 @@ function validateInternal(vctx: ValidationContext, data: any) {
       let elSchemas = getElementSchemas(vctx, key);
       if (elSchemas) {
         // save the current schema set and path
-        let prevSchemas = vctx.schemaSet;
+        let prevSchemas = vctx.schemas;
         let prevPath = vctx.path;
         vctx.path = `${vctx.path}.${key}`;
-        vctx.schemaSet = elSchemas;
+        vctx.schemas = elSchemas;
         validateElement(vctx, value, primitiveExtension);
         // restore the previous schema set and path
-        vctx.schemaSet = prevSchemas;
+        vctx.schemas = prevSchemas;
         vctx.path = prevPath;
       } else {
         vctx.errors.push({
@@ -254,12 +250,12 @@ function validateInternal(vctx: ValidationContext, data: any) {
 export function validateSchema(ctx: AtomicContext, opts: ValidationOptions) {
   let vctx = createContext(ctx, opts);
   for (const s of opts.schemaUrls) {
-    addSchema(vctx, s);
+    addSchemaToSet(vctx, vctx.schemas, s);
   }
   if (opts.resource?.resourceType !== undefined) {
     let prevPath = vctx.path;
     vctx.path = `${vctx.path}.resourceType`;
-    addSchema(vctx, opts.resource?.resourceType);
+    addSchemaToSet(vctx, vctx.schemas, opts.resource?.resourceType);
     vctx.path = prevPath;
   } else {
     vctx.path = "";
