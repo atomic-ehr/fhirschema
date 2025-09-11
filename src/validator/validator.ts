@@ -101,6 +101,33 @@ const TYPE_VALIDATORS: Record<string, (vctx: ValidationContext, rules: any[], da
       });
     }
   },
+  'number': (vctx: ValidationContext, _rules: any[], data: any) => {
+    if (typeof data !== 'number' || Number.isNaN(data)) {
+      vctx.errors.push({
+        code: FHIRSchemaErrorCode.WrongType,
+        message: 'Expected number',
+        path: vctx.path,
+      });
+    }
+  },
+  'code': (vctx: ValidationContext, _rules: any[], data: any) => {
+    if (typeof data !== 'string') {
+      vctx.errors.push({
+        code: FHIRSchemaErrorCode.WrongType,
+        message: 'Expected code (string)',
+        path: vctx.path,
+      });
+    }
+  },
+  'url': (vctx: ValidationContext, _rules: any[], data: any) => {
+    if (typeof data !== 'string') {
+      vctx.errors.push({
+        code: FHIRSchemaErrorCode.WrongType,
+        message: 'Expected url (string)',
+        path: vctx.path,
+      });
+    }
+  },
 }
 
 
@@ -166,6 +193,9 @@ const PRIMITIVE_TYPES = {
   "string": true,
   "integer": true,
   "boolean": true,
+  "number": true,
+  "code": true,
+  "url": true,
 };
 
 function getElementSchemas(

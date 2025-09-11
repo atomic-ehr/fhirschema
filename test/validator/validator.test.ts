@@ -94,6 +94,13 @@ const schemas: Record<string, FHIRSchema> = {
       a: { type: "boolean" },
     },
   },
+  "PrimitiveMore": {
+    elements: {
+      n: { type: "number" },
+      u: { type: "url" },
+      c: { type: "code" },
+    },
+  },
 };
 
 let ctx: AtomicContext = {
@@ -298,6 +305,49 @@ describe("validator", () => {
     const res = validateSchema(ctx, {
       schemaUrls: [],
       resource: { resourceType: "BooleanSchema", _a: { extension: [{ url: "exta", valueString: "string" }] } },
+    });
+    expect(res.errors).toEqual([]);
+  });
+
+  it("validates number type and reports wrong type", () => {
+    const res = validateSchema(ctx, {
+      schemaUrls: [],
+      resource: { resourceType: "PrimitiveMore", n: "3.14" },
+    });
+    expect(res.errors).toMatchObject([
+      { code: FHIRSchemaErrorCode.WrongType, path: "PrimitiveMore.n" },
+    ]);
+  });
+
+  it("validates number type success for decimal and integer", () => {
+    const res1 = validateSchema(ctx, {
+      schemaUrls: [],
+      resource: { resourceType: "PrimitiveMore", n: 3.14 },
+    });
+    expect(res1.errors).toEqual([]);
+
+    const res2 = validateSchema(ctx, {
+      schemaUrls: [],
+      resource: { resourceType: "PrimitiveMore", n: 2 },
+    });
+    expect(res2.errors).toEqual([]);
+  });
+
+  it("validates code (string) and url (string) wrong types", () => {
+    const res = validateSchema(ctx, {
+      schemaUrls: [],
+      resource: { resourceType: "PrimitiveMore", c: 42, u: 123 },
+    });
+    expect(res.errors).toMatchObject([
+      { code: FHIRSchemaErrorCode.WrongType, path: "PrimitiveMore.c" },
+      { code: FHIRSchemaErrorCode.WrongType, path: "PrimitiveMore.u" },
+    ]);
+  });
+
+  it("validates code (string) and url (string) success", () => {
+    const res = validateSchema(ctx, {
+      schemaUrls: [],
+      resource: { resourceType: "PrimitiveMore", c: "ok", u: "http://example.org" },
     });
     expect(res.errors).toEqual([]);
   });
