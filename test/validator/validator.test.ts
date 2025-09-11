@@ -89,6 +89,11 @@ const schemas: Record<string, FHIRSchema> = {
       },
     },
   },
+  "BooleanSchema": {
+    elements: {
+      a: { type: "boolean" },
+    },
+  },
 };
 
 let ctx: AtomicContext = {
@@ -240,6 +245,61 @@ describe("validator", () => {
         path: "ArrayOfObjects.a.1.ups",
       },
     ]);
+  });
+
+  it("validates integer type and reports wrong type", () => {
+    const res = validateSchema(ctx, {
+      schemaUrls: [],
+      resource: { resourceType: "Simple", a: "1", b: 2 },
+    });
+    expect(res.errors).toMatchObject([
+      {
+        code: FHIRSchemaErrorCode.WrongType,
+        path: "Simple.a",
+      },
+    ]);
+  });
+
+  it("validates string type and reports wrong type", () => {
+    const res = validateSchema(ctx, {
+      schemaUrls: [],
+      resource: { resourceType: "Child", id: "1", name: 123 },
+    });
+    expect(res.errors).toMatchObject([
+      {
+        code: FHIRSchemaErrorCode.WrongType,
+        path: "Child.name",
+      },
+    ]);
+  });
+
+  it("validates boolean type and reports wrong type", () => {
+    const res = validateSchema(ctx, {
+      schemaUrls: [],
+      resource: { resourceType: "BooleanSchema", a: "true" },
+    });
+    expect(res.errors).toMatchObject([
+      {
+        code: FHIRSchemaErrorCode.WrongType,
+        path: "BooleanSchema.a",
+      },
+    ]);
+  });
+
+  it("validates boolean type success", () => {
+    const res = validateSchema(ctx, {
+      schemaUrls: [],
+      resource: { resourceType: "BooleanSchema", a: true },
+    });
+    expect(res.errors).toEqual([]);
+  });
+
+  it("allows null boolean with primitive extension", () => {
+    const res = validateSchema(ctx, {
+      schemaUrls: [],
+      resource: { resourceType: "BooleanSchema", _a: { extension: [{ url: "exta", valueString: "string" }] } },
+    });
+    expect(res.errors).toEqual([]);
   });
 
 });

@@ -4,6 +4,7 @@ export enum FHIRSchemaErrorCode {
   ExpectedArray = "FS003",
   UnexpectedArray = "FS004",
   UnknownKeyword = "FS005",
+  WrongType = "FS006",
 }
 
 export interface AtomicContext {
@@ -73,11 +74,32 @@ function isObject(data: any): boolean {
 }
 
 const TYPE_VALIDATORS: Record<string, (vctx: ValidationContext, rules: any[], data: any) => void> = {
-  'string': (vctx: ValidationContext, rules: any[], data: any) => {
-    console.log("validateString", rules, data);
+  'string': (vctx: ValidationContext, _rules: any[], data: any) => {
+    if (typeof data !== 'string') {
+      vctx.errors.push({
+        code: FHIRSchemaErrorCode.WrongType,
+        message: 'Expected string',
+        path: vctx.path,
+      });
+    }
   },
-  'integer': (vctx: ValidationContext, rules: any[], data: any) => {
-    console.log("validateInteger", rules, data);
+  'integer': (vctx: ValidationContext, _rules: any[], data: any) => {
+    if (!(typeof data === 'number' && Number.isInteger(data))) {
+      vctx.errors.push({
+        code: FHIRSchemaErrorCode.WrongType,
+        message: 'Expected integer',
+        path: vctx.path,
+      });
+    }
+  },
+  'boolean': (vctx: ValidationContext, _rules: any[], data: any) => {
+    if (typeof data !== 'boolean') {
+      vctx.errors.push({
+        code: FHIRSchemaErrorCode.WrongType,
+        message: 'Expected boolean',
+        path: vctx.path,
+      });
+    }
   },
 }
 
@@ -201,6 +223,9 @@ function validateElement(vctx: ValidationContext, data: any, primitiveExtension:
       path: vctx.path
     })
   } else {
+    if (data === null && primitiveExtension) {
+      return;
+    }
     validateInternal(vctx, data);
   }
  }
