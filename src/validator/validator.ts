@@ -5,6 +5,9 @@ export enum FHIRSchemaErrorCode {
   UnexpectedArray = "FS004",
   UnknownKeyword = "FS005",
   WrongType = "FS006",
+  SlicingUnmatched = "FS007",
+  SlicingAmbiguous = "FS008",
+  SliceCardinality = "FS009",
 }
 
 export interface AtomicContext {
@@ -29,6 +32,17 @@ export interface FHIRschemaElement {
   elements?: Record<string, FHIRschemaElement>;
   choices?: string[];
   choiceOf?: string;
+  slicing?: {
+    discriminator?: Array<{ type?: string; path?: string }>;
+    rules?: 'closed' | 'open' | 'openAtEnd' | string;
+    ordered?: boolean;
+    slices?: Record<string, {
+      match?: any;
+      schema?: FHIRschemaElement;
+      min?: number;
+      max?: number;
+    }>;
+  };
 }
 
 export interface FHIRSchemaBase {
@@ -147,7 +161,7 @@ function validateValueRules(vctx: ValidationContext, data: any) {
   let schemas: Record<string, FHIRSchema> = {};
   for (const sch of Object.values(vctx.schemas)) {
     for(const [key, value] of Object.entries(sch)) {
-      if(key !== "elements" && key !== "choiceOf" && key !== "choices" && key !== "base" && key !== "isArray") {
+      if(key !== "elements" && key !== "choiceOf" && key !== "choices" && key !== "base" && key !== "isArray" && key !== "slicing") {
         rules[key] ||= [];
         schemas[key] ||= {} as FHIRSchema;
         rules[key].push(value);
@@ -227,16 +241,146 @@ function isElementArray(vctx: ValidationContext) {
   return false;
 }
 
+function mergeSlicing(vctx: ValidationContext): FHIRschemaElement['slicing'] | undefined {
+  let merged: FHIRschemaElement['slicing'] | undefined = undefined;
+  for (const sch of Object.values(vctx.schemas)) {
+    const el = sch as FHIRschemaElement;
+    if (el.slicing) {
+      if (!merged) {
+        merged = { discriminator: el.slicing.discriminator, rules: el.slicing.rules as any, ordered: el.slicing.ordered, slices: {} };
+      }
+      if (el.slicing.slices) {
+        merged.slices ||= {};
+        for (const [name, slice] of Object.entries(el.slicing.slices)) {
+          merged.slices![name] = {
+            ...(merged.slices![name] || {}),
+            ...slice,
+          } as any;
+        }
+      }
+    }
+  }
+  return merged;
+}
+
+function deepPartialMatch(value: any, pattern: any): boolean {
+  if (pattern === undefined) return true;
+  if (Array.isArray(pattern)) {
+    if (!Array.isArray(value)) return false;
+    return pattern.every((p) => value.some((v) => deepPartialMatch(v, p)));
+  }
+  if (isObject(pattern)) {
+    if (!isObject(value)) return false;
+    for (const [k, v] of Object.entries(pattern)) {
+      if (!deepPartialMatch((value as any)[k], v)) return false;
+    }
+    return true;
+  }
+  return value === pattern;
+}
+
+function classifySlice(slicing: NonNullable<FHIRschemaElement['slicing']>, item: any): { slice?: string; error?: 'unmatched' | 'ambiguous' } {
+  const matches: string[] = [];
+  const slices = slicing.slices || {};
+  for (const [name, slice] of Object.entries(slices)) {
+    const m = (slice as any).match;
+    if (m === undefined || (isObject(m) && Object.keys(m).length === 0)) {
+      matches.push(name);
+      continue;
+    }
+    if (deepPartialMatch(item, m)) {
+      matches.push(name);
+    }
+  }
+  if (matches.length === 0) {
+    return { error: 'unmatched' };
+  }
+  if (matches.length > 1) {
+    return { error: 'ambiguous' };
+  }
+  return { slice: matches[0] };
+}
+
+function overlaySchema(base: FHIRschemaElement, overlay?: FHIRschemaElement): FHIRschemaElement {
+  if (!overlay) return base;
+  const merged: FHIRschemaElement = { ...base, ...overlay };
+  if (base.elements || overlay.elements) {
+    merged.elements = { ...(base.elements || {}), ...(overlay.elements || {}) };
+  }
+  return merged;
+}
+
+function buildItemSchemasForSlice(vctx: ValidationContext, sliceSchema?: FHIRschemaElement): Record<string, FHIRSchema> {
+  const out: Record<string, FHIRSchema> = {};
+  for (const [k, sch] of Object.entries(vctx.schemas)) {
+    const el = sch as FHIRschemaElement;
+    const merged = overlaySchema(el, sliceSchema);
+    out[k] = merged as FHIRSchema;
+  }
+  return out;
+}
+
 
 function validateElement(vctx: ValidationContext, data: any, primitiveExtension: any) {
  if(isElementArray(vctx)) {
   if(Array.isArray(data)) {
+    const slicing = mergeSlicing(vctx);
+    const sliceCounts: Record<string, number> = {};
     for (let i = 0; i < data.length; i++) {
       let item = data[i]
       let prevPath = vctx.path;
       vctx.path = `${vctx.path}.${i}`;
-      validateInternal(vctx, item);
+      if (slicing && slicing.slices && Object.keys(slicing.slices).length > 0) {
+        const cls = classifySlice(slicing, item);
+        if (cls.error === 'ambiguous') {
+          vctx.errors.push({
+            code: FHIRSchemaErrorCode.SlicingAmbiguous,
+            message: 'Item matches multiple slices',
+            path: vctx.path,
+          });
+        } else if (cls.error === 'unmatched') {
+          const rules = slicing.rules || 'open';
+          if (rules === 'closed') {
+            vctx.errors.push({
+              code: FHIRSchemaErrorCode.SlicingUnmatched,
+              message: 'Item does not match any slice and slicing is closed',
+              path: vctx.path,
+            });
+          } else {
+            validateInternal(vctx, item);
+          }
+        } else if (cls.slice) {
+          sliceCounts[cls.slice] = (sliceCounts[cls.slice] || 0) + 1;
+          const prevSchemas = vctx.schemas;
+          const itemSchemas = buildItemSchemasForSlice(vctx, (slicing.slices as any)[cls.slice]?.schema as FHIRschemaElement);
+          vctx.schemas = itemSchemas;
+          validateInternal(vctx, item);
+          vctx.schemas = prevSchemas;
+        }
+      } else {
+        // No slicing configured
+        validateInternal(vctx, item);
+      }
       vctx.path = prevPath;
+    }
+    if (slicing && slicing.slices) {
+      for (const [name, slice] of Object.entries(slicing.slices)) {
+        const count = (sliceCounts as any)[name] || 0;
+        if ((slice as any).min !== undefined && count < (slice as any).min) {
+          vctx.errors.push({
+            code: FHIRSchemaErrorCode.SliceCardinality,
+            message: `Slice ${name}: expected min=${(slice as any).min} got ${count}`,
+            path: vctx.path,
+          });
+        }
+        if ((slice as any).max !== undefined && count > (slice as any).max) {
+          vctx.errors.push({
+            code: FHIRSchemaErrorCode.SliceCardinality,
+            message: `Slice ${name}: expected max=${(slice as any).max} got ${count}`,
+            path: vctx.path,
+          });
+        }
+      }
     }
   } else {
     vctx.errors.push({

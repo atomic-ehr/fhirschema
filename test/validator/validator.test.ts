@@ -101,6 +101,49 @@ const schemas: Record<string, FHIRSchema> = {
       c: { type: "code" },
     },
   },
+  "SlicePattern": {
+    elements: {
+      x: {
+        isArray: true,
+        elements: {
+          a: { type: "string" },
+        },
+        slicing: {
+          discriminator: [{ type: "pattern", path: "a" }],
+          rules: "open",
+          slices: {
+            s1: {
+              match: { a: "s1" },
+              min: 2,
+              max: 2,
+              schema: {
+                elements: {
+                  a: { type: "string" },
+                  b: { type: "integer" }
+                }
+              }
+            },
+            s2: { match: { a: "s2" } }
+          }
+        }
+      }
+    }
+  },
+  "SliceClosed": {
+    elements: {
+      x: {
+        isArray: true,
+        elements: { a: { type: "string" } },
+        slicing: {
+          discriminator: [{ type: "pattern", path: "a" }],
+          rules: "closed",
+          slices: {
+            s1: { match: { a: "s1" } }
+          }
+        }
+      }
+    }
+  },
 };
 
 let ctx: AtomicContext = {
@@ -307,6 +350,39 @@ describe("validator", () => {
       resource: { resourceType: "BooleanSchema", _a: { extension: [{ url: "exta", valueString: "string" }] } },
     });
     expect(res.errors).toEqual([]);
+  });
+
+  it("slicing: overlay allows extra element only for matched slice", () => {
+    const res = validateSchema(ctx, {
+      schemaUrls: [],
+      resource: {
+        resourceType: "SlicePattern",
+        x: [ { a: "s1", b: 1 }, { a: "s1" }, { a: "s2", b: 1 } ]
+      }
+    });
+    expect(res.errors).toMatchObject([
+      { code: FHIRSchemaErrorCode.UnknownElement, path: "SlicePattern.x.2.b" },
+    ]);
+  });
+
+  it("slicing: slice min cardinality violation is reported", () => {
+    const res = validateSchema(ctx, {
+      schemaUrls: [],
+      resource: { resourceType: "SlicePattern", x: [ { a: "s1" }, { a: "s2" } ] }
+    });
+    expect(res.errors).toMatchObject([
+      { code: "FS009" }
+    ]);
+  });
+
+  it("slicing: closed slicing errors on unmatched items", () => {
+    const res = validateSchema(ctx, {
+      schemaUrls: [],
+      resource: { resourceType: "SliceClosed", x: [ { a: "other" } ] }
+    });
+    expect(res.errors).toMatchObject([
+      { code: "FS007", path: "SliceClosed.x.0" }
+    ]);
   });
 
   it("validates number type and reports wrong type", () => {
