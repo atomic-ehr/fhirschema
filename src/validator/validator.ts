@@ -145,11 +145,44 @@ const TYPE_VALIDATORS: Record<string, (vctx: ValidationContext, rules: any[], da
 }
 
 
-function validateType(vctx: ValidationContext, rules: string[],  data: any): void {
-  let validator = TYPE_VALIDATORS[rules[0]];
-  if(validator) {
-    validator(vctx, rules, data);
+function matchesPrimitiveType(t: string, data: any): boolean {
+  switch (t) {
+    case 'string':
+      return typeof data === 'string';
+    case 'integer':
+      return typeof data === 'number' && Number.isInteger(data);
+    case 'boolean':
+      return typeof data === 'boolean';
+    case 'number':
+      return typeof data === 'number' && !Number.isNaN(data);
+    case 'code':
+    case 'url':
+      return typeof data === 'string';
+    default:
+      return false;
   }
+}
+
+function validateType(vctx: ValidationContext, rules: string[],  data: any): void {
+  // Collect allowed primitive types from all overlays
+  const allowed = (rules || []).filter((t) => typeof t === 'string');
+  const primitiveAllowed = allowed.filter((t) => PRIMITIVE_TYPES.has(t));
+  const hasNonPrimitive = allowed.some((t) => !PRIMITIVE_TYPES.has(t));
+
+  // If there are non-primitive alternatives, defer to structural validation
+  if (hasNonPrimitive) return;
+
+  if (primitiveAllowed.length === 0) return;
+
+  // Pass if any allowed primitive type matches
+  if (primitiveAllowed.some((t) => matchesPrimitiveType(t, data))) return;
+
+  // Otherwise, report a single WrongType with a concise expectation
+  vctx.errors.push({
+    code: FHIRSchemaErrorCode.WrongType,
+    message: `Expected one of: ${primitiveAllowed.join(', ')}`,
+    path: vctx.path,
+  });
 }
 
 const VALIDATORS: Record<string, (vctx: ValidationContext, rules: any[], data: any) => void> = {
@@ -202,15 +235,8 @@ function addSchemaToSet(vctx: ValidationContext, schemas: Record<string, FHIRSch
 }
 
 
-// TODO: i'm not sure about this map
-const PRIMITIVE_TYPES = {
-  "string": true,
-  "integer": true,
-  "boolean": true,
-  "number": true,
-  "code": true,
-  "url": true,
-};
+// Primitive types are derived from available TYPE_VALIDATORS to avoid drift
+const PRIMITIVE_TYPES: Set<string> = new Set(Object.keys(TYPE_VALIDATORS));
 
 function getElementSchemas(
   vctx: ValidationContext,
@@ -224,7 +250,7 @@ function getElementSchemas(
         schemas = {} as Record<string, FHIRSchema>;
       }
       schemas[`${schemaPath}.${key}`] = elSch;
-      if ( elSch.type !== undefined && !PRIMITIVE_TYPES[elSch.type as keyof typeof PRIMITIVE_TYPES]) {
+      if ( elSch.type !== undefined && !PRIMITIVE_TYPES.has(elSch.type)) {
         addSchemaToSet(vctx, schemas, elSch.type);
       }
     }
