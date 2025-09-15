@@ -1,6 +1,6 @@
 import { describe, it, expect } from "bun:test";
-import { AtomicContext, validateSchema,  FHIRSchemaErrorCode } from "../../src/validator/validator";
-import type { FHIRSchema } from "../../src/validator/validator";
+import { AtomicContext, validateSchema,  FHIRSchemaErrorCode } from "../../src/validator";
+import type { FHIRSchema } from "../../src/validator";
 
 const schemas: Record<string, FHIRSchema> = {
   "Simple": {

@@ -1,377 +1,470 @@
-import type { ValidationContext, FHIRSchema, ValidationResult, ValidationError } from './types.js';
+export enum FHIRSchemaErrorCode {
+  UnknownElement = "FS001",
+  UnknownSchema = "FS002",
+  ExpectedArray = "FS003",
+  UnexpectedArray = "FS004",
+  UnknownKeyword = "FS005",
+  WrongType = "FS006",
+  SlicingUnmatched = "FS007",
+  SlicingAmbiguous = "FS008",
+  SliceCardinality = "FS009",
+}
 
-export function validate(
-  ctx: ValidationContext, 
-  path: (string | number)[], 
-  data: any
-): ValidationResult {
-  // TODO: Implement validation logic
-  return {
+export interface AtomicContext {
+  resolveSchema(ctx: AtomicContext, url: string): FHIRSchema;
+}
+
+export interface ValidationOptions {
+  schemaUrls: string[];
+  resource: any;
+}
+
+export interface ValidationError {
+  code?: string;
+  message?: string;
+  schemaPath?: string;
+  path?: string;
+}
+
+// Use shared FHIR types to avoid duplication
+import type { FHIRSchemaElement, FHIRSchema } from "../types";
+
+export interface ValidationContext {
+  schemas: Record<string, FHIRSchema>;
+  path: string;
+  errors: ValidationError[];
+  ctx: AtomicContext;
+}
+
+export interface ValidationResult {
+  errors: ValidationError[];
+}
+
+export interface SchemaResolver {
+  resolve(url: string): FHIRSchema;
+}
+
+function createContext(
+  ctx: AtomicContext,
+  opts: ValidationOptions,
+): ValidationContext {
+  let vctx: ValidationContext = {
+    path: opts?.resource?.resourceType,
+    schemas: {},
     errors: [],
-    valid: true
+    ctx: ctx,
   };
+  return vctx;
 }
 
-export function validateSchemas(
-  ctx: ValidationContext,
-  schemas: Set<FHIRSchema>,
-  data: any
-): ValidationResult {
-  // TODO: Implement schema validation logic
-  const errors: ValidationError[] = [];
-  
-  // For now, just validate against the first schema
-  const schema = schemas.values().next().value;
-  if (!schema) {
-    return { errors: [], valid: true };
-  }
-  
-  // Set current data for context
-  currentData = data;
-  
-  // Basic implementation for tests
-  const result = validateSchema(ctx, schema, data, []);
-  
-  return {
-    errors: result.errors,
-    valid: result.errors.length === 0
-  };
+function isObject(data: any): boolean {
+  return typeof data === "object" && data !== null && !Array.isArray(data);
 }
 
-function validateSchema(
-  ctx: ValidationContext,
-  schema: FHIRSchema,
-  data: any,
-  path: (string | number)[]
-): { errors: ValidationError[] } {
-  const errors: ValidationError[] = [];
-  
-  // Get merged elements if this schema has both type and elements
-  let mergedElements = schema.elements || {};
-  if (schema.type && schema.elements) {
-    const typeSchema = ctx.schemas[schema.type];
-    if (typeSchema && typeSchema.kind !== 'primitive-type' && typeSchema.elements) {
-      // Merge type elements with schema elements (schema elements override)
-      mergedElements = { ...typeSchema.elements, ...schema.elements };
-    }
-  }
-  
-  // Type validation
-  if (schema.type) {
-    const typeErrors: ValidationError[] = [];
-    const isValid = validateType(ctx, schema.type, data, path, schema, typeErrors);
-    
-    if (!isValid) {
-      // If it's a referenced type, use the errors from nested validation
-      if (typeErrors.length > 0) {
-        errors.push(...typeErrors);
-      } else {
-        // Otherwise, create a generic type error
-        errors.push({
-          type: 'type',
-          path,
-          message: `Expected type ${schema.type}`,
-          value: data,
-          'schema-path': [...path.filter(p => typeof p === 'string'), 'type', schema.type, 'type']
-        });
-      }
-    }
-  }
-  
-  // Elements validation
-  const hasElements = mergedElements && Object.keys(mergedElements).length > 0;
-  if (hasElements && typeof data === 'object' && data !== null && !Array.isArray(data)) {
-    // Check for unknown elements
-    for (const key in data) {
-      if (!mergedElements[key] && !key.startsWith('_')) {
-        errors.push({
-          type: 'element/unknown',
-          path: [...path, key]
-        });
-      }
-    }
-    
-    // Validate known elements
-    for (const [key, elementSchema] of Object.entries(mergedElements)) {
-      if (data[key] !== undefined) {
-        const elementResult = validateElement(ctx, elementSchema, data[key], [...path, key]);
-        errors.push(...elementResult.errors);
-      }
-    }
-  } else if (hasElements && typeof data === 'object' && data !== null && Array.isArray(data)) {
-    // When schema expects elements but data is array, it's a type error
-    errors.push({
-      type: 'type/array',
-      message: 'Expected not array',
-      path,
-      value: data
-    });
-  } else if (schema.type && typeof data === 'object' && data !== null && !Array.isArray(data)) {
-    // If we have a primitive type but got an object, also check for unknown elements
-    const primitiveTypes = ['string', 'code', 'url', 'boolean', 'number', 'integer'];
-    if (primitiveTypes.includes(schema.type)) {
-      for (const key in data) {
-        errors.push({
-          type: 'element/unknown',
-          path: [...path, key]
-        });
-      }
-    }
-  }
-  
-  // Required fields validation
-  if (schema.required) {
-    for (const required of schema.required) {
-      if (data[required] === undefined && data[`_${required}`] === undefined) {
-        errors.push({
-          type: 'require',
-          path: [...path, required]
-        });
-      }
-    }
-  }
-  
-  // Choices validation
-  if (schema.choices) {
-    for (const [choiceName, choices] of Object.entries(schema.choices)) {
-      const presentChoices = choices.filter(choice => data[choice] !== undefined);
-      
-      if (presentChoices.length > 1) {
-        const choiceValues: any = {};
-        presentChoices.forEach(choice => {
-          choiceValues[choice] = data[choice];
-        });
-        
-        errors.push({
-          type: 'choices/multiple',
-          path: [...path, choiceName],
-          message: 'Only one choice element is allowd',
-          value: choiceValues
-        });
-      }
-      
-      // Also check for excluded choices
-      if (schema.elements) {
-        for (const key in data) {
-          const elementSchema = schema.elements[key];
-          if (elementSchema?.choiceOf === choiceName && !choices.includes(key)) {
-            errors.push({
-              type: 'choice/excluded',
-              message: `Choice element ${choiceName} is not allowed, only ${choices.join(', ')}`,
-              path: [...path, choiceName],
-              'schema-path': ['choices']
-            });
-          }
-        }
-      }
-    }
-  }
-  
-  return { errors };
-}
-
-function validateElement(
-  ctx: ValidationContext,
-  elementSchema: any,
-  data: any,
-  path: (string | number)[]
-): { errors: ValidationError[] } {
-  const errors: ValidationError[] = [];
-  
-  // Array validation
-  if (elementSchema.array && !Array.isArray(data)) {
-    errors.push({
-      type: 'type/array',
-      message: 'Expected array',
-      path,
-      value: data,
-      'schema-path': [...path, 'array']
-    });
-    return { errors };
-  }
-  
-  if (!elementSchema.array && Array.isArray(data)) {
-    errors.push({
-      type: 'type/array',
-      message: 'Expected not array',
-      path,
-      value: data
-    });
-    return { errors };
-  }
-  
-  // Handle array elements
-  if (elementSchema.array && Array.isArray(data)) {
-    // Cardinality validation
-    if (elementSchema.min !== undefined && data.length < elementSchema.min) {
-      errors.push({
-        type: 'min',
-        message: `expected min=${elementSchema.min} got ${data.length}`,
-        value: data.length,
-        expected: elementSchema.min,
-        path
+const TYPE_VALIDATORS: Record<string, (vctx: ValidationContext, rules: any[], data: any) => void> = {
+  'string': (vctx: ValidationContext, _rules: any[], data: any) => {
+    if (typeof data !== 'string') {
+      vctx.errors.push({
+        code: FHIRSchemaErrorCode.WrongType,
+        message: 'Expected string',
+        path: vctx.path,
       });
     }
-    
-    if (elementSchema.max !== undefined && data.length > elementSchema.max) {
-      errors.push({
-        type: 'max',
-        message: `expected max=${elementSchema.max} got ${data.length}`,
-        value: data.length,
-        expected: elementSchema.max,
-        path
+  },
+  'integer': (vctx: ValidationContext, _rules: any[], data: any) => {
+    if (!(typeof data === 'number' && Number.isInteger(data))) {
+      vctx.errors.push({
+        code: FHIRSchemaErrorCode.WrongType,
+        message: 'Expected integer',
+        path: vctx.path,
       });
     }
-    
-    // Validate each array element
-    data.forEach((item, index) => {
-      const result = validateElement(ctx, { ...elementSchema, array: false }, item, [...path, index]);
-      errors.push(...result.errors);
-    });
-  } else {
-    // Non-array validation
-    const result = validateSchema(ctx, elementSchema, data, path);
-    errors.push(...result.errors);
-    
-    // Pattern validation
-    if (elementSchema.pattern?.string && typeof data === 'string') {
-      if (data !== elementSchema.pattern.string) {
-        errors.push({
-          type: 'pattern',
-          expected: elementSchema.pattern.string,
-          'schema-path': [...path, 'pattern'],
-          got: data,
-          path
-        });
-      }
+  },
+  'boolean': (vctx: ValidationContext, _rules: any[], data: any) => {
+    if (typeof data !== 'boolean') {
+      vctx.errors.push({
+        code: FHIRSchemaErrorCode.WrongType,
+        message: 'Expected boolean',
+        path: vctx.path,
+      });
     }
-  }
-  
-  return { errors };
+  },
+  'number': (vctx: ValidationContext, _rules: any[], data: any) => {
+    if (typeof data !== 'number' || Number.isNaN(data)) {
+      vctx.errors.push({
+        code: FHIRSchemaErrorCode.WrongType,
+        message: 'Expected number',
+        path: vctx.path,
+      });
+    }
+  },
+  'code': (vctx: ValidationContext, _rules: any[], data: any) => {
+    if (typeof data !== 'string') {
+      vctx.errors.push({
+        code: FHIRSchemaErrorCode.WrongType,
+        message: 'Expected code (string)',
+        path: vctx.path,
+      });
+    }
+  },
+  'url': (vctx: ValidationContext, _rules: any[], data: any) => {
+    if (typeof data !== 'string') {
+      vctx.errors.push({
+        code: FHIRSchemaErrorCode.WrongType,
+        message: 'Expected url (string)',
+        path: vctx.path,
+      });
+    }
+  },
 }
 
-function validateType(
-  ctx: ValidationContext,
-  type: string,
-  data: any,
-  path: (string | number)[],
-  parentSchema: any,
-  errors: ValidationError[] = []
-): boolean {
-  // Handle null values with primitive extensions
-  if (data === null) {
-    // For array elements, check if there's a corresponding primitive extension
-    if (path.length >= 2 && typeof path[path.length - 1] === 'number') {
-      const index = path[path.length - 1] as number;
-      const fieldName = path[path.length - 2];
-      const parent = getParentData(path);
-      
-      if (parent && typeof fieldName === 'string' && parent[`_${fieldName}`]) {
-        const primitiveExt = parent[`_${fieldName}`];
-        if (Array.isArray(primitiveExt) && primitiveExt[index]) {
-          return true; // Allow null if primitive extension exists at same index
-        }
-      }
-    } else {
-      // Non-array case
-      const elementName = path[path.length - 1];
-      if (typeof elementName === 'string') {
-        const parent = getParentData(path);
-        if (parent && parent[`_${elementName}`]) {
-          return true; // Allow null if primitive extension exists
-        }
-      }
-    }
-    return false;
-  }
-  
-  // Primitive type validation first
-  switch (type) {
+
+function matchesPrimitiveType(t: string, data: any): boolean {
+  switch (t) {
     case 'string':
-    case 'code':
-    case 'url':
       return typeof data === 'string';
+    case 'integer':
+      return typeof data === 'number' && Number.isInteger(data);
     case 'boolean':
       return typeof data === 'boolean';
     case 'number':
-    case 'integer':
-      return typeof data === 'number';
+      return typeof data === 'number' && !Number.isNaN(data);
+    case 'code':
+    case 'url':
+      return typeof data === 'string';
+    default:
+      return false;
   }
-  
-  // Check if it's a referenced type
-  const typeSchema = ctx.schemas[type];
-  if (typeSchema && typeSchema.kind !== 'primitive-type') {
-    // If parent schema has elements, don't validate type's elements
-    // They will be validated by the merged elements
-    if (parentSchema.elements) {
-      // Just validate the type without elements
-      const typeSchemaWithoutElements = { ...typeSchema, elements: undefined };
-      const result = validateSchema(ctx, typeSchemaWithoutElements, data, path);
-      result.errors.forEach(error => {
-        const newError = { ...error };
-        if (newError['schema-path']) {
-          // Build correct schema path for nested type references
-          const elementPath = path.filter(p => typeof p === 'string');
-          const parentElement = elementPath[elementPath.length - 1];
-          
-          // Check if the error schema-path already starts with the parent element
-          // This happens when validating inside a referenced type
-          if (newError['schema-path'][0] === parentElement) {
-            // Remove the duplicate parent element
-            newError['schema-path'] = [...elementPath.slice(0, -1), parentElement, 'type', type, ...newError['schema-path'].slice(1)];
-          } else {
-            newError['schema-path'] = [...elementPath.slice(0, -1), parentElement, 'type', type, ...newError['schema-path']];
-          }
-        }
-        errors.push(newError);
-      });
-      return result.errors.length === 0;
+}
+
+function validateType(vctx: ValidationContext, rules: string[],  data: any): void {
+  // Collect allowed primitive types from all overlays
+  const allowed = (rules || []).filter((t) => typeof t === 'string');
+  const primitiveAllowed = allowed.filter((t) => PRIMITIVE_TYPES.has(t));
+  const hasNonPrimitive = allowed.some((t) => !PRIMITIVE_TYPES.has(t));
+
+  // If there are non-primitive alternatives, defer to structural validation
+  if (hasNonPrimitive) return;
+
+  if (primitiveAllowed.length === 0) return;
+
+  // Pass if any allowed primitive type matches
+  if (primitiveAllowed.some((t) => matchesPrimitiveType(t, data))) return;
+
+  // Otherwise, report a single WrongType with a concise expectation
+  vctx.errors.push({
+    code: FHIRSchemaErrorCode.WrongType,
+    message: `Expected one of: ${primitiveAllowed.join(', ')}`,
+    path: vctx.path,
+  });
+}
+
+const VALIDATORS: Record<string, (vctx: ValidationContext, rules: any[], data: any) => void> = {
+  'type': validateType,
+} 
+
+function validateValueRules(vctx: ValidationContext, data: any) {
+  let rules: Record<string, any[]> = {};
+  let schemas: Record<string, FHIRSchema> = {};
+  for (const sch of Object.values(vctx.schemas)) {
+    for(const [key, value] of Object.entries(sch)) {
+      if(key !== "elements" && key !== "choiceOf" && key !== "choices" && key !== "base" && key !== "isArray" && key !== "slicing") {
+        rules[key] ||= [];
+        schemas[key] ||= {} as FHIRSchema;
+        rules[key].push(value);
+        schemas[key] = sch;
+      }
+    }
+  }
+  for(const [ruleName, item] of Object.entries(rules)) {
+    let validator = VALIDATORS[ruleName];
+    if(validator) {
+      validator(vctx, item, data);
     } else {
-      const result = validateSchema(ctx, typeSchema, data, path);
-      result.errors.forEach(error => {
-        const newError = { ...error };
-        if (newError['schema-path']) {
-          // Build correct schema path for nested type references
-          const elementPath = path.filter(p => typeof p === 'string');
-          const parentElement = elementPath[elementPath.length - 1];
-          
-          // Check if the error schema-path already starts with the parent element
-          // This happens when validating inside a referenced type
-          if (newError['schema-path'][0] === parentElement) {
-            // Remove the duplicate parent element
-            newError['schema-path'] = [...elementPath.slice(0, -1), parentElement, 'type', type, ...newError['schema-path'].slice(1)];
-          } else {
-            newError['schema-path'] = [...elementPath.slice(0, -1), parentElement, 'type', type, ...newError['schema-path']];
-          }
-        }
-        errors.push(newError);
+      vctx.errors.push({
+        code: FHIRSchemaErrorCode.UnknownKeyword,
+        message: `Validator ${ruleName} not found`,
+        path: vctx.path,
       });
-      return result.errors.length === 0;
     }
   }
-  
-  return true; // Unknown types pass for now
 }
 
-let currentData: any = null;
-
-function getParentData(path: (string | number)[]): any {
-  if (!currentData) return null;
-  
-  // Handle array elements - need to go up two levels
-  if (path.length >= 2 && typeof path[path.length - 1] === 'number') {
-    let parent = currentData;
-    for (let i = 0; i < path.length - 2; i++) {
-      parent = parent?.[path[i]];
+function addSchemaToSet(vctx: ValidationContext, schemas: Record<string, FHIRSchema>, url: string) {
+  if(schemas[url]) { return; }
+  let sch = vctx.ctx.resolveSchema(vctx.ctx, url);
+  if (sch && schemas) {
+    schemas[url] = sch;
+    // In shared types, base is a top-level field on FHIRSchema
+    let base = (sch as any).base as string | undefined;
+    if (base !== undefined) {
+      addSchemaToSet(vctx, schemas, base);
     }
-    return parent;
+  } else {
+    vctx.errors.push({
+      code: FHIRSchemaErrorCode.UnknownSchema,
+      message: `Schema ${url} not found`,
+      path: vctx.path,
+    });
   }
-  
-  let parent = currentData;
-  for (let i = 0; i < path.length - 1; i++) {
-    parent = parent?.[path[i]];
-  }
-  return parent;
 }
 
-export type { ValidationContext, FHIRSchema, ValidationResult, ValidationError } from './types.js';
+
+// Primitive types are derived from available TYPE_VALIDATORS to avoid drift
+const PRIMITIVE_TYPES: Set<string> = new Set(Object.keys(TYPE_VALIDATORS));
+
+function getElementSchemas(
+  vctx: ValidationContext,
+  key: string,
+): Record<string, FHIRSchema> | false {
+  let schemas: Record<string, FHIRSchema> | false = false;
+  for (const [schemaPath, s] of Object.entries(vctx.schemas)) {
+    let elSch = (s as any).elements && (s as any).elements[key] as FHIRSchemaElement | undefined;
+    if (elSch) {
+      if (!schemas) {
+        schemas = {} as Record<string, FHIRSchema>;
+      }
+      schemas[`${schemaPath}.${key}`] = elSch;
+      if ( elSch.type !== undefined && !PRIMITIVE_TYPES.has(elSch.type)) {
+        addSchemaToSet(vctx, schemas, elSch.type);
+      }
+    }
+  }
+  return schemas;
+}
+
+function isElementArray(vctx: ValidationContext) {
+  for (const sch of Object.values(vctx.schemas)) {
+    // Support both legacy 'isArray' and shared 'array' flags
+    if ((sch as any).isArray || (sch as any).array) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function mergeSlicing(vctx: ValidationContext): FHIRSchemaElement['slicing'] | undefined {
+  let merged: FHIRSchemaElement['slicing'] | undefined = undefined;
+  for (const sch of Object.values(vctx.schemas)) {
+    const el = sch as FHIRSchemaElement;
+    if (el.slicing) {
+      if (!merged) {
+        merged = { discriminator: (el.slicing as any).discriminator, rules: (el.slicing as any).rules as any, ordered: (el.slicing as any).ordered, slices: {} } as any;
+      }
+      if ((el.slicing as any).slices) {
+        (merged as any).slices ||= {};
+        for (const [name, slice] of Object.entries((el.slicing as any).slices)) {
+          merged.slices![name] = {
+            ...(merged.slices![name] || {}),
+            ...slice,
+          } as any;
+        }
+      }
+    }
+  }
+  return merged;
+}
+
+function deepPartialMatch(value: any, pattern: any): boolean {
+  if (pattern === undefined) return true;
+  if (Array.isArray(pattern)) {
+    if (!Array.isArray(value)) return false;
+    return pattern.every((p) => value.some((v) => deepPartialMatch(v, p)));
+  }
+  if (isObject(pattern)) {
+    if (!isObject(value)) return false;
+    for (const [k, v] of Object.entries(pattern)) {
+      if (!deepPartialMatch((value as any)[k], v)) return false;
+    }
+    return true;
+  }
+  return value === pattern;
+}
+
+function classifySlice(slicing: NonNullable<FHIRSchemaElement['slicing']>, item: any): { slice?: string; error?: 'unmatched' | 'ambiguous' } {
+  const matches: string[] = [];
+  const slices = (slicing as any).slices || {};
+  for (const [name, slice] of Object.entries(slices)) {
+    const m = (slice as any).match;
+    if (m === undefined || (isObject(m) && Object.keys(m).length === 0)) {
+      matches.push(name);
+      continue;
+    }
+    if (deepPartialMatch(item, m)) {
+      matches.push(name);
+    }
+  }
+  if (matches.length === 0) {
+    return { error: 'unmatched' };
+  }
+  if (matches.length > 1) {
+    return { error: 'ambiguous' };
+  }
+  return { slice: matches[0] };
+}
+
+function overlaySchema(base: FHIRSchemaElement, overlay?: FHIRSchemaElement): FHIRSchemaElement {
+  if (!overlay) return base;
+  const merged: FHIRSchemaElement = { ...base, ...overlay } as any;
+  if (base.elements || overlay.elements) {
+    merged.elements = { ...(base.elements || {}), ...(overlay.elements || {}) };
+  }
+  return merged;
+}
+
+function buildItemSchemasForSlice(vctx: ValidationContext, sliceSchema?: FHIRSchemaElement): Record<string, FHIRSchema> {
+  const out: Record<string, FHIRSchema> = {};
+  for (const [k, sch] of Object.entries(vctx.schemas)) {
+    const el = sch as FHIRSchemaElement;
+    const merged = overlaySchema(el, sliceSchema);
+    out[k] = merged as FHIRSchema;
+  }
+  return out;
+}
+
+
+function validateElement(vctx: ValidationContext, data: any, primitiveExtension: any) {
+ if(isElementArray(vctx)) {
+  if(Array.isArray(data)) {
+    const slicing = mergeSlicing(vctx);
+    const sliceCounts: Record<string, number> = {};
+    for (let i = 0; i < data.length; i++) {
+      let item = data[i]
+      let prevPath = vctx.path;
+      vctx.path = `${vctx.path}.${i}`;
+      if (slicing && slicing.slices && Object.keys((slicing as any).slices).length > 0) {
+        const cls = classifySlice(slicing, item);
+        if (cls.error === 'ambiguous') {
+          vctx.errors.push({
+            code: FHIRSchemaErrorCode.SlicingAmbiguous,
+            message: 'Item matches multiple slices',
+            path: vctx.path,
+          });
+        } else if (cls.error === 'unmatched') {
+          const rules = (slicing as any).rules || 'open';
+          if (rules === 'closed') {
+            vctx.errors.push({
+              code: FHIRSchemaErrorCode.SlicingUnmatched,
+              message: 'Item does not match any slice and slicing is closed',
+              path: vctx.path,
+            });
+          } else {
+            validateInternal(vctx, item);
+          }
+        } else if (cls.slice) {
+          sliceCounts[cls.slice] = (sliceCounts[cls.slice] || 0) + 1;
+          const prevSchemas = vctx.schemas;
+          const itemSchemas = buildItemSchemasForSlice(vctx, ((slicing as any).slices as any)[cls.slice]?.schema as FHIRSchemaElement);
+          vctx.schemas = itemSchemas;
+          validateInternal(vctx, item);
+          vctx.schemas = prevSchemas;
+        }
+      } else {
+        // No slicing configured
+        validateInternal(vctx, item);
+      }
+      vctx.path = prevPath;
+    }
+    if (slicing && (slicing as any).slices) {
+      for (const [name, slice] of Object.entries((slicing as any).slices)) {
+        const count = (sliceCounts as any)[name] || 0;
+        if ((slice as any).min !== undefined && count < (slice as any).min) {
+          vctx.errors.push({
+            code: FHIRSchemaErrorCode.SliceCardinality,
+            message: `Slice ${name}: expected min=${(slice as any).min} got ${count}`,
+            path: vctx.path,
+          });
+        }
+        if ((slice as any).max !== undefined && count > (slice as any).max) {
+          vctx.errors.push({
+            code: FHIRSchemaErrorCode.SliceCardinality,
+            message: `Slice ${name}: expected max=${(slice as any).max} got ${count}`,
+            path: vctx.path,
+          });
+        }
+      }
+    }
+  } else {
+    vctx.errors.push({
+      code: FHIRSchemaErrorCode.ExpectedArray,
+      message: 'Expected array',
+      path: vctx.path
+    })
+  }
+ } else {
+  if(Array.isArray(data)) {
+    vctx.errors.push({
+      code: FHIRSchemaErrorCode.UnexpectedArray,
+      message: 'Unexpected array',
+      path: vctx.path
+    })
+  } else {
+    if (data === null && primitiveExtension) {
+      return;
+    }
+    validateInternal(vctx, data);
+  }
+ }
+}
+
+function validateInternal(vctx: ValidationContext, data: any) {
+  validateValueRules(vctx, data);
+  if (isObject(data)) {
+    for (let [key, value] of Object.entries(data)) {
+      let primitiveExtension = null;
+      if (key == "resourceType") continue;
+      if(key.startsWith("_")) {
+        let normKey = key.substring(1);
+        // will be handled by next with normal element key
+        if(data[normKey] !== undefined) {
+          continue;
+        } else {
+          key = normKey;
+          primitiveExtension = value;
+          value = null;
+        }
+      } else {
+        primitiveExtension = (data as any)[`_${key}`] || null;
+      }
+      let elSchemas = getElementSchemas(vctx, key);
+      if (elSchemas) {
+        // save the current schema set and path
+        let prevSchemas = vctx.schemas;
+        let prevPath = vctx.path;
+        vctx.path = `${vctx.path}.${key}`;
+        vctx.schemas = elSchemas;
+        validateElement(vctx, value, primitiveExtension);
+        // restore the previous schema set and path
+        vctx.schemas = prevSchemas;
+        vctx.path = prevPath;
+      } else {
+        vctx.errors.push({
+          code: FHIRSchemaErrorCode.UnknownElement,
+          message: `Element ${key} is unknown`,
+          path: `${vctx.path}.${key}`,
+        });
+      }
+    }
+  }
+}
+
+export function validateSchema(ctx: AtomicContext, opts: ValidationOptions) {
+  let vctx = createContext(ctx, opts);
+  for (const s of opts.schemaUrls) {
+    addSchemaToSet(vctx, vctx.schemas, s);
+  }
+  if (opts.resource?.resourceType !== undefined) {
+    let prevPath = vctx.path;
+    vctx.path = `${vctx.path}.resourceType`;
+    addSchemaToSet(vctx, vctx.schemas, opts.resource?.resourceType);
+    vctx.path = prevPath;
+  } else {
+    vctx.path = "";
+  }
+  validateInternal(vctx, opts.resource);
+  let vres: ValidationResult = {
+    errors: vctx.errors,
+  };
+  return vres;
+}
+
