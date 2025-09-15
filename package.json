@@ -43,9 +43,12 @@
   "homepage": "https://github.com/atomic-ehr/fhirschema#readme",
   "devDependencies": {
     "@types/bun": "latest",
-    "typescript": "^5.0.0"
+    "typescript": "^5.0.0",
+    "turndown": "^7.2.1"
   },
   "peerDependencies": {
     "typescript": "^5"
+  },
+  "dependencies": {
   }
 }
