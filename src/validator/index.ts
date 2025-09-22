@@ -210,7 +210,7 @@ function addSchemaToSet(vctx: ValidationContext, schemas: Record<string, FHIRSch
 }
 
 
-// Primitive types are derived from available TYPE_VALIDATORS to avoid drift
+// Primitive types are derived from available TYPE_RS to avoid drift
 const PRIMITIVE_TYPES: Set<string> = new Set(Object.keys(TYPE_VALIDATORS));
 
 function getElementSchemas(
@@ -254,9 +254,9 @@ function mergeSlicing(vctx: ValidationContext): FHIRSchemaElement['slicing'] | u
       if ((el.slicing as any).slices) {
         (merged as any).slices ||= {};
         for (const [name, slice] of Object.entries((el.slicing as any).slices)) {
-          merged.slices![name] = {
-            ...(merged.slices![name] || {}),
-            ...slice,
+          merged!.slices![name] = {
+            ...(merged!.slices![name] || {}),
+            ...slice!,
           } as any;
         }
       }
