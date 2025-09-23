@@ -2,7 +2,7 @@
 export { translate } from './converter/index.js';
 
 // Export validator functionality
-export { validate } from './validator/index.js';
+export { validateSchema } from './validator/index.js';
 
 // Export all types
 export * from './types.js';
