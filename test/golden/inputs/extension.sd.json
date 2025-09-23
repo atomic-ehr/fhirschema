@@ -71,9 +71,7 @@
                 "path": "Extension.url",
                 "id": "Extension.url",
                 "short": "identifies the meaning of the extension",
-                "representation": [
-                    "xmlAttr"
-                ],
+                "representation": ["xmlAttr"],
                 "definition": "Source of the definition for the extension code - a logical name or a URL.",
                 "type": [
                     {

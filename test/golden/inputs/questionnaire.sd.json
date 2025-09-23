@@ -89,11 +89,7 @@
                         "identity": "rim"
                     }
                 ],
-                "alias": [
-                    "Form",
-                    "CRF",
-                    "Survey"
-                ],
+                "alias": ["Form", "CRF", "Survey"],
                 "constraint": [
                     {
                         "key": "que-2",
@@ -210,9 +206,7 @@
                 "max": "1",
                 "path": "Questionnaire.name",
                 "id": "Questionnaire.name",
-                "condition": [
-                    "inv-0"
-                ],
+                "condition": ["inv-0"],
                 "short": "Name for this questionnaire (computer friendly)",
                 "definition": "A natural language name identifying the questionnaire. This name should be usable as an identifier for the module by machine processing applications such as code generation.",
                 "type": [
@@ -265,9 +259,7 @@
                 "type": [
                     {
                         "code": "canonical",
-                        "targetProfile": [
-                            "http://hl7.org/fhir/StructureDefinition/Questionnaire"
-                        ]
+                        "targetProfile": ["http://hl7.org/fhir/StructureDefinition/Questionnaire"]
                     }
                 ],
                 "mapping": [
@@ -424,9 +416,7 @@
                         "identity": "rim"
                     }
                 ],
-                "alias": [
-                    "Revision Date"
-                ],
+                "alias": ["Revision Date"],
                 "comment": "Note that this is not the same as the resource last-modified-date, since the resource may be a secondary representation of the questionnaire. Additional specific dates may be added as extensions or be found by consulting Provenances associated with past versions of the resource."
             },
             {
@@ -633,10 +623,7 @@
                         "identity": "objimpl"
                     }
                 ],
-                "alias": [
-                    "License",
-                    "Restrictions"
-                ]
+                "alias": ["License", "Restrictions"]
             },
             {
                 "min": 0,
@@ -762,9 +749,7 @@
                 "max": "*",
                 "path": "Questionnaire.item",
                 "id": "Questionnaire.item",
-                "condition": [
-                    "que-3"
-                ],
+                "condition": ["que-3"],
                 "short": "Questions and sections within the Questionnaire",
                 "definition": "A particular question, question grouping or display text that is part of the questionnaire.",
                 "type": [
@@ -918,9 +903,7 @@
                 "max": "*",
                 "path": "Questionnaire.item.code",
                 "id": "Questionnaire.item.code",
-                "condition": [
-                    "que-3"
-                ],
+                "condition": ["que-3"],
                 "short": "Corresponding concept for this item in a terminology",
                 "definition": "A terminology code that corresponds to this group or question (e.g. a code from LOINC, which defines many questions and answers).",
                 "type": [
@@ -955,9 +938,7 @@
                         "identity": "rim"
                     }
                 ],
-                "alias": [
-                    "label"
-                ],
+                "alias": ["label"],
                 "comment": "These are generally unique within a questionnaire, though this is not guaranteed. Some questionnaires may have multiple questions with the same label with logic to control which gets exposed.  Typically, these won't be used for \"display\" items, though such use is not prohibited.  Systems SHOULD NOT generate their own prefixes if prefixes are defined for any items within a Questionnaire."
             },
             {
@@ -1110,9 +1091,7 @@
                 "max": "1",
                 "path": "Questionnaire.item.enableWhen.answer[x]",
                 "id": "Questionnaire.item.enableWhen.answer[x]",
-                "condition": [
-                    "que-7"
-                ],
+                "condition": ["que-7"],
                 "short": "Value for question comparison based on operator",
                 "definition": "A value that the referenced question is tested using the specified operator in order for the item to be enabled.",
                 "type": [
@@ -1145,9 +1124,7 @@
                     },
                     {
                         "code": "Reference",
-                        "targetProfile": [
-                            "http://hl7.org/fhir/StructureDefinition/Resource"
-                        ]
+                        "targetProfile": ["http://hl7.org/fhir/StructureDefinition/Resource"]
                     }
                 ],
                 "mapping": [
@@ -1173,9 +1150,7 @@
                 "max": "1",
                 "path": "Questionnaire.item.enableBehavior",
                 "id": "Questionnaire.item.enableBehavior",
-                "condition": [
-                    "que-12"
-                ],
+                "condition": ["que-12"],
                 "short": "all | any",
                 "definition": "Controls how multiple enableWhen values are interpreted -  whether all or any must be true.",
                 "type": [
@@ -1197,9 +1172,7 @@
                 "path": "Questionnaire.item.required",
                 "meaningWhenMissing": "Items are generally assumed not to be required unless explicitly specified. Systems SHOULD always populate this value",
                 "id": "Questionnaire.item.required",
-                "condition": [
-                    "que-6"
-                ],
+                "condition": ["que-6"],
                 "short": "Whether the item must be included in data results",
                 "definition": "An indication, if true, that the item must be present in a \"completed\" QuestionnaireResponse.  If false, the item may be skipped when answering the questionnaire.",
                 "type": [
@@ -1222,9 +1195,7 @@
                 "path": "Questionnaire.item.repeats",
                 "meaningWhenMissing": "Items are generally assumed not to repeat unless explicitly specified. Systems SHOULD always populate this value",
                 "id": "Questionnaire.item.repeats",
-                "condition": [
-                    "que-6"
-                ],
+                "condition": ["que-6"],
                 "short": "Whether the item may repeat",
                 "definition": "An indication, if true, that the item may occur multiple times in the response, collecting multiple answers for questions or multiple sets of answers for groups.",
                 "type": [
@@ -1246,9 +1217,7 @@
                 "max": "1",
                 "path": "Questionnaire.item.readOnly",
                 "id": "Questionnaire.item.readOnly",
-                "condition": [
-                    "que-9"
-                ],
+                "condition": ["que-9"],
                 "short": "Don't allow human editing",
                 "definition": "An indication, when true, that the value cannot be changed by a human respondent to the Questionnaire.",
                 "type": [
@@ -1269,9 +1238,7 @@
                 "max": "1",
                 "path": "Questionnaire.item.maxLength",
                 "id": "Questionnaire.item.maxLength",
-                "condition": [
-                    "que-10"
-                ],
+                "condition": ["que-10"],
                 "short": "No more than this many characters",
                 "definition": "The maximum number of characters that are permitted in the answer to be considered a \"valid\" QuestionnaireResponse.",
                 "type": [
@@ -1296,18 +1263,13 @@
                 "max": "1",
                 "path": "Questionnaire.item.answerValueSet",
                 "id": "Questionnaire.item.answerValueSet",
-                "condition": [
-                    "que-4",
-                    "que-5"
-                ],
+                "condition": ["que-4", "que-5"],
                 "short": "Valueset containing permitted answers",
                 "definition": "A reference to a value set containing a list of codes representing permitted answers for a \"choice\" or \"open-choice\" question.",
                 "type": [
                     {
                         "code": "canonical",
-                        "targetProfile": [
-                            "http://hl7.org/fhir/StructureDefinition/ValueSet"
-                        ]
+                        "targetProfile": ["http://hl7.org/fhir/StructureDefinition/ValueSet"]
                     }
                 ],
                 "mapping": [
@@ -1323,10 +1285,7 @@
                 "max": "*",
                 "path": "Questionnaire.item.answerOption",
                 "id": "Questionnaire.item.answerOption",
-                "condition": [
-                    "que-4",
-                    "que-5"
-                ],
+                "condition": ["que-4", "que-5"],
                 "short": "Permitted answer",
                 "definition": "One of the permitted answers for a \"choice\" or \"open-choice\" question.",
                 "type": [
@@ -1378,9 +1337,7 @@
                     },
                     {
                         "code": "Reference",
-                        "targetProfile": [
-                            "http://hl7.org/fhir/StructureDefinition/Resource"
-                        ]
+                        "targetProfile": ["http://hl7.org/fhir/StructureDefinition/Resource"]
                     }
                 ],
                 "mapping": [
@@ -1418,10 +1375,7 @@
                 "max": "*",
                 "path": "Questionnaire.item.initial",
                 "id": "Questionnaire.item.initial",
-                "condition": [
-                    "que-8",
-                    "que-13"
-                ],
+                "condition": ["que-8", "que-13"],
                 "short": "Initial value(s) when item is first rendered",
                 "definition": "One or more values that should be pre-populated in the answer when initially rendering the questionnaire for user input.",
                 "type": [
@@ -1491,9 +1445,7 @@
                     },
                     {
                         "code": "Reference",
-                        "targetProfile": [
-                            "http://hl7.org/fhir/StructureDefinition/Resource"
-                        ]
+                        "targetProfile": ["http://hl7.org/fhir/StructureDefinition/Resource"]
                     }
                 ],
                 "mapping": [
@@ -1510,9 +1462,7 @@
                 "max": "*",
                 "path": "Questionnaire.item.item",
                 "id": "Questionnaire.item.item",
-                "condition": [
-                    "que-1"
-                ],
+                "condition": ["que-1"],
                 "short": "Nested questionnaire items",
                 "contentReference": "#Questionnaire.item",
                 "definition": "Text, questions and other groups to be nested beneath a question or group.",
