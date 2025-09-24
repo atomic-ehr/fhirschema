@@ -2,11 +2,11 @@
 export { translate } from './converter/index.js';
 // Re-export specific converter types that might be useful
 export type {
-    Action,
-    ConversionContext,
-    PathComponent,
-    StructureDefinition,
-    StructureDefinitionElement,
+  Action,
+  ConversionContext,
+  PathComponent,
+  StructureDefinition,
+  StructureDefinitionElement,
 } from './converter/types.js';
 
 // Export all types
@@ -16,7 +16,7 @@ export { validateSchema } from './validator/index.js';
 
 // Re-export validator types
 export type {
-    ValidationContext,
-    ValidationError,
-    ValidationResult,
+  ValidationContext,
+  ValidationError,
+  ValidationResult,
 } from './validator/types.js';

@@ -29,7 +29,7 @@
         "lineEnding": "lf",
         "lineWidth": 100,
         "indentStyle": "space",
-        "indentWidth": 4,
+        "indentWidth": 2,
         "attributePosition": "multiline",
         "formatWithErrors": false
     },

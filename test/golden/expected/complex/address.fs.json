@@ -1,87 +1,87 @@
 {
-    "description": "Base StructureDefinition for Address Type: An address expressed using postal conventions (as opposed to GPS or other location definition formats).  This data type may be used to convey addresses for use in delivering mail as well as for visiting locations which might not be valid for mail delivery.  There are a variety of postal address formats defined around the world.",
-    "derivation": "specialization",
-    "name": "Address",
-    "type": "Address",
-    "elements": {
-        "use": {
-            "isModifier": true,
-            "short": "home | work | temp | old | billing - purpose of this address",
-            "type": "code",
-            "binding": {
-                "strength": "required",
-                "valueSet": "http://hl7.org/fhir/ValueSet/address-use|4.0.1",
-                "bindingName": "AddressUse"
-            },
-            "isModifierReason": "This is labeled as \"Is Modifier\" because applications should not mistake a temporary or old address etc.for a current/permanent one",
-            "isSummary": true,
-            "index": 0
-        },
-        "city": {
-            "short": "Name of city, town etc.",
-            "type": "string",
-            "isSummary": true,
-            "index": 4
-        },
-        "type": {
-            "short": "postal | physical | both",
-            "type": "code",
-            "binding": {
-                "strength": "required",
-                "valueSet": "http://hl7.org/fhir/ValueSet/address-type|4.0.1",
-                "bindingName": "AddressType"
-            },
-            "isSummary": true,
-            "index": 1
-        },
-        "state": {
-            "short": "Sub-unit of country (abbreviations ok)",
-            "type": "string",
-            "isSummary": true,
-            "index": 6
-        },
-        "line": {
-            "short": "Street name, number, direction & P.O. Box etc.",
-            "type": "string",
-            "array": true,
-            "orderMeaning": "The order in which lines should appear in an address label",
-            "isSummary": true,
-            "index": 3
-        },
-        "postalCode": {
-            "short": "Postal code for area",
-            "type": "string",
-            "isSummary": true,
-            "index": 7
-        },
-        "period": {
-            "short": "Time period when address was/is in use",
-            "type": "Period",
-            "isSummary": true,
-            "index": 9
-        },
-        "country": {
-            "short": "Country (e.g. can be ISO 3166 2 or 3 letter code)",
-            "type": "string",
-            "isSummary": true,
-            "index": 8
-        },
-        "district": {
-            "short": "District name (aka county)",
-            "type": "string",
-            "isSummary": true,
-            "index": 5
-        },
-        "text": {
-            "short": "Text representation of the address",
-            "type": "string",
-            "isSummary": true,
-            "index": 2
-        }
+  "description": "Base StructureDefinition for Address Type: An address expressed using postal conventions (as opposed to GPS or other location definition formats).  This data type may be used to convey addresses for use in delivering mail as well as for visiting locations which might not be valid for mail delivery.  There are a variety of postal address formats defined around the world.",
+  "derivation": "specialization",
+  "name": "Address",
+  "type": "Address",
+  "elements": {
+    "use": {
+      "isModifier": true,
+      "short": "home | work | temp | old | billing - purpose of this address",
+      "type": "code",
+      "binding": {
+        "strength": "required",
+        "valueSet": "http://hl7.org/fhir/ValueSet/address-use|4.0.1",
+        "bindingName": "AddressUse"
+      },
+      "isModifierReason": "This is labeled as \"Is Modifier\" because applications should not mistake a temporary or old address etc.for a current/permanent one",
+      "isSummary": true,
+      "index": 0
     },
-    "class": "complex-type",
-    "kind": "complex-type",
-    "url": "http://hl7.org/fhir/StructureDefinition/Address",
-    "base": "http://hl7.org/fhir/StructureDefinition/Element",
-    "version": "4.0.1"
+    "city": {
+      "short": "Name of city, town etc.",
+      "type": "string",
+      "isSummary": true,
+      "index": 4
+    },
+    "type": {
+      "short": "postal | physical | both",
+      "type": "code",
+      "binding": {
+        "strength": "required",
+        "valueSet": "http://hl7.org/fhir/ValueSet/address-type|4.0.1",
+        "bindingName": "AddressType"
+      },
+      "isSummary": true,
+      "index": 1
+    },
+    "state": {
+      "short": "Sub-unit of country (abbreviations ok)",
+      "type": "string",
+      "isSummary": true,
+      "index": 6
+    },
+    "line": {
+      "short": "Street name, number, direction & P.O. Box etc.",
+      "type": "string",
+      "array": true,
+      "orderMeaning": "The order in which lines should appear in an address label",
+      "isSummary": true,
+      "index": 3
+    },
+    "postalCode": {
+      "short": "Postal code for area",
+      "type": "string",
+      "isSummary": true,
+      "index": 7
+    },
+    "period": {
+      "short": "Time period when address was/is in use",
+      "type": "Period",
+      "isSummary": true,
+      "index": 9
+    },
+    "country": {
+      "short": "Country (e.g. can be ISO 3166 2 or 3 letter code)",
+      "type": "string",
+      "isSummary": true,
+      "index": 8
+    },
+    "district": {
+      "short": "District name (aka county)",
+      "type": "string",
+      "isSummary": true,
+      "index": 5
+    },
+    "text": {
+      "short": "Text representation of the address",
+      "type": "string",
+      "isSummary": true,
+      "index": 2
+    }
+  },
+  "class": "complex-type",
+  "kind": "complex-type",
+  "url": "http://hl7.org/fhir/StructureDefinition/Address",
+  "base": "http://hl7.org/fhir/StructureDefinition/Element",
+  "version": "4.0.1"
 }
