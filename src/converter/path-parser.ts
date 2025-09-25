@@ -1,5 +1,24 @@
 import type { PathComponent, StructureDefinitionElement } from './types.js';
 
+// Helper interface for building path items with optional slicing/slice info
+interface PathItemBuilder {
+  slicing?: {
+    discriminator?: Array<{
+      type: string;
+      path: string;
+    }>;
+    rules?: string;
+    ordered?: boolean;
+    min?: number;
+    max?: number;
+  };
+  slice?: {
+    min?: number;
+    max?: number;
+  };
+  sliceName?: string;
+}
+
 export function parsePath(element: StructureDefinitionElement): PathComponent[] {
   const pathParts = element.path.split('.');
   // Skip the first part (resource type)
@@ -13,7 +32,7 @@ export function parsePath(element: StructureDefinitionElement): PathComponent[] 
 
   // Add slicing/sliceName info to the last component
   const lastIndex = path.length - 1;
-  const pathItem: any = {};
+  const pathItem: PathItemBuilder = {};
 
   if (element.slicing) {
     pathItem.slicing = {
@@ -38,7 +57,13 @@ export function parsePath(element: StructureDefinitionElement): PathComponent[] 
     pathItem.sliceName = element.sliceName;
   }
 
-  path[lastIndex] = { ...path[lastIndex], ...pathItem };
+  // Merge the pathItem into the last path component
+  path[lastIndex] = {
+    ...path[lastIndex],
+    ...(pathItem.slicing && { slicing: pathItem.slicing }),
+    ...(pathItem.slice && { slice: pathItem.slice }),
+    ...(pathItem.sliceName && { sliceName: pathItem.sliceName }),
+  };
 
   return path;
 }
