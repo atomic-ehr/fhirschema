@@ -2,13 +2,56 @@ import type {
   FHIRSchemaElement,
   StructureDefinition,
   StructureDefinitionElement,
+  StructureDefinitionExtension,
 } from './types.js';
 
 const BINDING_NAME_EXT = 'http://hl7.org/fhir/StructureDefinition/elementdefinition-bindingName';
 const DEFAULT_TYPE_EXT = 'http://hl7.org/fhir/StructureDefinition/elementdefinition-defaulttype';
 const FHIR_TYPE_EXT = 'http://hl7.org/fhir/StructureDefinition/structuredefinition-fhir-type';
 
-function getExtension(extensions: any[] | undefined, url: string): any {
+// Helper types for internal processing
+interface ProcessingElement extends Record<string, unknown> {
+  type?:
+    | string
+    | Array<{
+        code: string;
+        profile?: string[];
+        targetProfile?: string[];
+        extension?: StructureDefinitionExtension[];
+      }>;
+  binding?: {
+    strength: string;
+    valueSet?: string;
+    extension?: StructureDefinitionExtension[];
+  };
+  constraint?: Record<string, { expression: string; human: string; severity: string }>;
+  extension?: StructureDefinitionExtension[];
+  min?: number;
+  max?: string | number; // Can be string or number during processing
+  contentReference?: string;
+  choiceOf?: string;
+  choices?: string[];
+  refers?: string[];
+  url?: string;
+  array?: boolean;
+  _required?: boolean;
+  pattern?: {
+    type: string;
+    value: unknown;
+  };
+  defaultType?: string;
+}
+
+interface NormalizedBinding {
+  strength: string;
+  valueSet?: string;
+  bindingName?: string;
+}
+
+function getExtension(
+  extensions: StructureDefinitionExtension[] | undefined,
+  url: string,
+): StructureDefinitionExtension | undefined {
   if (!extensions) return undefined;
   return extensions.find((ext) => ext.url === url);
 }
@@ -38,8 +81,8 @@ function patternTypeNormalize(typeName: string): string {
   return typeMap[typeName] || typeName;
 }
 
-function processPatterns(element: any): any {
-  const result: any = {};
+function processPatterns(element: ProcessingElement): ProcessingElement {
+  const result: ProcessingElement = {};
 
   for (const [key, value] of Object.entries(element)) {
     if (typeof key === 'string' && key.startsWith('pattern')) {
@@ -61,7 +104,9 @@ function processPatterns(element: any): any {
   return result;
 }
 
-function buildReferenceTargets(types: any[]): string[] | undefined {
+function buildReferenceTargets(
+  types: Array<{ targetProfile?: string | string[] }>,
+): string[] | undefined {
   const refers: string[] = [];
 
   for (const type of types) {
@@ -94,9 +139,14 @@ function preprocessElement(element: StructureDefinitionElement): StructureDefini
   return element;
 }
 
-function buildElementBinding(element: any, structureDefinition: StructureDefinition): any {
-  const normalizeBinding = (binding: any) => {
-    const result: any = {
+function buildElementBinding(
+  element: ProcessingElement,
+  structureDefinition: StructureDefinition,
+): ProcessingElement {
+  const normalizeBinding = (
+    binding: NonNullable<ProcessingElement['binding']>,
+  ): NormalizedBinding => {
+    const result: NormalizedBinding = {
       strength: binding.strength,
       ...(binding.valueSet && { valueSet: binding.valueSet }),
     };
@@ -134,13 +184,22 @@ function buildElementBinding(element: any, structureDefinition: StructureDefinit
   return rest;
 }
 
-function buildElementConstraints(element: any): any {
-  if (!element.constraint || element.constraint.length === 0) {
+function buildElementConstraints(element: ProcessingElement): ProcessingElement {
+  // Handle case where constraint is already a Record (from previous processing)
+  if (element.constraint && !Array.isArray(element.constraint)) {
     return element;
   }
 
-  const constraints: Record<string, any> = {};
-  for (const constraint of element.constraint) {
+  // Handle array constraint case
+  const constraintArray = element.constraint as
+    | Array<{ key: string; expression: string; human: string; severity: string }>
+    | undefined;
+  if (!constraintArray || constraintArray.length === 0) {
+    return element;
+  }
+
+  const constraints: Record<string, { expression: string; human: string; severity: string }> = {};
+  for (const constraint of constraintArray) {
     constraints[constraint.key] = {
       expression: constraint.expression,
       human: constraint.human,
@@ -151,75 +210,107 @@ function buildElementConstraints(element: any): any {
   return { ...element, constraint: constraints };
 }
 
-function buildElementType(element: any, structureDefinition: StructureDefinition): any {
-  if (!element.type || element.type.length === 0) {
+function buildElementType(
+  element: ProcessingElement,
+  structureDefinition: StructureDefinition,
+): ProcessingElement {
+  if (!element.type || (Array.isArray(element.type) && element.type.length === 0)) {
     return element;
   }
 
-  // Check for type in extension
-  const typeFromExt = element.type[0]?.extension?.[0];
-  if (typeFromExt?.url === FHIR_TYPE_EXT && typeFromExt.valueUrl) {
-    return { ...element, type: typeFromExt.valueUrl };
-  }
+  // Handle array type (from StructureDefinitionElement)
+  if (Array.isArray(element.type)) {
+    const firstType = element.type[0];
 
-  // Normal type
-  const typeCode = element.type[0].code;
-  const result = { ...element, type: typeCode };
-
-  // Add defaultType for logical models
-  if (structureDefinition.kind === 'logical') {
-    const defaultTypeExt = getExtension(element.extension, DEFAULT_TYPE_EXT);
-    if (defaultTypeExt?.valueCanonical) {
-      result.defaultType = defaultTypeExt.valueCanonical;
+    // Check for type in extension
+    const typeFromExt = firstType.extension?.[0];
+    if (
+      typeFromExt?.url === FHIR_TYPE_EXT &&
+      typeFromExt.valueUrl &&
+      typeof typeFromExt.valueUrl === 'string'
+    ) {
+      return { ...element, type: typeFromExt.valueUrl };
     }
+
+    // Normal type
+    const typeCode = firstType.code;
+    const result: ProcessingElement = { ...element, type: typeCode };
+
+    // Add defaultType for logical models
+    if (structureDefinition.kind === 'logical') {
+      const defaultTypeExt = getExtension(element.extension, DEFAULT_TYPE_EXT);
+      if (defaultTypeExt?.valueCanonical) {
+        result.defaultType = defaultTypeExt.valueCanonical;
+      }
+    }
+
+    return result;
   }
 
-  return result;
+  return element;
 }
 
-function buildElementExtension(element: any): any {
-  const type = element.type?.[0]?.code;
-  if (type !== 'Extension') {
-    return element;
+function buildElementExtension(element: ProcessingElement): ProcessingElement {
+  // Handle array type case
+  if (Array.isArray(element.type)) {
+    const firstType = element.type[0];
+    if (firstType.code !== 'Extension') {
+      return element;
+    }
+
+    const extUrl = firstType.profile?.[0];
+    if (!extUrl) {
+      return element;
+    }
+
+    const result: ProcessingElement = {
+      ...element,
+      url: extUrl,
+    };
+
+    if (element.min) {
+      result.min = element.min;
+    }
+    if (element.max && element.max !== '*') {
+      const maxStr = typeof element.max === 'string' ? element.max : String(element.max);
+      result.max = Number.parseInt(maxStr, 10);
+    }
+
+    return result;
   }
 
-  const extUrl = element.type[0]?.profile?.[0];
-  if (!extUrl) {
+  if (element.type !== 'Extension') {
     return element;
   }
-
-  return {
-    ...element,
-    url: extUrl,
-    ...(element.min && { min: element.min }),
-    ...(element.max && element.max !== '*' && { max: Number.parseInt(element.max, 10) }),
-  };
+  return element;
 }
 
-function buildElementCardinality(element: any): any {
+function buildElementCardinality(element: ProcessingElement): ProcessingElement {
   if (element.url) {
     // Extension element, cardinality already handled
     return element;
   }
 
+  const maxValue = typeof element.max === 'string' ? element.max : String(element.max || '');
+
   const isArray =
-    element.max === '*' ||
+    maxValue === '*' ||
     (element.min && element.min >= 2) ||
-    (element.max && Number.parseInt(element.max, 10) >= 2);
+    (maxValue && maxValue !== '*' && Number.parseInt(maxValue, 10) >= 2);
 
   const isRequired = element.min === 1;
 
-  const result: any = { ...element };
+  const result: ProcessingElement = { ...element };
   delete result.min;
   delete result.max;
 
   if (isArray) {
     result.array = true;
-    if (element.min && element.min > 0) {
+    if (typeof element.min === 'number' && element.min > 0) {
       result.min = element.min;
     }
-    if (element.max && element.max !== '*') {
-      result.max = Number.parseInt(element.max, 10);
+    if (maxValue && maxValue !== '*') {
+      result.max = Number.parseInt(maxValue, 10);
     }
   }
 
@@ -245,7 +336,10 @@ function contentReferenceToElementReference(
   return result;
 }
 
-function buildElementContentReference(element: any, structureDefinition: StructureDefinition): any {
+function buildElementContentReference(
+  element: ProcessingElement,
+  structureDefinition: StructureDefinition,
+): ProcessingElement {
   if (!element.contentReference) {
     return element;
   }
@@ -257,7 +351,7 @@ function buildElementContentReference(element: any, structureDefinition: Structu
   };
 }
 
-function clearElement(element: any): any {
+function clearElement(element: StructureDefinitionElement): ProcessingElement {
   const {
     path,
     slicing,
@@ -274,7 +368,7 @@ function clearElement(element: any): any {
     ...rest
   } = element;
 
-  return rest;
+  return rest as ProcessingElement;
 }
 
 export function isArrayElement(element: StructureDefinitionElement): boolean {
@@ -293,8 +387,8 @@ export function transformElement(
   element: StructureDefinitionElement,
   structureDefinition: StructureDefinition,
 ): FHIRSchemaElement {
-  let transformed: any = preprocessElement(element);
-  transformed = clearElement(transformed);
+  let transformed: ProcessingElement = preprocessElement(element) as ProcessingElement;
+  transformed = clearElement(transformed as StructureDefinitionElement);
   transformed = buildElementBinding(transformed, structureDefinition);
   transformed = buildElementConstraints(transformed);
   transformed = buildElementContentReference(transformed, structureDefinition);
