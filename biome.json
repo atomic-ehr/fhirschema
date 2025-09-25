@@ -59,7 +59,7 @@
         "useExponentiationOperator": "error",
         "useTemplate": "error",
         "noParameterAssign": "error",
-        "noNonNullAssertion": "warn",
+        "noNonNullAssertion": "error",
         "useDefaultParameterLast": "error",
         "useExportType": "error",
         "noUselessElse": "error",
