@@ -153,7 +153,10 @@ export function translate(
   let index = 0;
 
   while (elementQueue.length > 0) {
-    const element = elementQueue.shift()!;
+    const element = elementQueue.shift();
+    if (element === undefined) {
+      continue;
+    }
 
     // Handle choice elements
     if (isChoiceElement(element)) {

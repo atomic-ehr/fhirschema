@@ -265,10 +265,14 @@ function mergeSlicing(vctx: ValidationContext): FHIRSchemaElement['slicing'] | u
       if ((el.slicing as any).slices) {
         (merged as any).slices ||= {};
         for (const [name, slice] of Object.entries((el.slicing as any).slices)) {
-          merged?.slices![name] = {
-            ...(merged?.slices?.[name] || {}),
-            ...slice!,
-          } as any;
+          if (merged?.slices) {
+            if (slice) {
+              merged.slices[name] = {
+                ...(merged.slices[name] || {}),
+                ...slice,
+              };
+            }
+          }
         }
       }
     }

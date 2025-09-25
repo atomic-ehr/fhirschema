@@ -6,9 +6,12 @@ function sliceChanged(prevItem: PathComponent, newItem: PathComponent): boolean 
 }
 
 function exitSliceAction(item: PathComponent): Action {
+  if (!item.sliceName) {
+    throw new Error('Cannot create exit-slice action for item without sliceName');
+  }
   return {
     type: 'exit-slice',
-    sliceName: item.sliceName!,
+    sliceName: item.sliceName,
     ...(item.slicing && { slicing: item.slicing }),
     ...(item.slice && { slice: item.slice }),
   };
