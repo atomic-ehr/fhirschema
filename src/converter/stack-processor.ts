@@ -1,6 +1,34 @@
-import type { Action } from './types.js';
+import type { Action, FHIRSchemaSlicing, FHIRValue } from './types.js';
 
-function popAndUpdate(stack: any[], updateFn: (parent: any, child: any) => any): any[] {
+// Type for stack elements and general processing objects
+type ProcessingObject = Record<string, unknown>;
+
+// Use the existing FHIR types instead of creating conflicting ones
+type SlicingConfig = FHIRSchemaSlicing;
+
+// Type for slice node structure - make it compatible with FHIRSchemaSlicing
+interface SliceNode {
+  match?: FHIRValue;
+  schema?: ProcessingObject;
+  min?: number;
+  max?: number;
+}
+
+// Type for slice information in actions
+interface SliceInfo {
+  min?: number;
+  max?: number;
+}
+
+// Type for pattern information
+interface PatternInfo {
+  value?: FHIRValue;
+}
+
+function popAndUpdate(
+  stack: ProcessingObject[],
+  updateFn: (parent: ProcessingObject, child: ProcessingObject) => ProcessingObject,
+): ProcessingObject[] {
   const child = stack[stack.length - 1];
   const newStack = stack.slice(0, -1);
   const parent = newStack[newStack.length - 1];
@@ -9,12 +37,12 @@ function popAndUpdate(stack: any[], updateFn: (parent: any, child: any) => any):
   return [...newStack.slice(0, -1), updatedParent];
 }
 
-function buildMatchForSlice(slicing: any, sliceSchema: any): any {
+function buildMatchForSlice(slicing: SlicingConfig, sliceSchema: ProcessingObject): FHIRValue {
   if (!slicing.discriminator) {
     return {};
   }
 
-  const match: any = {};
+  const match: Record<string, unknown> = {};
 
   for (const discriminator of slicing.discriminator) {
     if (!discriminator.type || !['pattern', 'value', undefined].includes(discriminator.type)) {
@@ -25,12 +53,23 @@ function buildMatchForSlice(slicing: any, sliceSchema: any): any {
 
     if (path === '$this') {
       // Merge pattern value from slice schema
-      if (sliceSchema.pattern?.value) {
-        Object.assign(match, sliceSchema.pattern.value);
+      const pattern = sliceSchema.pattern as PatternInfo | undefined;
+      if (pattern?.value) {
+        if (
+          typeof pattern.value === 'object' &&
+          pattern.value !== null &&
+          !Array.isArray(pattern.value)
+        ) {
+          Object.assign(match, pattern.value);
+        } else {
+          // For primitive values, we'd need to handle differently based on context
+          // This is a simplified approach
+          Object.assign(match, { value: pattern.value });
+        }
       }
     } else {
       // Build path to pattern in nested elements
-      const pathParts = path.split('.').filter((p: string) => p);
+      const pathParts = path.split('.').filter((p: string) => p.trim() !== '');
 
       // Look for pattern fields in slice schema
       const patternKeys = Object.keys(sliceSchema).filter((k) => k.startsWith('pattern'));
@@ -42,7 +81,7 @@ function buildMatchForSlice(slicing: any, sliceSchema: any): any {
       }
 
       // Also check nested elements
-      const currentPath = ['elements'];
+      const currentPath: string[] = ['elements'];
 
       for (const part of pathParts) {
         currentPath.push(part);
@@ -54,30 +93,43 @@ function buildMatchForSlice(slicing: any, sliceSchema: any): any {
       currentPath.push('pattern');
 
       // Get value from slice schema
-      let value = sliceSchema;
+      let value: unknown = sliceSchema;
       for (const segment of currentPath) {
-        value = value?.[segment];
+        if (value && typeof value === 'object' && !Array.isArray(value)) {
+          value = (value as Record<string, unknown>)[segment];
+        } else {
+          value = undefined;
+          break;
+        }
       }
 
-      if (value?.value !== undefined) {
-        // Set value in match object
-        let matchTarget = match;
-        for (let i = 0; i < pathParts.length - 1; i++) {
-          if (!matchTarget[pathParts[i]]) {
-            matchTarget[pathParts[i]] = {};
+      if (value && typeof value === 'object' && 'value' in value) {
+        const patternValue = (value as { value?: unknown }).value;
+        if (patternValue !== undefined) {
+          // Set value in match object
+          let matchTarget: Record<string, unknown> = match;
+          for (let i = 0; i < pathParts.length - 1; i++) {
+            const part = pathParts[i];
+            if (!matchTarget[part] || typeof matchTarget[part] !== 'object') {
+              matchTarget[part] = {};
+            }
+            matchTarget = matchTarget[part] as Record<string, unknown>;
           }
-          matchTarget = matchTarget[pathParts[i]];
+          matchTarget[pathParts[pathParts.length - 1]] = patternValue;
         }
-        matchTarget[pathParts[pathParts.length - 1]] = value.value;
       }
     }
   }
 
-  return match;
+  return match as FHIRValue;
 }
 
-function buildSliceNode(sliceSchema: any, match: any, slice: any): any {
-  const node: any = {
+function buildSliceNode(
+  sliceSchema: ProcessingObject,
+  match: FHIRValue,
+  slice?: SliceInfo,
+): SliceNode {
+  const node: SliceNode = {
     match,
     schema: sliceSchema,
   };
@@ -93,59 +145,77 @@ function buildSliceNode(sliceSchema: any, match: any, slice: any): any {
   return node;
 }
 
-function buildSlice(action: any, parent: any, sliceSchema: any): any {
-  const slicingInfo = parent.slicing || action.slicing || {};
+function buildSlice(
+  action: Action & { type: 'exit-slice' },
+  parent: ProcessingObject,
+  sliceSchema: ProcessingObject,
+): ProcessingObject {
+  const existingSlicing = parent.slicing as SlicingConfig | undefined;
+  const slicingInfo: SlicingConfig =
+    existingSlicing || (action.slicing as SlicingConfig) || ({} as SlicingConfig);
   const match = buildMatchForSlice(slicingInfo, sliceSchema);
-  const sliceNode = buildSliceNode(sliceSchema, match, action.slice);
+  const sliceNode = buildSliceNode(sliceSchema, match, action.slice as SliceInfo | undefined);
 
-  if (!parent.slicing) {
-    parent.slicing = {};
+  const updatedParent = { ...parent };
+
+  if (!updatedParent.slicing) {
+    updatedParent.slicing = {} as SlicingConfig;
   }
+
+  const currentSlicing = updatedParent.slicing as SlicingConfig;
 
   if (action.slicing) {
-    parent.slicing = { ...parent.slicing, ...action.slicing };
+    updatedParent.slicing = { ...currentSlicing, ...(action.slicing as SlicingConfig) };
   }
 
-  if (!parent.slicing.slices) {
-    parent.slicing.slices = {};
+  const finalSlicing = updatedParent.slicing as SlicingConfig;
+  if (!finalSlicing.slices) {
+    finalSlicing.slices = {};
   }
 
-  parent.slicing.slices[action.sliceName] = sliceNode;
+  if (finalSlicing.slices) {
+    finalSlicing.slices[action.sliceName] = sliceNode;
+  }
 
-  return parent;
+  return updatedParent;
 }
 
-function slicingToExtensions(slicingElement: any): any {
-  if (!slicingElement.slicing?.slices) {
+function slicingToExtensions(slicingElement: ProcessingObject): Record<string, ProcessingObject> {
+  const slicing = slicingElement.slicing as SlicingConfig | undefined;
+  if (!slicing?.slices) {
     return {};
   }
 
-  const extensions: any = {};
+  const extensions: Record<string, ProcessingObject> = {};
 
-  for (const [sliceName, slice] of Object.entries(slicingElement.slicing.slices)) {
-    const { match, schema, ...sliceProps } = slice as any;
+  for (const [sliceName, slice] of Object.entries(slicing.slices)) {
+    const { match, schema, min: sliceMin, max: sliceMax } = slice;
+
+    if (!schema) continue;
+
     // Clean up schema properties
-    const { slicing, elements, type, min, ...cleanSchema } = schema || {};
+    const { slicing: nestedSlicing, elements, type, min: schemaMin, ...cleanSchema } = schema;
 
-    const extension: any = {};
-    if (match?.url) {
+    const extension: ProcessingObject = {};
+
+    if (match && typeof match === 'object' && 'url' in match) {
       extension.url = match.url;
     }
 
     // Add slice properties (min, max) - skip min if 0
-    if (sliceProps.min !== undefined && sliceProps.min !== 0) {
-      extension.min = sliceProps.min;
+    if (sliceMin !== undefined && sliceMin !== 0) {
+      extension.min = sliceMin;
     }
-    if (sliceProps.max !== undefined) {
-      extension.max = sliceProps.max;
+    if (sliceMax !== undefined) {
+      extension.max = sliceMax;
     }
 
     // Add clean schema properties
     Object.assign(extension, cleanSchema);
 
     // Add min from schema if not 0 and not already added from sliceProps
-    if (min !== undefined && min !== 0 && extension.min === undefined) {
-      extension.min = min;
+    if (schemaMin !== undefined && schemaMin !== 0 && extension.min === undefined) {
+      extension.min = schemaMin;
     }
 
     extensions[sliceName] = extension;
@@ -154,7 +224,11 @@ function slicingToExtensions(slicingElement: any): any {
   return extensions;
 }
 
-function addElement(elementName: string, parent: any, child: any): any {
+function addElement(
+  elementName: string,
+  parent: ProcessingObject,
+  child: ProcessingObject,
+): ProcessingObject {
   const updated = { ...parent };
 
   // Special handling for extension elements
@@ -167,27 +241,35 @@ function addElement(elementName: string, parent: any, child: any): any {
     updated.elements = {};
   }
 
+  const elements = updated.elements as Record<string, ProcessingObject>;
+
   // Determine actual element name (handle choiceOf)
-  const actualElementName = child.choiceOf || elementName;
+  const choiceOf = child.choiceOf as string | undefined;
+  const actualElementName = choiceOf || elementName;
 
   // Remove internal _required flag before adding
   const { _required, ...cleanChild } = child;
-  updated.elements[elementName] = cleanChild;
+  elements[elementName] = cleanChild;
 
   // Add to required array if needed
   if (_required) {
     if (!updated.required) {
       updated.required = [];
     }
-    if (!updated.required.includes(actualElementName)) {
-      updated.required.push(actualElementName);
+    const required = updated.required as string[];
+    if (!required.includes(actualElementName)) {
+      required.push(actualElementName);
     }
   }
 
   return updated;
 }
 
-export function applyActions(stack: any[], actions: Action[], value: any): any[] {
+export function applyActions(
+  stack: ProcessingObject[],
+  actions: Action[],
+  value: ProcessingObject,
+): ProcessingObject[] {
   let currentStack = [...stack];
 
   for (let i = 0; i < actions.length; i++) {
@@ -214,7 +296,7 @@ export function applyActions(stack: any[], actions: Action[], value: any): any[]
 
       case 'exit-slice':
         currentStack = popAndUpdate(currentStack, (parent, child) =>
-          buildSlice(action, parent, child),
+          buildSlice(action as Action & { type: 'exit-slice' }, parent, child),
         );
         break;
     }

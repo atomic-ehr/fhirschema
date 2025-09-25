@@ -1,3 +1,6 @@
+// Import our properly typed interfaces
+import type { FHIRSchema, FHIRSchemaElement } from '../types';
+
 export enum FHIRSchemaErrorCode {
   UnknownElement = 'FS001',
   UnknownSchema = 'FS002',
@@ -16,7 +19,7 @@ export interface AtomicContext {
 
 export interface ValidationOptions {
   schemaUrls: string[];
-  resource: any;
+  resource: unknown; // Changed from any
 }
 
 export interface ValidationError {
@@ -25,9 +28,6 @@ export interface ValidationError {
   schemaPath?: string;
   path?: string;
 }
-
-// Use shared FHIR types to avoid duplication
-import type { FHIRSchema, FHIRSchemaElement } from '../types';
 
 export interface ValidationContext {
   schemas: Record<string, FHIRSchema>;
@@ -46,7 +46,7 @@ export interface SchemaResolver {
 
 function createContext(ctx: AtomicContext, opts: ValidationOptions): ValidationContext {
   const vctx: ValidationContext = {
-    path: opts?.resource?.resourceType,
+    path: ((opts?.resource as Record<string, unknown>)?.resourceType as string) || '',
     schemas: {},
     errors: [],
     ctx: ctx,
@@ -54,69 +54,74 @@ function createContext(ctx: AtomicContext, opts: ValidationOptions): ValidationC
   return vctx;
 }
 
-function isObject(data: any): boolean {
+function isObject(data: unknown): data is Record<string, unknown> {
   return typeof data === 'object' && data !== null && !Array.isArray(data);
 }
 
-const TYPE_VALIDATORS: Record<string, (vctx: ValidationContext, rules: any[], data: any) => void> =
-  {
-    string: (vctx: ValidationContext, _rules: any[], data: any) => {
-      if (typeof data !== 'string') {
-        vctx.errors.push({
-          code: FHIRSchemaErrorCode.WrongType,
-          message: 'Expected string',
-          path: vctx.path,
-        });
-      }
-    },
-    integer: (vctx: ValidationContext, _rules: any[], data: any) => {
-      if (!(typeof data === 'number' && Number.isInteger(data))) {
-        vctx.errors.push({
-          code: FHIRSchemaErrorCode.WrongType,
-          message: 'Expected integer',
-          path: vctx.path,
-        });
-      }
-    },
-    boolean: (vctx: ValidationContext, _rules: any[], data: any) => {
-      if (typeof data !== 'boolean') {
-        vctx.errors.push({
-          code: FHIRSchemaErrorCode.WrongType,
-          message: 'Expected boolean',
-          path: vctx.path,
-        });
-      }
-    },
-    number: (vctx: ValidationContext, _rules: any[], data: any) => {
-      if (typeof data !== 'number' || Number.isNaN(data)) {
-        vctx.errors.push({
-          code: FHIRSchemaErrorCode.WrongType,
-          message: 'Expected number',
-          path: vctx.path,
-        });
-      }
-    },
-    code: (vctx: ValidationContext, _rules: any[], data: any) => {
-      if (typeof data !== 'string') {
-        vctx.errors.push({
-          code: FHIRSchemaErrorCode.WrongType,
-          message: 'Expected code (string)',
-          path: vctx.path,
-        });
-      }
-    },
-    url: (vctx: ValidationContext, _rules: any[], data: any) => {
-      if (typeof data !== 'string') {
-        vctx.errors.push({
-          code: FHIRSchemaErrorCode.WrongType,
-          message: 'Expected url (string)',
-          path: vctx.path,
-        });
-      }
-    },
-  };
+// Type for validation rule arrays - can contain strings (types) or other validation constraints
+type ValidationRules = (string | number | boolean | Record<string, unknown>)[];
 
-function matchesPrimitiveType(t: string, data: any): boolean {
+// Type validator functions
+type TypeValidator = (vctx: ValidationContext, rules: ValidationRules, data: unknown) => void;
+
+const TYPE_VALIDATORS: Record<string, TypeValidator> = {
+  string: (vctx: ValidationContext, _rules: ValidationRules, data: unknown) => {
+    if (typeof data !== 'string') {
+      vctx.errors.push({
+        code: FHIRSchemaErrorCode.WrongType,
+        message: 'Expected string',
+        path: vctx.path,
+      });
+    }
+  },
+  integer: (vctx: ValidationContext, _rules: ValidationRules, data: unknown) => {
+    if (!(typeof data === 'number' && Number.isInteger(data))) {
+      vctx.errors.push({
+        code: FHIRSchemaErrorCode.WrongType,
+        message: 'Expected integer',
+        path: vctx.path,
+      });
+    }
+  },
+  boolean: (vctx: ValidationContext, _rules: ValidationRules, data: unknown) => {
+    if (typeof data !== 'boolean') {
+      vctx.errors.push({
+        code: FHIRSchemaErrorCode.WrongType,
+        message: 'Expected boolean',
+        path: vctx.path,
+      });
+    }
+  },
+  number: (vctx: ValidationContext, _rules: ValidationRules, data: unknown) => {
+    if (typeof data !== 'number' || Number.isNaN(data)) {
+      vctx.errors.push({
+        code: FHIRSchemaErrorCode.WrongType,
+        message: 'Expected number',
+        path: vctx.path,
+      });
+    }
+  },
+  code: (vctx: ValidationContext, _rules: ValidationRules, data: unknown) => {
+    if (typeof data !== 'string') {
+      vctx.errors.push({
+        code: FHIRSchemaErrorCode.WrongType,
+        message: 'Expected code (string)',
+        path: vctx.path,
+      });
+    }
+  },
+  url: (vctx: ValidationContext, _rules: ValidationRules, data: unknown) => {
+    if (typeof data !== 'string') {
+      vctx.errors.push({
+        code: FHIRSchemaErrorCode.WrongType,
+        message: 'Expected url (string)',
+        path: vctx.path,
+      });
+    }
+  },
+};
+
+function matchesPrimitiveType(t: string, data: unknown): boolean {
   switch (t) {
     case 'string':
       return typeof data === 'string';
@@ -134,9 +139,9 @@ function matchesPrimitiveType(t: string, data: any): boolean {
   }
 }
 
-function validateType(vctx: ValidationContext, rules: string[], data: any): void {
+function validateType(vctx: ValidationContext, rules: ValidationRules, data: unknown): void {
   // Collect allowed primitive types from all overlays
-  const allowed = (rules || []).filter((t) => typeof t === 'string');
+  const allowed = (rules || []).filter((t): t is string => typeof t === 'string');
   const primitiveAllowed = allowed.filter((t) => PRIMITIVE_TYPES.has(t));
   const hasNonPrimitive = allowed.some((t) => !PRIMITIVE_TYPES.has(t));
 
@@ -156,13 +161,16 @@ function validateType(vctx: ValidationContext, rules: string[], data: any): void
   });
 }
 
-const VALIDATORS: Record<string, (vctx: ValidationContext, rules: any[], data: any) => void> = {
+type ValidatorFunction = (vctx: ValidationContext, rules: ValidationRules, data: unknown) => void;
+
+const VALIDATORS: Record<string, ValidatorFunction> = {
   type: validateType,
 };
 
-function validateValueRules(vctx: ValidationContext, data: any) {
-  const rules: Record<string, any[]> = {};
+function validateValueRules(vctx: ValidationContext, data: unknown) {
+  const rules: Record<string, ValidationRules> = {};
   const schemas: Record<string, FHIRSchema> = {};
+
   for (const sch of Object.values(vctx.schemas)) {
     for (const [key, value] of Object.entries(sch)) {
       if (
@@ -175,11 +183,12 @@ function validateValueRules(vctx: ValidationContext, data: any) {
       ) {
         rules[key] ||= [];
         schemas[key] ||= {} as FHIRSchema;
-        rules[key].push(value);
+        rules[key].push(value as string | number | boolean | Record<string, unknown>);
         schemas[key] = sch;
       }
     }
   }
+
   for (const [ruleName, item] of Object.entries(rules)) {
     const validator = VALIDATORS[ruleName];
     if (validator) {
@@ -201,8 +210,8 @@ function addSchemaToSet(vctx: ValidationContext, schemas: Record<string, FHIRSch
   const sch = vctx.ctx.resolveSchema(vctx.ctx, url);
   if (sch && schemas) {
     schemas[url] = sch;
-    // In shared types, base is a top-level field on FHIRSchema
-    const base = (sch as any).base as string | undefined;
+    // Use the properly typed base field from FHIRSchema
+    const base = sch.base;
     if (base !== undefined) {
       addSchemaToSet(vctx, schemas, base);
     }
@@ -215,7 +224,7 @@ function addSchemaToSet(vctx: ValidationContext, schemas: Record<string, FHIRSch
   }
 }
 
-// Primitive types are derived from available TYPE_RS to avoid drift
+// Primitive types are derived from available TYPE_VALIDATORS to avoid drift
 const PRIMITIVE_TYPES: Set<string> = new Set(Object.keys(TYPE_VALIDATORS));
 
 function getElementSchemas(
@@ -223,14 +232,14 @@ function getElementSchemas(
   key: string,
 ): Record<string, FHIRSchema> | false {
   let schemas: Record<string, FHIRSchema> | false = false;
+
   for (const [schemaPath, s] of Object.entries(vctx.schemas)) {
-    const elSch =
-      (s as any).elements && ((s as any).elements[key] as FHIRSchemaElement | undefined);
+    const elSch = s.elements?.[key] as FHIRSchemaElement | undefined;
     if (elSch) {
       if (!schemas) {
         schemas = {} as Record<string, FHIRSchema>;
       }
-      schemas[`${schemaPath}.${key}`] = elSch;
+      schemas[`${schemaPath}.${key}`] = elSch as FHIRSchema;
       if (elSch.type !== undefined && !PRIMITIVE_TYPES.has(elSch.type)) {
         addSchemaToSet(vctx, schemas, elSch.type);
       }
@@ -239,10 +248,11 @@ function getElementSchemas(
   return schemas;
 }
 
-function isElementArray(vctx: ValidationContext) {
+function isElementArray(vctx: ValidationContext): boolean {
   for (const sch of Object.values(vctx.schemas)) {
+    const schemaElement = sch as FHIRSchemaElement;
     // Support both legacy 'isArray' and shared 'array' flags
-    if ((sch as any).isArray || (sch as any).array) {
+    if ((sch as unknown as Record<string, unknown>).isArray || schemaElement.array) {
       return true;
     }
   }
@@ -251,27 +261,26 @@ function isElementArray(vctx: ValidationContext) {
 
 function mergeSlicing(vctx: ValidationContext): FHIRSchemaElement['slicing'] | undefined {
   let merged: FHIRSchemaElement['slicing'] | undefined;
+
   for (const sch of Object.values(vctx.schemas)) {
     const el = sch as FHIRSchemaElement;
     if (el.slicing) {
       if (!merged) {
         merged = {
-          discriminator: (el.slicing as any).discriminator,
-          rules: (el.slicing as any).rules as any,
-          ordered: (el.slicing as any).ordered,
+          discriminator: el.slicing.discriminator,
+          rules: el.slicing.rules,
+          ordered: el.slicing.ordered,
           slices: {},
-        } as any;
+        };
       }
-      if ((el.slicing as any).slices) {
-        (merged as any).slices ||= {};
-        for (const [name, slice] of Object.entries((el.slicing as any).slices)) {
-          if (merged?.slices) {
-            if (slice) {
-              merged.slices[name] = {
-                ...(merged.slices[name] || {}),
-                ...slice,
-              };
-            }
+      if (el.slicing.slices) {
+        merged.slices ||= {};
+        for (const [name, slice] of Object.entries(el.slicing.slices)) {
+          if (merged.slices && slice) {
+            merged.slices[name] = {
+              ...(merged.slices[name] || {}),
+              ...slice,
+            };
           }
         }
       }
@@ -280,30 +289,34 @@ function mergeSlicing(vctx: ValidationContext): FHIRSchemaElement['slicing'] | u
   return merged;
 }
 
-function deepPartialMatch(value: any, pattern: any): boolean {
+function deepPartialMatch(value: unknown, pattern: unknown): boolean {
   if (pattern === undefined) return true;
+
   if (Array.isArray(pattern)) {
     if (!Array.isArray(value)) return false;
     return pattern.every((p) => value.some((v) => deepPartialMatch(v, p)));
   }
+
   if (isObject(pattern)) {
     if (!isObject(value)) return false;
     for (const [k, v] of Object.entries(pattern)) {
-      if (!deepPartialMatch((value as any)[k], v)) return false;
+      if (!deepPartialMatch(value[k], v)) return false;
     }
     return true;
   }
+
   return value === pattern;
 }
 
 function classifySlice(
   slicing: NonNullable<FHIRSchemaElement['slicing']>,
-  item: any,
+  item: unknown,
 ): { slice?: string; error?: 'unmatched' | 'ambiguous' } {
   const matches: string[] = [];
-  const slices = (slicing as any).slices || {};
+  const slices = slicing.slices || {};
+
   for (const [name, slice] of Object.entries(slices)) {
-    const m = (slice as any).match;
+    const m = slice.match;
     if (m === undefined || (isObject(m) && Object.keys(m).length === 0)) {
       matches.push(name);
       continue;
@@ -312,6 +325,7 @@ function classifySlice(
       matches.push(name);
     }
   }
+
   if (matches.length === 0) {
     return { error: 'unmatched' };
   }
@@ -323,7 +337,7 @@ function classifySlice(
 
 function overlaySchema(base: FHIRSchemaElement, overlay?: FHIRSchemaElement): FHIRSchemaElement {
   if (!overlay) return base;
-  const merged: FHIRSchemaElement = { ...base, ...overlay } as any;
+  const merged: FHIRSchemaElement = { ...base, ...overlay };
   if (base.elements || overlay.elements) {
     merged.elements = { ...(base.elements || {}), ...(overlay.elements || {}) };
   }
@@ -343,16 +357,18 @@ function buildItemSchemasForSlice(
   return out;
 }
 
-function validateElement(vctx: ValidationContext, data: any, primitiveExtension: any) {
+function validateElement(vctx: ValidationContext, data: unknown, primitiveExtension: unknown) {
   if (isElementArray(vctx)) {
     if (Array.isArray(data)) {
       const slicing = mergeSlicing(vctx);
       const sliceCounts: Record<string, number> = {};
+
       for (let i = 0; i < data.length; i++) {
         const item = data[i];
         const prevPath = vctx.path;
         vctx.path = `${vctx.path}.${i}`;
-        if (slicing?.slices && Object.keys((slicing as any).slices).length > 0) {
+
+        if (slicing?.slices && Object.keys(slicing.slices).length > 0) {
           const cls = classifySlice(slicing, item);
           if (cls.error === 'ambiguous') {
             vctx.errors.push({
@@ -361,7 +377,7 @@ function validateElement(vctx: ValidationContext, data: any, primitiveExtension:
               path: vctx.path,
             });
           } else if (cls.error === 'unmatched') {
-            const rules = (slicing as any).rules || 'open';
+            const rules = slicing.rules || 'open';
             if (rules === 'closed') {
               vctx.errors.push({
                 code: FHIRSchemaErrorCode.SlicingUnmatched,
@@ -374,10 +390,7 @@ function validateElement(vctx: ValidationContext, data: any, primitiveExtension:
           } else if (cls.slice) {
             sliceCounts[cls.slice] = (sliceCounts[cls.slice] || 0) + 1;
             const prevSchemas = vctx.schemas;
-            const itemSchemas = buildItemSchemasForSlice(
-              vctx,
-              ((slicing as any).slices as any)[cls.slice]?.schema as FHIRSchemaElement,
-            );
+            const itemSchemas = buildItemSchemasForSlice(vctx, slicing.slices[cls.slice]?.schema);
             vctx.schemas = itemSchemas;
             validateInternal(vctx, item);
             vctx.schemas = prevSchemas;
@@ -388,20 +401,21 @@ function validateElement(vctx: ValidationContext, data: any, primitiveExtension:
         }
         vctx.path = prevPath;
       }
-      if (slicing && (slicing as any).slices) {
-        for (const [name, slice] of Object.entries((slicing as any).slices)) {
-          const count = (sliceCounts as any)[name] || 0;
-          if ((slice as any).min !== undefined && count < (slice as any).min) {
+
+      if (slicing?.slices) {
+        for (const [name, slice] of Object.entries(slicing.slices)) {
+          const count = sliceCounts[name] || 0;
+          if (slice.min !== undefined && count < slice.min) {
             vctx.errors.push({
               code: FHIRSchemaErrorCode.SliceCardinality,
-              message: `Slice ${name}: expected min=${(slice as any).min} got ${count}`,
+              message: `Slice ${name}: expected min=${slice.min} got ${count}`,
               path: vctx.path,
             });
           }
-          if ((slice as any).max !== undefined && count > (slice as any).max) {
+          if (slice.max !== undefined && count > slice.max) {
             vctx.errors.push({
               code: FHIRSchemaErrorCode.SliceCardinality,
-              message: `Slice ${name}: expected max=${(slice as any).max} got ${count}`,
+              message: `Slice ${name}: expected max=${slice.max} got ${count}`,
               path: vctx.path,
             });
           }
@@ -430,12 +444,14 @@ function validateElement(vctx: ValidationContext, data: any, primitiveExtension:
   }
 }
 
-function validateInternal(vctx: ValidationContext, data: any) {
+function validateInternal(vctx: ValidationContext, data: unknown) {
   validateValueRules(vctx, data);
+
   if (isObject(data)) {
     for (let [key, value] of Object.entries(data)) {
-      let primitiveExtension = null;
+      let primitiveExtension: unknown = null;
       if (key === 'resourceType') continue;
+
       if (key.startsWith('_')) {
         const normKey = key.substring(1);
         // will be handled by next with normal element key
@@ -446,8 +462,9 @@ function validateInternal(vctx: ValidationContext, data: any) {
         primitiveExtension = value;
         value = null;
       } else {
-        primitiveExtension = (data as any)[`_${key}`] || null;
+        primitiveExtension = data[`_${key}`] || null;
       }
+
       const elSchemas = getElementSchemas(vctx, key);
       if (elSchemas) {
         // save the current schema set and path
@@ -470,20 +487,23 @@ function validateInternal(vctx: ValidationContext, data: any) {
   }
 }
 
-export function validateSchema(ctx: AtomicContext, opts: ValidationOptions) {
+export function validateSchema(ctx: AtomicContext, opts: ValidationOptions): ValidationResult {
   const vctx = createContext(ctx, opts);
   for (const s of opts.schemaUrls) {
     addSchemaToSet(vctx, vctx.schemas, s);
   }
-  if (opts.resource?.resourceType !== undefined) {
+
+  if (isObject(opts.resource) && opts.resource.resourceType !== undefined) {
     const prevPath = vctx.path;
     vctx.path = `${vctx.path}.resourceType`;
-    addSchemaToSet(vctx, vctx.schemas, opts.resource?.resourceType);
+    addSchemaToSet(vctx, vctx.schemas, opts.resource.resourceType as string);
     vctx.path = prevPath;
   } else {
     vctx.path = '';
   }
+
   validateInternal(vctx, opts.resource);
+
   const vres: ValidationResult = {
     errors: vctx.errors,
   };
