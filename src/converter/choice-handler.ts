@@ -1,16 +1,16 @@
-import { StructureDefinitionElement } from './types.js';
+import type { StructureDefinitionElement } from './types.js';
 
 export function isChoiceElement(element: StructureDefinitionElement): boolean {
   if (element.path.endsWith('[x]')) {
     return true;
   }
-  
+
   // Check if multiple types with different codes
   if (element.type && element.type.length > 1) {
-    const uniqueCodes = new Set(element.type.map(t => t.code));
+    const uniqueCodes = new Set(element.type.map((t) => t.code));
     return uniqueCodes.size > 1;
   }
-  
+
   return false;
 }
 
@@ -24,26 +24,28 @@ function canonicalToName(url: string): string {
   return parts[parts.length - 1];
 }
 
-export function expandChoiceElement(element: StructureDefinitionElement): StructureDefinitionElement[] {
+export function expandChoiceElement(
+  element: StructureDefinitionElement,
+): StructureDefinitionElement[] {
   const basePath = element.path.replace(/\[x\]$/, '');
   const fieldName = basePath.split('.').pop() || '';
-  
+
   if (!element.type) {
     return [];
   }
-  
+
   const expanded: StructureDefinitionElement[] = [];
-  
+
   // Create the parent choice element
-  const choices = element.type.map(t => fieldName + capitalize(canonicalToName(t.code)));
+  const choices = element.type.map((t) => fieldName + capitalize(canonicalToName(t.code)));
   const { type, binding, ...restElement } = element;
   const parentElement: StructureDefinitionElement = {
     ...restElement,
     path: basePath,
-    choices: choices // Preserve original order
+    choices: choices, // Preserve original order
   };
   expanded.push(parentElement);
-  
+
   // Create typed elements
   for (const type of element.type) {
     const typeName = capitalize(canonicalToName(type.code));
@@ -51,7 +53,7 @@ export function expandChoiceElement(element: StructureDefinitionElement): Struct
       ...element,
       path: basePath + typeName,
       type: [type],
-      choiceOf: fieldName
+      choiceOf: fieldName,
     };
     // Remove binding if it exists, it will be handled specially
     if (element.binding) {
@@ -59,6 +61,6 @@ export function expandChoiceElement(element: StructureDefinitionElement): Struct
     }
     expanded.push(typedElement);
   }
-  
+
   return expanded;
 }

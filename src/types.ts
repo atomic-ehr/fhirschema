@@ -41,53 +41,53 @@ export interface FHIRSchemaElement {
   // Type information
   type?: string;
   array?: boolean;
-  
+
   // Cardinality
   min?: number;
   max?: number;
-  
+
   // References
   refers?: string[];
   elementReference?: string[];
-  
+
   // Documentation
   short?: string;
-  
+
   // Binding
   binding?: FHIRSchemaBinding;
-  
+
   // Pattern/Fixed values
   pattern?: FHIRSchemaPattern;
-  
+
   // Constraints
   constraint?: Record<string, FHIRSchemaConstraint>;
-  
+
   // Nested elements
   elements?: Record<string, FHIRSchemaElement>;
-  
+
   // Choice type handling
   choiceOf?: string;
   choices?: string[];
-  
+
   // Extension URL
   url?: string;
-  
+
   // Modifiers
   mustSupport?: boolean;
   isModifier?: boolean;
   isModifierReason?: string;
   isSummary?: boolean;
-  
+
   // Slicing
   slicing?: FHIRSchemaSlicing;
-  
+
   // Extensions
   extensions?: Record<string, FHIRSchemaElement>;
-  
+
   // Required/excluded elements
   required?: string[];
   excluded?: string[];
-  
+
   // Internal flags
   _required?: boolean;
   index?: number;
@@ -98,33 +98,33 @@ export interface FHIRSchema {
   url: string;
   version?: string;
   name: string;
-  
+
   // Structure type
   type: string;
   kind: string;
-  
+
   // Derivation
   derivation?: string;
   base?: string;
   abstract?: boolean;
   class: string;
-  
+
   // Documentation
   description?: string;
-  
+
   // Package information
   package_name?: string;
   package_version?: string;
   package_id?: string;
   package_meta?: any;
-  
+
   // Content
   elements?: Record<string, FHIRSchemaElement>;
   required?: string[];
   excluded?: string[];
   extensions?: Record<string, FHIRSchemaElement>;
   constraint?: Record<string, FHIRSchemaConstraint>;
-  
+
   // For primitive types
   primitiveType?: string;
   choices?: Record<string, string[]>;
@@ -274,7 +274,7 @@ export interface PathComponent {
 
 // Action types for stack processing
 
-export type Action = 
+export type Action =
   | { type: 'enter'; el: string }
   | { type: 'exit'; el: string }
   | { type: 'enter-slice'; sliceName: string }
@@ -322,10 +322,10 @@ export const FHIR_PRIMITIVE_TYPES = [
   'unsignedInt',
   'positiveInt',
   'uuid',
-  'xhtml'
+  'xhtml',
 ] as const;
 
-export type FHIRPrimitiveType = typeof FHIR_PRIMITIVE_TYPES[number];
+export type FHIRPrimitiveType = (typeof FHIR_PRIMITIVE_TYPES)[number];
 
 export const FHIR_COMPLEX_TYPES = [
   'Address',
@@ -348,10 +348,10 @@ export const FHIR_COMPLEX_TYPES = [
   'Reference',
   'SampledData',
   'Signature',
-  'Timing'
+  'Timing',
 ] as const;
 
-export type FHIRComplexType = typeof FHIR_COMPLEX_TYPES[number];
+export type FHIRComplexType = (typeof FHIR_COMPLEX_TYPES)[number];
 
 export const VALIDATION_ERROR_TYPES = {
   REQUIRED: 'required',
@@ -363,7 +363,8 @@ export const VALIDATION_ERROR_TYPES = {
   UNKNOWN_ELEMENT: 'unknown-element',
   INVALID_CHOICE: 'invalid-choice',
   SLICE_CARDINALITY: 'slice-cardinality',
-  DISCRIMINATOR: 'discriminator'
+  DISCRIMINATOR: 'discriminator',
 } as const;
 
-export type ValidationErrorType = typeof VALIDATION_ERROR_TYPES[keyof typeof VALIDATION_ERROR_TYPES];
+export type ValidationErrorType =
+  (typeof VALIDATION_ERROR_TYPES)[keyof typeof VALIDATION_ERROR_TYPES];

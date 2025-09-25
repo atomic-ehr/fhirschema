@@ -21,7 +21,12 @@
     "build": "bun run build:clean && bun run build:types",
     "build:clean": "rm -rf dist",
     "build:types": "bunx tsc -p tsconfig.build.json",
-    "prepublishOnly": "bun run build"
+    "prepublishOnly": "bun run build",
+    "lint": "biome check --write",
+    "lint:unsafe": "biome lint --write --unsafe src test",
+    "format": "biome format --write src test package.json",
+    "check": "biome check src",
+    "check:fix": "biome check --fix src"
   },
   "repository": {
     "type": "git",
@@ -42,13 +47,12 @@
   },
   "homepage": "https://github.com/atomic-ehr/fhirschema#readme",
   "devDependencies": {
+    "@biomejs/biome": "2.2.4",
     "@types/bun": "latest",
-    "typescript": "^5.0.0",
-    "turndown": "^7.2.1"
+    "turndown": "^7.2.1",
+    "typescript": "^5.0.0"
   },
   "peerDependencies": {
     "typescript": "^5"
-  },
-  "dependencies": {
   }
 }

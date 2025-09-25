@@ -1,11 +1,11 @@
 {
-  "description" : "Base StructureDefinition for unsignedInt type: An integer with a value that is not negative (e.g. >= 0)",
-  "derivation" : "specialization",
-  "name" : "unsignedInt",
-  "type" : "unsignedInt",
-  "class" : "primitive-type",
-  "kind" : "primitive-type",
-  "url" : "http://hl7.org/fhir/StructureDefinition/unsignedInt",
-  "base" : "http://hl7.org/fhir/StructureDefinition/integer",
-  "version" : "4.0.1"
+  "description": "Base StructureDefinition for unsignedInt type: An integer with a value that is not negative (e.g. >= 0)",
+  "derivation": "specialization",
+  "name": "unsignedInt",
+  "type": "unsignedInt",
+  "class": "primitive-type",
+  "kind": "primitive-type",
+  "url": "http://hl7.org/fhir/StructureDefinition/unsignedInt",
+  "base": "http://hl7.org/fhir/StructureDefinition/integer",
+  "version": "4.0.1"
 }

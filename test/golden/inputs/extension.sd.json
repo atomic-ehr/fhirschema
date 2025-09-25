@@ -1,279 +1,277 @@
 {
-    "abstract": false,
-    "url": "http://hl7.org/fhir/StructureDefinition/Extension",
-    "id": "Extension",
-    "name": "Extension",
-    "extension": [
-        {
+  "abstract": false,
+  "url": "http://hl7.org/fhir/StructureDefinition/Extension",
+  "id": "Extension",
+  "name": "Extension",
+  "extension": [
+    {
+      "url": "http://hl7.org/fhir/StructureDefinition/structuredefinition-standards-status",
+      "valueCode": "normative"
+    },
+    {
+      "url": "http://hl7.org/fhir/StructureDefinition/structuredefinition-normative-version",
+      "valueCode": "4.0.0"
+    }
+  ],
+  "status": "active",
+  "kind": "complex-type",
+  "type": "Extension",
+  "baseDefinition": "http://hl7.org/fhir/StructureDefinition/Element",
+  "publisher": "HL7 FHIR Standard",
+  "mapping": [
+    {
+      "uri": "http://hl7.org/v3",
+      "name": "RIM Mapping",
+      "identity": "rim"
+    }
+  ],
+  "version": "4.0.1",
+  "meta": {
+    "lastUpdated": "2019-11-01T09:29:23.356+11:00"
+  },
+  "date": "2019-11-01T09:29:23+11:00",
+  "differential": {
+    "element": [
+      {
+        "min": 0,
+        "max": "*",
+        "path": "Extension",
+        "id": "Extension",
+        "short": "Optional Extensions Element",
+        "extension": [
+          {
             "url": "http://hl7.org/fhir/StructureDefinition/structuredefinition-standards-status",
             "valueCode": "normative"
-        },
-        {
+          },
+          {
             "url": "http://hl7.org/fhir/StructureDefinition/structuredefinition-normative-version",
             "valueCode": "4.0.0"
-        }
-    ],
-    "status": "active",
-    "kind": "complex-type",
-    "type": "Extension",
-    "baseDefinition": "http://hl7.org/fhir/StructureDefinition/Element",
-    "publisher": "HL7 FHIR Standard",
-    "mapping": [
-        {
-            "uri": "http://hl7.org/v3",
-            "name": "RIM Mapping",
+          }
+        ],
+        "definition": "Optional Extension Element - found in all resources.",
+        "mapping": [
+          {
+            "map": "N/A",
             "identity": "rim"
-        }
-    ],
-    "version": "4.0.1",
-    "meta": {
-        "lastUpdated": "2019-11-01T09:29:23.356+11:00"
-    },
-    "date": "2019-11-01T09:29:23+11:00",
-    "differential": {
-        "element": [
-            {
-                "min": 0,
-                "max": "*",
-                "path": "Extension",
-                "id": "Extension",
-                "short": "Optional Extensions Element",
-                "extension": [
-                    {
-                        "url": "http://hl7.org/fhir/StructureDefinition/structuredefinition-standards-status",
-                        "valueCode": "normative"
-                    },
-                    {
-                        "url": "http://hl7.org/fhir/StructureDefinition/structuredefinition-normative-version",
-                        "valueCode": "4.0.0"
-                    }
-                ],
-                "definition": "Optional Extension Element - found in all resources.",
-                "mapping": [
-                    {
-                        "map": "N/A",
-                        "identity": "rim"
-                    }
-                ],
-                "constraint": [
-                    {
-                        "key": "ext-1",
-                        "human": "Must have either extensions or value[x], not both",
-                        "xpath": "exists(f:extension)!=exists(f:*[starts-with(local-name(.), 'value')])",
-                        "severity": "error",
-                        "expression": "extension.exists() != value.exists()"
-                    }
-                ]
-            },
-            {
-                "min": 1,
-                "max": "1",
-                "path": "Extension.url",
-                "id": "Extension.url",
-                "short": "identifies the meaning of the extension",
-                "representation": [
-                    "xmlAttr"
-                ],
-                "definition": "Source of the definition for the extension code - a logical name or a URL.",
-                "type": [
-                    {
-                        "code": "http://hl7.org/fhirpath/System.String",
-                        "extension": [
-                            {
-                                "url": "http://hl7.org/fhir/StructureDefinition/structuredefinition-fhir-type",
-                                "valueUrl": "uri"
-                            }
-                        ]
-                    }
-                ],
-                "mapping": [
-                    {
-                        "map": "N/A",
-                        "identity": "rim"
-                    }
-                ],
-                "comment": "The definition may point directly to a computable or human-readable definition of the extensibility codes, or it may be a logical URI as declared in some other specification. The definition SHALL be a URI for the Structure Definition defining the extension."
-            },
-            {
-                "id": "Extension.value[x]",
-                "max": "1",
-                "min": 0,
-                "path": "Extension.value[x]",
-                "type": [
-                    {
-                        "code": "base64Binary"
-                    },
-                    {
-                        "code": "boolean"
-                    },
-                    {
-                        "code": "canonical"
-                    },
-                    {
-                        "code": "code"
-                    },
-                    {
-                        "code": "date"
-                    },
-                    {
-                        "code": "dateTime"
-                    },
-                    {
-                        "code": "decimal"
-                    },
-                    {
-                        "code": "id"
-                    },
-                    {
-                        "code": "instant"
-                    },
-                    {
-                        "code": "integer"
-                    },
-                    {
-                        "code": "markdown"
-                    },
-                    {
-                        "code": "oid"
-                    },
-                    {
-                        "code": "positiveInt"
-                    },
-                    {
-                        "code": "string"
-                    },
-                    {
-                        "code": "time"
-                    },
-                    {
-                        "code": "unsignedInt"
-                    },
-                    {
-                        "code": "uri"
-                    },
-                    {
-                        "code": "url"
-                    },
-                    {
-                        "code": "uuid"
-                    },
-                    {
-                        "code": "Address"
-                    },
-                    {
-                        "code": "Age"
-                    },
-                    {
-                        "code": "Annotation"
-                    },
-                    {
-                        "code": "Attachment"
-                    },
-                    {
-                        "code": "CodeableConcept"
-                    },
-                    {
-                        "code": "Coding"
-                    },
-                    {
-                        "code": "ContactPoint"
-                    },
-                    {
-                        "code": "Count"
-                    },
-                    {
-                        "code": "Distance"
-                    },
-                    {
-                        "code": "Duration"
-                    },
-                    {
-                        "code": "HumanName"
-                    },
-                    {
-                        "code": "Identifier"
-                    },
-                    {
-                        "code": "Money"
-                    },
-                    {
-                        "code": "Period"
-                    },
-                    {
-                        "code": "Quantity"
-                    },
-                    {
-                        "code": "Range"
-                    },
-                    {
-                        "code": "Ratio"
-                    },
-                    {
-                        "code": "Reference"
-                    },
-                    {
-                        "code": "SampledData"
-                    },
-                    {
-                        "code": "Signature"
-                    },
-                    {
-                        "code": "Timing"
-                    },
-                    {
-                        "code": "ContactDetail"
-                    },
-                    {
-                        "code": "Contributor"
-                    },
-                    {
-                        "code": "DataRequirement"
-                    },
-                    {
-                        "code": "Expression"
-                    },
-                    {
-                        "code": "ParameterDefinition"
-                    },
-                    {
-                        "code": "RelatedArtifact"
-                    },
-                    {
-                        "code": "TriggerDefinition"
-                    },
-                    {
-                        "code": "UsageContext"
-                    },
-                    {
-                        "code": "Dosage"
-                    },
-                    {
-                        "code": "Meta"
-                    }
-                ],
-                "short": "Value of extension",
-                "mapping": [
-                    {
-                        "map": "N/A",
-                        "identity": "rim"
-                    }
-                ],
-                "definition": "Value of extension - must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list)."
-            }
+          }
+        ],
+        "constraint": [
+          {
+            "key": "ext-1",
+            "human": "Must have either extensions or value[x], not both",
+            "xpath": "exists(f:extension)!=exists(f:*[starts-with(local-name(.), 'value')])",
+            "severity": "error",
+            "expression": "extension.exists() != value.exists()"
+          }
         ]
-    },
-    "resourceType": "StructureDefinition",
-    "contact": [
-        {
-            "telecom": [
-                {
-                    "value": "http://hl7.org/fhir",
-                    "system": "url"
-                }
+      },
+      {
+        "min": 1,
+        "max": "1",
+        "path": "Extension.url",
+        "id": "Extension.url",
+        "short": "identifies the meaning of the extension",
+        "representation": ["xmlAttr"],
+        "definition": "Source of the definition for the extension code - a logical name or a URL.",
+        "type": [
+          {
+            "code": "http://hl7.org/fhirpath/System.String",
+            "extension": [
+              {
+                "url": "http://hl7.org/fhir/StructureDefinition/structuredefinition-fhir-type",
+                "valueUrl": "uri"
+              }
             ]
+          }
+        ],
+        "mapping": [
+          {
+            "map": "N/A",
+            "identity": "rim"
+          }
+        ],
+        "comment": "The definition may point directly to a computable or human-readable definition of the extensibility codes, or it may be a logical URI as declared in some other specification. The definition SHALL be a URI for the Structure Definition defining the extension."
+      },
+      {
+        "id": "Extension.value[x]",
+        "max": "1",
+        "min": 0,
+        "path": "Extension.value[x]",
+        "type": [
+          {
+            "code": "base64Binary"
+          },
+          {
+            "code": "boolean"
+          },
+          {
+            "code": "canonical"
+          },
+          {
+            "code": "code"
+          },
+          {
+            "code": "date"
+          },
+          {
+            "code": "dateTime"
+          },
+          {
+            "code": "decimal"
+          },
+          {
+            "code": "id"
+          },
+          {
+            "code": "instant"
+          },
+          {
+            "code": "integer"
+          },
+          {
+            "code": "markdown"
+          },
+          {
+            "code": "oid"
+          },
+          {
+            "code": "positiveInt"
+          },
+          {
+            "code": "string"
+          },
+          {
+            "code": "time"
+          },
+          {
+            "code": "unsignedInt"
+          },
+          {
+            "code": "uri"
+          },
+          {
+            "code": "url"
+          },
+          {
+            "code": "uuid"
+          },
+          {
+            "code": "Address"
+          },
+          {
+            "code": "Age"
+          },
+          {
+            "code": "Annotation"
+          },
+          {
+            "code": "Attachment"
+          },
+          {
+            "code": "CodeableConcept"
+          },
+          {
+            "code": "Coding"
+          },
+          {
+            "code": "ContactPoint"
+          },
+          {
+            "code": "Count"
+          },
+          {
+            "code": "Distance"
+          },
+          {
+            "code": "Duration"
+          },
+          {
+            "code": "HumanName"
+          },
+          {
+            "code": "Identifier"
+          },
+          {
+            "code": "Money"
+          },
+          {
+            "code": "Period"
+          },
+          {
+            "code": "Quantity"
+          },
+          {
+            "code": "Range"
+          },
+          {
+            "code": "Ratio"
+          },
+          {
+            "code": "Reference"
+          },
+          {
+            "code": "SampledData"
+          },
+          {
+            "code": "Signature"
+          },
+          {
+            "code": "Timing"
+          },
+          {
+            "code": "ContactDetail"
+          },
+          {
+            "code": "Contributor"
+          },
+          {
+            "code": "DataRequirement"
+          },
+          {
+            "code": "Expression"
+          },
+          {
+            "code": "ParameterDefinition"
+          },
+          {
+            "code": "RelatedArtifact"
+          },
+          {
+            "code": "TriggerDefinition"
+          },
+          {
+            "code": "UsageContext"
+          },
+          {
+            "code": "Dosage"
+          },
+          {
+            "code": "Meta"
+          }
+        ],
+        "short": "Value of extension",
+        "mapping": [
+          {
+            "map": "N/A",
+            "identity": "rim"
+          }
+        ],
+        "definition": "Value of extension - must be one of a constrained set of the data types (see [Extensibility](extensibility.html) for a list)."
+      }
+    ]
+  },
+  "resourceType": "StructureDefinition",
+  "contact": [
+    {
+      "telecom": [
+        {
+          "value": "http://hl7.org/fhir",
+          "system": "url"
         }
-    ],
-    "derivation": "specialization",
-    "description": "Base StructureDefinition for Extension Type: Optional Extension Element - found in all resources.",
-    "purpose": "The ability to add extensions in a structured way is what keeps FHIR resources simple."
+      ]
+    }
+  ],
+  "derivation": "specialization",
+  "description": "Base StructureDefinition for Extension Type: Optional Extension Element - found in all resources.",
+  "purpose": "The ability to add extensions in a structured way is what keeps FHIR resources simple."
 }
