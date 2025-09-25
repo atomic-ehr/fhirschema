@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'bun:test';
-import { parsePath, getCommonPath, enrichPath } from '../../src/converter/path-parser';
+import { describe, expect, it } from 'bun:test';
+import { enrichPath, getCommonPath, parsePath } from '../../src/converter/path-parser';
 
 describe('Path Parser', () => {
   describe('parsePath', () => {
@@ -23,12 +23,12 @@ describe('Path Parser', () => {
         path: 'R.a.b',
         slicing: {
           discriminator: [{ type: 'pattern', path: 'code' }],
-          rules: 'open'
+          rules: 'open',
         },
         min: 1,
-        max: '*'
+        max: '*',
       });
-      
+
       expect(result).toEqual([
         { el: 'a' },
         {
@@ -36,9 +36,9 @@ describe('Path Parser', () => {
           slicing: {
             discriminator: [{ type: 'pattern', path: 'code' }],
             rules: 'open',
-            min: 1
-          }
-        }
+            min: 1,
+          },
+        },
       ]);
     });
 
@@ -47,17 +47,19 @@ describe('Path Parser', () => {
         path: 'R.a',
         sliceName: 's1',
         min: 0,
-        max: '2'
+        max: '2',
       });
-      
-      expect(result).toEqual([{
-        el: 'a',
-        sliceName: 's1',
-        slice: {
-          min: 0,
-          max: 2
-        }
-      }]);
+
+      expect(result).toEqual([
+        {
+          el: 'a',
+          sliceName: 's1',
+          slice: {
+            min: 0,
+            max: 2,
+          },
+        },
+      ]);
     });
   });
 
@@ -65,7 +67,7 @@ describe('Path Parser', () => {
     it('should find common path between two paths', () => {
       const path1 = [{ el: 'a' }, { el: 'b' }, { el: 'c' }];
       const path2 = [{ el: 'a' }, { el: 'b' }, { el: 'd' }];
-      
+
       const result = getCommonPath(path1, path2);
       expect(result).toEqual([{ el: 'a' }, { el: 'b' }]);
     });
@@ -73,7 +75,7 @@ describe('Path Parser', () => {
     it('should handle paths with no common elements', () => {
       const path1 = [{ el: 'a' }];
       const path2 = [{ el: 'b' }];
-      
+
       const result = getCommonPath(path1, path2);
       expect(result).toEqual([]);
     });
@@ -92,39 +94,25 @@ describe('Path Parser', () => {
 
   describe('enrichPath', () => {
     it('should inherit slicing info from previous path', () => {
-      const prevPath = [
-        { el: 'a', slicing: { rules: 'open' } },
-        { el: 'b' }
-      ];
-      const newPath = [
-        { el: 'a' },
-        { el: 'b' },
-        { el: 'c' }
-      ];
-      
+      const prevPath = [{ el: 'a', slicing: { rules: 'open' } }, { el: 'b' }];
+      const newPath = [{ el: 'a' }, { el: 'b' }, { el: 'c' }];
+
       const result = enrichPath(prevPath, newPath);
-      expect(result).toEqual([
-        { el: 'a', slicing: { rules: 'open' } },
-        { el: 'b' },
-        { el: 'c' }
-      ]);
+      expect(result).toEqual([{ el: 'a', slicing: { rules: 'open' } }, { el: 'b' }, { el: 'c' }]);
     });
 
     it('should inherit sliceName from previous path', () => {
       const prevPath = [{ el: 'a', sliceName: 's1' }];
       const newPath = [{ el: 'a' }, { el: 'b' }];
-      
+
       const result = enrichPath(prevPath, newPath);
-      expect(result).toEqual([
-        { el: 'a', sliceName: 's1' },
-        { el: 'b' }
-      ]);
+      expect(result).toEqual([{ el: 'a', sliceName: 's1' }, { el: 'b' }]);
     });
 
     it('should handle different paths', () => {
       const prevPath = [{ el: 'a' }];
       const newPath = [{ el: 'b' }];
-      
+
       const result = enrichPath(prevPath, newPath);
       expect(result).toEqual([{ el: 'b' }]);
     });

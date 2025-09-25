@@ -115,11 +115,14 @@ export interface FHIRSchemaElement {
     type: string;
     value: any;
   };
-  constraint?: Record<string, {
-    expression: string;
-    human: string;
-    severity: string;
-  }>;
+  constraint?: Record<
+    string,
+    {
+      expression: string;
+      human: string;
+      severity: string;
+    }
+  >;
   elements?: Record<string, FHIRSchemaElement>;
   choiceOf?: string;
   choices?: string[];
@@ -136,12 +139,15 @@ export interface FHIRSchemaElement {
     }>;
     rules?: string;
     ordered?: boolean;
-    slices?: Record<string, {
-      match?: any;
-      schema?: FHIRSchemaElement;
-      min?: number;
-      max?: number;
-    }>;
+    slices?: Record<
+      string,
+      {
+        match?: any;
+        schema?: FHIRSchemaElement;
+        min?: number;
+        max?: number;
+      }
+    >;
   };
   extensions?: Record<string, FHIRSchemaElement>;
   required?: string[];
@@ -169,11 +175,14 @@ export interface FHIRSchema {
   required?: string[];
   excluded?: string[];
   extensions?: Record<string, FHIRSchemaElement>;
-  constraint?: Record<string, {
-    expression: string;
-    human: string;
-    severity: string;
-  }>;
+  constraint?: Record<
+    string,
+    {
+      expression: string;
+      human: string;
+      severity: string;
+    }
+  >;
 }
 
 export interface PathComponent {
@@ -183,7 +192,7 @@ export interface PathComponent {
   slice?: any;
 }
 
-export type Action = 
+export type Action =
   | { type: 'enter'; el: string }
   | { type: 'exit'; el: string }
   | { type: 'enter-slice'; sliceName: string }
