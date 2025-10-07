@@ -99,7 +99,68 @@ export interface StructureDefinition {
   };
 }
 
-export interface FHIRSchemaElement {
+type FhirOpenTypeSufix =
+  // https://hl7.org/fhir/datatypes.html#open
+  // Primitive Types
+  | "Base64Binary"
+  | "Boolean"
+  | "Canonical"
+  | "Code"
+  | "Date"
+  | "DateTime"
+  | "Decimal"
+  | "Id"
+  | "Instant"
+  | "Integer"
+  | "Integer64"
+  | "Markdown"
+  | "Oid"
+  | "PositiveInt"
+  | "String"
+  | "Time"
+  | "UnsignedInt"
+  | "Uri"
+  | "Url"
+  | "Uuid"
+  // Datatypes
+  | "Address"
+  | "Age"
+  | "Annotation"
+  | "Attachment"
+  | "CodeableConcept"
+  | "CodeableReference"
+  | "Coding"
+  | "ContactPoint"
+  | "Count"
+  | "Distance"
+  | "Duration"
+  | "HumanName"
+  | "Identifier"
+  | "Money"
+  | "Period"
+  | "Quantity"
+  | "Range"
+  | "Ratio"
+  | "RatioRange"
+  | "Reference"
+  | "SampledData"
+  | "Signature"
+  | "Timing"
+  // MetaDataTypes
+  | "ContactDetail"
+  | "DataRequirement"
+  | "Expression"
+  | "ParameterDefinition"
+  | "RelatedArtifact"
+  | "TriggerDefinition"
+  | "UsageContext"
+  | "Availability"
+  | "ExtendedContactDetail"
+  // Special Types
+  | "Dosage"
+  | "Meta";
+
+export type FHIRSchemaElement = {
   type?: string;
   array?: boolean;
   min?: number;
@@ -111,19 +172,14 @@ export interface FHIRSchemaElement {
     valueSet?: string;
     bindingName?: string;
   };
-  pattern?: {
-    type: string;
-    value: any;
-  };
-  constraint?: Record<
-    string,
-    {
+  constraint?: {
+    [key in string]: {
       expression: string;
       human: string;
       severity: string;
-    }
-  >;
-  elements?: Record<string, FHIRSchemaElement>;
+    };
+  };
+  elements?: { [key in string]: FHIRSchemaElement };
   choiceOf?: string;
   choices?: string[];
   url?: string;
@@ -133,28 +189,33 @@ export interface FHIRSchemaElement {
   isSummary?: boolean;
   elementReference?: string[];
   slicing?: {
-    discriminator?: Array<{
-      type: string;
-      path: string;
-    }>;
+    discriminator?: { type: string; path: string }[];
     rules?: string;
     ordered?: boolean;
-    slices?: Record<
-      string,
-      {
-        match?: any;
+    slices?: {
+      [key in string]: {
+        match?: { type: string; value: unknown }[];
         schema?: FHIRSchemaElement;
         min?: number;
         max?: number;
-      }
-    >;
+      };
+    };
   };
   extensions?: Record<string, FHIRSchemaElement>;
   required?: string[];
   excluded?: string[];
   _required?: boolean; // Internal flag
   index?: number; // For tracking element order
-}
+} & {
+  //defaultValue[x] (https://hl7.org/fhir/elementdefinition-definitions.html#ElementDefinition.defaultValue_x_)
+  [key in `defaultValue${FhirOpenTypeSufix}`]?: unknown;
+} & {
+  //fixed[x] (https://hl7.org/fhir/elementdefinition-definitions.html#ElementDefinition.fixed_x_)
+  [key in `fixed${FhirOpenTypeSufix}`]?: unknown;
+} & {
+  //pattern[x] (https://hl7.org/fhir/elementdefinition-definitions.html#ElementDefinition.pattern_x_)
+  [key in `pattern${FhirOpenTypeSufix}`]?: unknown;
+};
 
 export interface PackageMeta {
   package: string;
@@ -170,13 +231,12 @@ export interface FHIRSchema {
   derivation?: 'specialization' | 'constraint';
   base?: string;
   abstract?: boolean;
-  class: string;
   description?: string;
   package_name?: string;
   package_version?: string;
   package_id?: string;
   package_meta?: PackageMeta;
-  elements?: Record<string, FHIRSchemaElement>;
+  elements?: { [key in string]?: FHIRSchemaElement };
   required?: string[];
   excluded?: string[];
   extensions?: Record<string, FHIRSchemaElement>;
@@ -188,7 +248,7 @@ export interface FHIRSchema {
       severity: string;
     }
   >;
-}
+};
 
 export interface PathComponent {
   el: string;
@@ -198,10 +258,10 @@ export interface PathComponent {
 }
 
 export type Action =
-  | { type: 'enter'; el: string }
-  | { type: 'exit'; el: string }
-  | { type: 'enter-slice'; sliceName: string }
-  | { type: 'exit-slice'; sliceName: string; slicing?: any; slice?: any };
+  | { type: "enter"; el: string }
+  | { type: "exit"; el: string }
+  | { type: "enter-slice"; sliceName: string }
+  | { type: "exit-slice"; sliceName: string; slicing?: any; slice?: any };
 
 export interface ConversionContext {
   package_meta?: any;

@@ -1,0 +1,472 @@
+{
+  "url": "http://hl7.org/fhir/us/core/StructureDefinition/us-core-vital-signs",
+  "derivedFrom": "StructureDefinition/a97d2a04-7c24-4e2c-91e3-1d719c661a47",
+  "id": "c293fe60-5b70-433c-af98-f120562570dc",
+  "base": "http://hl7.org/fhir/StructureDefinition/vitalsigns",
+  "name": "us-core-vital-signs",
+  "extension": [
+    {
+      "url": "http://hl7.org/fhir/StructureDefinition/structuredefinition-wg",
+      "valueCode": "cgp"
+    },
+    {
+      "url": "http://hl7.org/fhir/StructureDefinition/structuredefinition-fmm",
+      "valueInteger": 3,
+      "_valueInteger": {
+        "extension": [
+          {
+            "url": "http://hl7.org/fhir/StructureDefinition/structuredefinition-conformance-derivedFrom",
+            "valueCanonical": "http://hl7.org/fhir/us/core/ImplementationGuide/hl7.fhir.us.core"
+          }
+        ]
+      }
+    },
+    {
+      "url": "http://hl7.org/fhir/StructureDefinition/structuredefinition-standards-status",
+      "valueCode": "trial-use",
+      "_valueCode": {
+        "extension": [
+          {
+            "url": "http://hl7.org/fhir/StructureDefinition/structuredefinition-conformance-derivedFrom",
+            "valueCanonical": "http://hl7.org/fhir/us/core/ImplementationGuide/hl7.fhir.us.core"
+          }
+        ]
+      }
+    }
+  ],
+  "kind": "resource",
+  "required": ["category"],
+  "type": "Observation",
+  "version": "8.0.0-ballot",
+  "resourceType": "FHIRSchema",
+  "elements": {
+    "valuePeriod": {
+      "type": "Period",
+      "short": "Vital Signs Value",
+      "binding": {
+        "strength": "extensible",
+        "valueSet": "http://hl7.org/fhir/ValueSet/ucum-vitals-common",
+        "valueSetVersion": "4.0.1"
+      },
+      "choiceOf": "value",
+      "definition": "Vital Signs value are typically recorded using the Quantity data type.",
+      "mustSupport": true
+    },
+    "valueSampledData": {
+      "type": "SampledData",
+      "short": "Vital Signs Value",
+      "binding": {
+        "strength": "extensible",
+        "valueSet": "http://hl7.org/fhir/ValueSet/ucum-vitals-common",
+        "valueSetVersion": "4.0.1"
+      },
+      "choiceOf": "value",
+      "definition": "Vital Signs value are typically recorded using the Quantity data type.",
+      "mustSupport": true
+    },
+    "effectiveDateTime": {
+      "type": "dateTime",
+      "short": "Often just a dateTime for Vital Signs",
+      "choiceOf": "effective",
+      "mustSupport": true
+    },
+    "valueString": {
+      "type": "string",
+      "short": "Vital Signs Value",
+      "binding": {
+        "strength": "extensible",
+        "valueSet": "http://hl7.org/fhir/ValueSet/ucum-vitals-common",
+        "valueSetVersion": "4.0.1"
+      },
+      "choiceOf": "value",
+      "definition": "Vital Signs value are typically recorded using the Quantity data type.",
+      "mustSupport": true
+    },
+    "valueRatio": {
+      "type": "Ratio",
+      "short": "Vital Signs Value",
+      "binding": {
+        "strength": "extensible",
+        "valueSet": "http://hl7.org/fhir/ValueSet/ucum-vitals-common",
+        "valueSetVersion": "4.0.1"
+      },
+      "choiceOf": "value",
+      "definition": "Vital Signs value are typically recorded using the Quantity data type.",
+      "mustSupport": true
+    },
+    "effectivePeriod": {
+      "type": "Period",
+      "short": "Often just a dateTime for Vital Signs",
+      "choiceOf": "effective",
+      "mustSupport": true
+    },
+    "dataAbsentReason": {
+      "mustSupport": true
+    },
+    "valueRange": {
+      "type": "Range",
+      "short": "Vital Signs Value",
+      "binding": {
+        "strength": "extensible",
+        "valueSet": "http://hl7.org/fhir/ValueSet/ucum-vitals-common",
+        "valueSetVersion": "4.0.1"
+      },
+      "choiceOf": "value",
+      "definition": "Vital Signs value are typically recorded using the Quantity data type.",
+      "mustSupport": true
+    },
+    "component": {
+      "short": "Component observations",
+      "elements": {
+        "valuePeriod": {
+          "type": "Period",
+          "short": "Vital Sign Component Value",
+          "binding": {
+            "strength": "extensible",
+            "valueSet": "http://hl7.org/fhir/ValueSet/ucum-vitals-common",
+            "valueSetVersion": "4.0.1"
+          },
+          "choiceOf": "value",
+          "definition": "Vital Signs value are typically recorded using the Quantity data type. For supporting observations such as cuff size could use other datatypes such as CodeableConcept.",
+          "mustSupport": true
+        },
+        "valueSampledData": {
+          "type": "SampledData",
+          "short": "Vital Sign Component Value",
+          "binding": {
+            "strength": "extensible",
+            "valueSet": "http://hl7.org/fhir/ValueSet/ucum-vitals-common",
+            "valueSetVersion": "4.0.1"
+          },
+          "choiceOf": "value",
+          "definition": "Vital Signs value are typically recorded using the Quantity data type. For supporting observations such as cuff size could use other datatypes such as CodeableConcept.",
+          "mustSupport": true
+        },
+        "valueString": {
+          "type": "string",
+          "short": "Vital Sign Component Value",
+          "binding": {
+            "strength": "extensible",
+            "valueSet": "http://hl7.org/fhir/ValueSet/ucum-vitals-common",
+            "valueSetVersion": "4.0.1"
+          },
+          "choiceOf": "value",
+          "definition": "Vital Signs value are typically recorded using the Quantity data type. For supporting observations such as cuff size could use other datatypes such as CodeableConcept.",
+          "mustSupport": true
+        },
+        "valueRatio": {
+          "type": "Ratio",
+          "short": "Vital Sign Component Value",
+          "binding": {
+            "strength": "extensible",
+            "valueSet": "http://hl7.org/fhir/ValueSet/ucum-vitals-common",
+            "valueSetVersion": "4.0.1"
+          },
+          "choiceOf": "value",
+          "definition": "Vital Signs value are typically recorded using the Quantity data type. For supporting observations such as cuff size could use other datatypes such as CodeableConcept.",
+          "mustSupport": true
+        },
+        "dataAbsentReason": {
+          "mustSupport": true
+        },
+        "valueRange": {
+          "type": "Range",
+          "short": "Vital Sign Component Value",
+          "binding": {
+            "strength": "extensible",
+            "valueSet": "http://hl7.org/fhir/ValueSet/ucum-vitals-common",
+            "valueSetVersion": "4.0.1"
+          },
+          "choiceOf": "value",
+          "definition": "Vital Signs value are typically recorded using the Quantity data type. For supporting observations such as cuff size could use other datatypes such as CodeableConcept.",
+          "mustSupport": true
+        },
+        "valueDateTime": {
+          "type": "dateTime",
+          "short": "Vital Sign Component Value",
+          "binding": {
+            "strength": "extensible",
+            "valueSet": "http://hl7.org/fhir/ValueSet/ucum-vitals-common",
+            "valueSetVersion": "4.0.1"
+          },
+          "choiceOf": "value",
+          "definition": "Vital Signs value are typically recorded using the Quantity data type. For supporting observations such as cuff size could use other datatypes such as CodeableConcept.",
+          "mustSupport": true
+        },
+        "value": {
+          "choices": [
+            "valueQuantity",
+            "valueCodeableConcept",
+            "valueString",
+            "valueBoolean",
+            "valueInteger",
+            "valueRange",
+            "valueRatio",
+            "valueSampledData",
+            "valueTime",
+            "valueDateTime",
+            "valuePeriod"
+          ]
+        },
+        "valueBoolean": {
+          "type": "boolean",
+          "short": "Vital Sign Component Value",
+          "binding": {
+            "strength": "extensible",
+            "valueSet": "http://hl7.org/fhir/ValueSet/ucum-vitals-common",
+            "valueSetVersion": "4.0.1"
+          },
+          "choiceOf": "value",
+          "definition": "Vital Signs value are typically recorded using the Quantity data type. For supporting observations such as cuff size could use other datatypes such as CodeableConcept.",
+          "mustSupport": true
+        },
+        "valueCodeableConcept": {
+          "type": "CodeableConcept",
+          "short": "Vital Sign Component Value",
+          "binding": {
+            "strength": "extensible",
+            "valueSet": "http://hl7.org/fhir/ValueSet/ucum-vitals-common",
+            "valueSetVersion": "4.0.1"
+          },
+          "choiceOf": "value",
+          "definition": "Vital Signs value are typically recorded using the Quantity data type. For supporting observations such as cuff size could use other datatypes such as CodeableConcept.",
+          "mustSupport": true
+        },
+        "valueTime": {
+          "type": "time",
+          "short": "Vital Sign Component Value",
+          "binding": {
+            "strength": "extensible",
+            "valueSet": "http://hl7.org/fhir/ValueSet/ucum-vitals-common",
+            "valueSetVersion": "4.0.1"
+          },
+          "choiceOf": "value",
+          "definition": "Vital Signs value are typically recorded using the Quantity data type. For supporting observations such as cuff size could use other datatypes such as CodeableConcept.",
+          "mustSupport": true
+        },
+        "valueQuantity": {
+          "type": "Quantity",
+          "short": "Vital Sign Component Value",
+          "binding": {
+            "strength": "extensible",
+            "valueSet": "http://hl7.org/fhir/ValueSet/ucum-vitals-common",
+            "valueSetVersion": "4.0.1"
+          },
+          "choiceOf": "value",
+          "definition": "Vital Signs value are typically recorded using the Quantity data type. For supporting observations such as cuff size could use other datatypes such as CodeableConcept.",
+          "mustSupport": true
+        },
+        "code": {
+          "short": "Coded vital sign result type",
+          "binding": {
+            "strength": "extensible",
+            "valueSet": "http://cts.nlm.nih.gov/fhir/ValueSet/2.16.840.1.113883.3.88.12.80.62"
+          },
+          "mustSupport": true
+        },
+        "valueInteger": {
+          "type": "integer",
+          "short": "Vital Sign Component Value",
+          "binding": {
+            "strength": "extensible",
+            "valueSet": "http://hl7.org/fhir/ValueSet/ucum-vitals-common",
+            "valueSetVersion": "4.0.1"
+          },
+          "choiceOf": "value",
+          "definition": "Vital Signs value are typically recorded using the Quantity data type. For supporting observations such as cuff size could use other datatypes such as CodeableConcept.",
+          "mustSupport": true
+        }
+      },
+      "definition": "Used when reporting component observation such as systolic and diastolic blood pressure.",
+      "mustSupport": true
+    },
+    "valueDateTime": {
+      "type": "dateTime",
+      "short": "Vital Signs Value",
+      "binding": {
+        "strength": "extensible",
+        "valueSet": "http://hl7.org/fhir/ValueSet/ucum-vitals-common",
+        "valueSetVersion": "4.0.1"
+      },
+      "choiceOf": "value",
+      "definition": "Vital Signs value are typically recorded using the Quantity data type.",
+      "mustSupport": true
+    },
+    "value": {
+      "choices": [
+        "valueQuantity",
+        "valueCodeableConcept",
+        "valueString",
+        "valueBoolean",
+        "valueInteger",
+        "valueRange",
+        "valueRatio",
+        "valueSampledData",
+        "valueTime",
+        "valueDateTime",
+        "valuePeriod"
+      ]
+    },
+    "valueBoolean": {
+      "type": "boolean",
+      "short": "Vital Signs Value",
+      "binding": {
+        "strength": "extensible",
+        "valueSet": "http://hl7.org/fhir/ValueSet/ucum-vitals-common",
+        "valueSetVersion": "4.0.1"
+      },
+      "choiceOf": "value",
+      "definition": "Vital Signs value are typically recorded using the Quantity data type.",
+      "mustSupport": true
+    },
+    "status": {
+      "mustSupport": true
+    },
+    "subject": {
+      "type": "Reference",
+      "refers": [
+        "http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient"
+      ],
+      "mustSupport": true
+    },
+    "valueCodeableConcept": {
+      "type": "CodeableConcept",
+      "short": "Vital Signs Value",
+      "binding": {
+        "strength": "extensible",
+        "valueSet": "http://hl7.org/fhir/ValueSet/ucum-vitals-common",
+        "valueSetVersion": "4.0.1"
+      },
+      "choiceOf": "value",
+      "definition": "Vital Signs value are typically recorded using the Quantity data type.",
+      "mustSupport": true
+    },
+    "valueTime": {
+      "type": "time",
+      "short": "Vital Signs Value",
+      "binding": {
+        "strength": "extensible",
+        "valueSet": "http://hl7.org/fhir/ValueSet/ucum-vitals-common",
+        "valueSetVersion": "4.0.1"
+      },
+      "choiceOf": "value",
+      "definition": "Vital Signs value are typically recorded using the Quantity data type.",
+      "mustSupport": true
+    },
+    "category": {
+      "type": "CodeableConcept",
+      "array": true,
+      "slicing": {
+        "rules": "open",
+        "slices": {
+          "VSCat": {
+            "max": 1,
+            "min": 1,
+            "match": [
+              {
+                "type": "pattern",
+                "value": {
+                  "coding": {
+                    "code": "vital-signs",
+                    "system": "http://terminology.hl7.org/CodeSystem/observation-category"
+                  }
+                }
+              }
+            ],
+            "schema": {
+              "type": "CodeableConcept",
+              "elements": {
+                "coding": {
+                  "type": "Coding",
+                  "array": true,
+                  "elements": {
+                    "code": {
+                      "max": 1,
+                      "type": "code",
+                      "fixed": "vital-signs",
+                      "short": "Symbol in syntax defined by the system",
+                      "mustSupport": true
+                    },
+                    "system": {
+                      "max": 1,
+                      "type": "uri",
+                      "fixed": "http://terminology.hl7.org/CodeSystem/observation-category",
+                      "short": "Identity of the terminology system",
+                      "mustSupport": true
+                    }
+                  },
+                  "required": ["system", "code"],
+                  "mustSupport": true
+                }
+              },
+              "required": ["coding"],
+              "mustSupport": true
+            },
+            "sliceIsConstraining": true
+          }
+        },
+        "ordered": false,
+        "discriminator": [
+          {
+            "path": "coding.code",
+            "type": "value"
+          },
+          {
+            "path": "coding.system",
+            "type": "value"
+          }
+        ],
+        "constraining-slice?": true
+      },
+      "mustSupport": true
+    },
+    "valueQuantity": {
+      "type": "Quantity",
+      "short": "Vital Signs Value",
+      "binding": {
+        "strength": "extensible",
+        "valueSet": "http://hl7.org/fhir/ValueSet/ucum-vitals-common",
+        "valueSetVersion": "4.0.1"
+      },
+      "choiceOf": "value",
+      "definition": "Vital Signs value are typically recorded using the Quantity data type.",
+      "mustSupport": true
+    },
+    "code": {
+      "short": "Coded vital sign result type",
+      "binding": {
+        "strength": "extensible",
+        "valueSet": "http://cts.nlm.nih.gov/fhir/ValueSet/2.16.840.1.113883.3.88.12.80.62"
+      },
+      "mustSupport": true
+    },
+    "effective": {
+      "choices": ["effectiveDateTime", "effectivePeriod"]
+    },
+    "valueInteger": {
+      "type": "integer",
+      "short": "Vital Signs Value",
+      "binding": {
+        "strength": "extensible",
+        "valueSet": "http://hl7.org/fhir/ValueSet/ucum-vitals-common",
+        "valueSetVersion": "4.0.1"
+      },
+      "choiceOf": "value",
+      "definition": "Vital Signs value are typically recorded using the Quantity data type.",
+      "mustSupport": true
+    },
+    "performer": {
+      "type": "Reference",
+      "refers": [
+        "http://hl7.org/fhir/us/core/StructureDefinition/us-core-practitioner",
+        "http://hl7.org/fhir/us/core/StructureDefinition/us-core-organization",
+        "http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient",
+        "http://hl7.org/fhir/StructureDefinition/PractitionerRole",
+        "http://hl7.org/fhir/us/core/StructureDefinition/us-core-careteam",
+        "http://hl7.org/fhir/us/core/StructureDefinition/us-core-relatedperson"
+      ],
+      "mustSupport": true
+    }
+  },
+  "derivation": "constraint"
+}

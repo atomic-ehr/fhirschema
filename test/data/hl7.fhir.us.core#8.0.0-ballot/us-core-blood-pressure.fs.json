@@ -1,0 +1,212 @@
+{
+  "url": "http://hl7.org/fhir/us/core/StructureDefinition/us-core-blood-pressure",
+  "derivedFrom": "StructureDefinition/dd27e498-d100-4a89-8c54-177b2a1d86bf",
+  "id": "684d0a8c-3500-4f70-bf72-479551c9def3",
+  "base": "http://hl7.org/fhir/us/core/StructureDefinition/us-core-vital-signs",
+  "name": "us-core-blood-pressure",
+  "extension": [
+    {
+      "url": "http://hl7.org/fhir/StructureDefinition/structuredefinition-wg",
+      "valueCode": "cgp"
+    },
+    {
+      "url": "http://hl7.org/fhir/StructureDefinition/structuredefinition-fmm",
+      "valueInteger": 3,
+      "_valueInteger": {
+        "extension": [
+          {
+            "url": "http://hl7.org/fhir/StructureDefinition/structuredefinition-conformance-derivedFrom",
+            "valueCanonical": "http://hl7.org/fhir/us/core/ImplementationGuide/hl7.fhir.us.core"
+          }
+        ]
+      }
+    },
+    {
+      "url": "http://hl7.org/fhir/StructureDefinition/structuredefinition-standards-status",
+      "valueCode": "trial-use",
+      "_valueCode": {
+        "extension": [
+          {
+            "url": "http://hl7.org/fhir/StructureDefinition/structuredefinition-conformance-derivedFrom",
+            "valueCanonical": "http://hl7.org/fhir/us/core/ImplementationGuide/hl7.fhir.us.core"
+          }
+        ]
+      }
+    }
+  ],
+  "kind": "resource",
+  "type": "Observation",
+  "version": "8.0.0-ballot",
+  "resourceType": "FHIRSchema",
+  "elements": {
+    "code": {
+      "type": "CodeableConcept",
+      "short": "Blood Pressure",
+      "patternCodeableConcept": {
+        "coding": [
+          {
+            "code": "85354-9",
+            "system": "http://loinc.org"
+          }
+        ]
+      },
+      "mustSupport": true
+    },
+    "component": {
+      "array": true,
+      "short": "Component observations",
+      "slicing": {
+        "rules": "open",
+        "slices": {
+          "systolic": {
+            "max": 1,
+            "min": 1,
+            "match": [
+              {
+                "type": "pattern",
+                "value": {
+                  "code": {
+                    "coding": [
+                      {
+                        "code": "8480-6",
+                        "system": "http://loinc.org"
+                      }
+                    ]
+                  }
+                }
+              }
+            ],
+            "schema": {
+              "short": "Systolic Blood Pressure",
+              "elements": {
+                "code": {
+                  "max": 1,
+                  "short": "Systolic Blood Pressure Code",
+                  "patternCodeableConcept": {
+                    "coding": [
+                      {
+                        "code": "8480-6",
+                        "system": "http://loinc.org"
+                      }
+                    ]
+                  },
+                  "mustSupport": true
+                },
+                "valueQuantity": {
+                  "type": "Quantity",
+                  "short": "Vital Sign Component Value",
+                  "elements": {
+                    "code": {
+                      "max": 1,
+                      "type": "code",
+                      "fixed": "mm[Hg]",
+                      "mustSupport": true
+                    },
+                    "unit": {
+                      "max": 1,
+                      "type": "string",
+                      "mustSupport": true
+                    },
+                    "value": {
+                      "max": 1,
+                      "type": "decimal",
+                      "mustSupport": true
+                    },
+                    "system": {
+                      "max": 1,
+                      "type": "uri",
+                      "fixed": "http://unitsofmeasure.org",
+                      "mustSupport": true
+                    }
+                  },
+                  "required": ["value", "unit", "system", "code"],
+                  "mustSupport": true
+                }
+              },
+              "required": ["code"],
+              "mustSupport": true
+            }
+          },
+          "diastolic": {
+            "max": 1,
+            "min": 1,
+            "match": [
+              {
+                "type": "pattern",
+                "value": {
+                  "code": {
+                    "coding": [
+                      {
+                        "code": "8462-4",
+                        "system": "http://loinc.org"
+                      }
+                    ]
+                  }
+                }
+              }
+            ],
+            "schema": {
+              "short": "Diastolic Blood Pressure",
+              "elements": {
+                "code": {
+                  "max": 1,
+                  "short": "Diastolic Blood Pressure Code",
+                  "patternCodeableConcept": {
+                    "coding": [
+                      {
+                        "code": "8462-4",
+                        "system": "http://loinc.org"
+                      }
+                    ]
+                  },
+                  "mustSupport": true
+                },
+                "valueQuantity": {
+                  "type": "Quantity",
+                  "short": "Vital Sign Component Value",
+                  "elements": {
+                    "code": {
+                      "max": 1,
+                      "type": "code",
+                      "fixed": "mm[Hg]",
+                      "mustSupport": true
+                    },
+                    "unit": {
+                      "max": 1,
+                      "type": "string",
+                      "mustSupport": true
+                    },
+                    "value": {
+                      "max": 1,
+                      "type": "decimal",
+                      "mustSupport": true
+                    },
+                    "system": {
+                      "max": 1,
+                      "type": "uri",
+                      "fixed": "http://unitsofmeasure.org",
+                      "mustSupport": true
+                    }
+                  },
+                  "required": ["value", "unit", "system", "code"],
+                  "mustSupport": true
+                }
+              },
+              "required": ["code"],
+              "mustSupport": true
+            }
+          }
+        },
+        "ordered": false,
+        "discriminator": [
+          {
+            "path": "code",
+            "type": "value"
+          }
+        ]
+      },
+      "mustSupport": true
+    }
+  },
+  "derivation": "constraint"
+}
