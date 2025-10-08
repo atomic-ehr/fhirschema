@@ -156,6 +156,11 @@ export interface FHIRSchemaElement {
   index?: number; // For tracking element order
 }
 
+export interface PackageMeta {
+  package: string;
+  version: string;
+}
+
 export interface FHIRSchema {
   url: string;
   version?: string;
@@ -170,7 +175,7 @@ export interface FHIRSchema {
   package_name?: string;
   package_version?: string;
   package_id?: string;
-  package_meta?: any;
+  package_meta?: PackageMeta;
   elements?: Record<string, FHIRSchemaElement>;
   required?: string[];
   excluded?: string[];
