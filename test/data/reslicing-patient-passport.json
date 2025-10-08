@@ -18,7 +18,6 @@
           "slices": {
             "passport": {
               "min": 0,
-              "max": "*",
               "short": "Passport identifier",
               "definition": "A passport number used to identify the patient",
               "elements": {
@@ -93,6 +92,8 @@
     }
   },
   "result": {
+    "base": "http://example.org/fhir/StructureDefinition/PatientWithIdentifiers",
+    "name": "PatientWithCountryPassports",
     "kind": "resource",
     "type": "Patient",
     "elements": {
@@ -108,7 +109,6 @@
           "slices": {
             "passport": {
               "min": 0,
-              "max": "*",
               "short": "Passport identifier",
               "definition": "A passport number used to identify the patient",
               "elements": {
