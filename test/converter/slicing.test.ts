@@ -10,8 +10,9 @@ import r4ResourceProfile from '../data/hl7.fhir.r4.core#4.0.1/Resource.fs.json';
 import slicingObsComponent from '../data/slicing-obs-component.json';
 import reslicingPatPassport from '../data/reslicing-patient-passport.json';
 import usCoreBloodPreasureProfilesChain from '../data/uscore-blood-preasure-profiles-chain.json';
+import goodPatternObs1 from '../data/slicing-good-pattern-obs1.json';
 
-const profilesIndex: {[key in string]: FHIRSchema} = {
+const profilesIndex: { [key in string]: FHIRSchema } = {
   'http://hl7.org/fhir/us/core/StructureDefinition/us-core-blood-pressure|8.0.0-ballot':
     usCoreBloodPressureProfile,
   'http://hl7.org/fhir/us/core/StructureDefinition/us-core-vital-signs|8.0.0-ballot':
@@ -44,6 +45,18 @@ describe('Slicing merge', () => {
         .reduce((p1, p2) => sut.merge(p1, p2) as FHIRSchema);
 
       expect(result).toEqual(usCoreBloodPreasureProfilesChain.result);
+    });
+  });
+});
+
+describe('Slicing validation', () => {
+  const usCoreBloodPreasure = usCoreBloodPreasureProfilesChain.profiles
+    .map((canon) => profilesIndex[canon])
+    .reduce((p1, p2) => sut.merge(p1, p2) as FHIRSchema);
+
+  describe('good pattern discrimination', () => {
+    test('US core blood preasure component', () => {
+      sut.validate(goodPatternObs1.resource, usCoreBloodPreasure);
     });
   });
 });

@@ -160,6 +160,15 @@ type FhirOpenTypeSufix =
   | 'Dosage'
   | 'Meta';
 
+export type FhirSchemaSlicingDiscriminator = { type: string; path: string }
+
+export type FhirSchemaSlicing = {
+  discriminator?: FhirSchemaSlicingDiscriminator[];
+  rules?: string;
+  ordered?: boolean;
+  slices?: { [key in string]: FHIRSchemaElement };
+}
+
 export type FHIRSchemaElement = {
   type?: string;
   array?: boolean;
@@ -188,12 +197,7 @@ export type FHIRSchemaElement = {
   isModifierReason?: string;
   isSummary?: boolean;
   elementReference?: string[];
-  slicing?: {
-    discriminator?: { type: string; path: string }[];
-    rules?: string;
-    ordered?: boolean;
-    slices?: { [key in string]: FHIRSchemaElement };
-  };
+  slicing?: FhirSchemaSlicing;
   extensions?: Record<string, FHIRSchemaElement>;
   required?: string[];
   excluded?: string[];
