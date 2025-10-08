@@ -167,7 +167,7 @@ export interface FHIRSchema {
   name: string;
   type: string;
   kind: string;
-  derivation?: string;
+  derivation?: 'specialization' | 'constraint';
   base?: string;
   abstract?: boolean;
   class: string;
