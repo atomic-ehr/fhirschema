@@ -1,22 +1,28 @@
-import { FHIRSchema, FHIRSchemaElement } from "./types";
-import { zipper, ZipperOps } from "@thi.ng/zipper";
+import { FHIRSchema, FHIRSchemaElement } from './types';
 
-function merge(
-  base: Partial<FHIRSchema>,
-  derived: Partial<FHIRSchema>
-): Partial<FHIRSchema> {
-  const zOpts: ZipperOps<FhirSchemaNode> = {
-    branch: (x) => Object.keys(x?.elements || {}).length > 0,
-    children: (x) => Object.entries(x?.elements || {}).map(([_k, v]) => v),
-    factory: (node, _children) => node,
-  };
+const merge = (base?: FhirSchemaNode, overlay?: FhirSchemaNode): FhirSchemaNode | undefined => {
+  if (base == overlay == undefined) return;
+  if (base == undefined) return overlay;
+  if (overlay == undefined) return base;
 
-  // TODO: implement
-  const zBase = zipper(zOpts, base);
-  const zDerived = zipper(zOpts, derived);
-  return base;
-}
+  const keys = [...new Set(Object
+    .keys(base.elements || {})
+    .concat(Object.keys(overlay.elements || {})))];
+  
+  const elements = keys.length == 0 ? undefined : keys
+    .reduce((acc, k) => ({
+      ...acc, 
+      [k]: merge(base.elements?.[k], overlay.elements?.[k])
+    }), {});
 
-type FhirSchemaNode = Partial<FHIRSchema> | FHIRSchemaElement | undefined;
+  const cleanFields = ({url, name, base, ...rest}: FhirSchemaNode) => rest;
+  const result = Object.assign(cleanFields(base), overlay, {elements: elements});
+
+  return result;
+};
+
+type FhirSchemaNode = Pick<FHIRSchemaElement, 'elements' | 'slicing'> & Partial<Pick<FHIRSchema, 'name' | 'base' | 'url'>>;
+type FhirSchemaElements = FhirSchemaNode['elements'];
+type FhirSchemaSlicing = FhirSchemaNode['slicing'];
 
 export { merge };

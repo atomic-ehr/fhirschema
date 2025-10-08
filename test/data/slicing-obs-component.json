@@ -3,11 +3,40 @@
     "url": "http://hl7.org/fhir/us/core/StructureDefinition/us-core-vital-signs",
     "base": "http://hl7.org/fhir/StructureDefinition/vitalsigns",
     "name": "us-core-vital-signs",
+    "kind": "resource",
     "type": "Observation",
     "elements": {
       "component": {
         "short": "Component observations",
+        "definition": "Used when reporting component observation such as systolic and diastolic blood pressure.",
+        "mustSupport": true,
         "elements": {
+          "dataAbsentReason": {
+            "mustSupport": true
+          },
+          "code": {
+            "short": "Coded vital sign result type",
+            "binding": {
+              "strength": "extensible",
+              "valueSet": "http://cts.nlm.nih.gov/fhir/ValueSet/2.16.840.1.113883.3.88.12.80.62"
+            },
+            "mustSupport": true
+          },
+          "value": {
+            "choices": [
+              "valueQuantity",
+              "valueCodeableConcept",
+              "valueString",
+              "valueBoolean",
+              "valueInteger",
+              "valueRange",
+              "valueRatio",
+              "valueSampledData",
+              "valueTime",
+              "valueDateTime",
+              "valuePeriod"
+            ]
+          },
           "valuePeriod": {
             "type": "Period",
             "short": "Vital Sign Component Value",
@@ -56,9 +85,6 @@
             "definition": "Vital Signs value are typically recorded using the Quantity data type. For supporting observations such as cuff size could use other datatypes such as CodeableConcept.",
             "mustSupport": true
           },
-          "dataAbsentReason": {
-            "mustSupport": true
-          },
           "valueRange": {
             "type": "Range",
             "short": "Vital Sign Component Value",
@@ -82,21 +108,6 @@
             "choiceOf": "value",
             "definition": "Vital Signs value are typically recorded using the Quantity data type. For supporting observations such as cuff size could use other datatypes such as CodeableConcept.",
             "mustSupport": true
-          },
-          "value": {
-            "choices": [
-              "valueQuantity",
-              "valueCodeableConcept",
-              "valueString",
-              "valueBoolean",
-              "valueInteger",
-              "valueRange",
-              "valueRatio",
-              "valueSampledData",
-              "valueTime",
-              "valueDateTime",
-              "valuePeriod"
-            ]
           },
           "valueBoolean": {
             "type": "boolean",
@@ -146,14 +157,6 @@
             "definition": "Vital Signs value are typically recorded using the Quantity data type. For supporting observations such as cuff size could use other datatypes such as CodeableConcept.",
             "mustSupport": true
           },
-          "code": {
-            "short": "Coded vital sign result type",
-            "binding": {
-              "strength": "extensible",
-              "valueSet": "http://cts.nlm.nih.gov/fhir/ValueSet/2.16.840.1.113883.3.88.12.80.62"
-            },
-            "mustSupport": true
-          },
           "valueInteger": {
             "type": "integer",
             "short": "Vital Sign Component Value",
@@ -166,9 +169,7 @@
             "definition": "Vital Signs value are typically recorded using the Quantity data type. For supporting observations such as cuff size could use other datatypes such as CodeableConcept.",
             "mustSupport": true
           }
-        },
-        "definition": "Used when reporting component observation such as systolic and diastolic blood pressure.",
-        "mustSupport": true
+        }
       }
     }
   },
@@ -190,139 +191,105 @@
             "systolic": {
               "max": 1,
               "min": 1,
-              "match": [
-                {
-                  "type": "pattern",
-                  "value": {
+              "short": "Systolic Blood Pressure",
+              "required": ["code"],
+              "mustSupport": true,
+              "elements": {
+                "code": {
+                  "max": 1,
+                  "short": "Systolic Blood Pressure Code",
+                  "mustSupport": true,
+                  "patternCodeableConcept": {
+                    "coding": [
+                      {
+                        "code": "8480-6",
+                        "system": "http://loinc.org"
+                      }
+                    ]
+                  }
+                },
+                "valueQuantity": {
+                  "type": "Quantity",
+                  "short": "Vital Sign Component Value",
+                  "required": ["value", "unit", "system", "code"],
+                  "mustSupport": true,
+                  "elements": {
                     "code": {
-                      "coding": [
-                        {
-                          "code": "8480-6",
-                          "system": "http://loinc.org"
-                        }
-                      ]
+                      "max": 1,
+                      "type": "code",
+                      "fixed": "mm[Hg]",
+                      "mustSupport": true
+                    },
+                    "unit": {
+                      "max": 1,
+                      "type": "string",
+                      "mustSupport": true
+                    },
+                    "value": {
+                      "max": 1,
+                      "type": "decimal",
+                      "mustSupport": true
+                    },
+                    "system": {
+                      "max": 1,
+                      "type": "uri",
+                      "fixed": "http://unitsofmeasure.org",
+                      "mustSupport": true
                     }
                   }
                 }
-              ],
-              "schema": {
-                "short": "Systolic Blood Pressure",
-                "elements": {
-                  "code": {
-                    "max": 1,
-                    "short": "Systolic Blood Pressure Code",
-                    "patternCodeableConcept": {
-                      "coding": [
-                        {
-                          "code": "8480-6",
-                          "system": "http://loinc.org"
-                        }
-                      ]
-                    },
-                    "mustSupport": true
-                  },
-                  "valueQuantity": {
-                    "type": "Quantity",
-                    "short": "Vital Sign Component Value",
-                    "elements": {
-                      "code": {
-                        "max": 1,
-                        "type": "code",
-                        "fixed": "mm[Hg]",
-                        "mustSupport": true
-                      },
-                      "unit": {
-                        "max": 1,
-                        "type": "string",
-                        "mustSupport": true
-                      },
-                      "value": {
-                        "max": 1,
-                        "type": "decimal",
-                        "mustSupport": true
-                      },
-                      "system": {
-                        "max": 1,
-                        "type": "uri",
-                        "fixed": "http://unitsofmeasure.org",
-                        "mustSupport": true
-                      }
-                    },
-                    "required": ["value", "unit", "system", "code"],
-                    "mustSupport": true
-                  }
-                },
-                "required": ["code"],
-                "mustSupport": true
               }
             },
             "diastolic": {
               "max": 1,
               "min": 1,
-              "match": [
-                {
-                  "type": "pattern",
-                  "value": {
-                    "code": {
-                      "coding": [
-                        {
-                          "code": "8462-4",
-                          "system": "http://loinc.org"
-                        }
-                      ]
-                    }
-                  }
-                }
-              ],
-              "schema": {
-                "short": "Diastolic Blood Pressure",
-                "elements": {
-                  "code": {
-                    "max": 1,
-                    "short": "Diastolic Blood Pressure Code",
-                    "patternCodeableConcept": {
-                      "coding": [
-                        {
-                          "code": "8462-4",
-                          "system": "http://loinc.org"
-                        }
-                      ]
-                    },
-                    "mustSupport": true
-                  },
-                  "valueQuantity": {
-                    "type": "Quantity",
-                    "short": "Vital Sign Component Value",
-                    "elements": {
-                      "code": {
-                        "max": 1,
-                        "type": "code",
-                        "fixed": "mm[Hg]",
-                        "mustSupport": true
-                      },
-                      "unit": {
-                        "max": 1,
-                        "type": "string",
-                        "mustSupport": true
-                      },
-                      "value": {
-                        "max": 1,
-                        "type": "decimal",
-                        "mustSupport": true
-                      },
-                      "system": {
-                        "max": 1,
-                        "type": "uri",
-                        "fixed": "http://unitsofmeasure.org",
-                        "mustSupport": true
+              "short": "Diastolic Blood Pressure",
+              "required": ["code"],
+              "mustSupport": true,
+              "elements": {
+                "code": {
+                  "max": 1,
+                  "short": "Diastolic Blood Pressure Code",
+                  "patternCodeableConcept": {
+                    "coding": [
+                      {
+                        "code": "8462-4",
+                        "system": "http://loinc.org"
                       }
-                    },
-                    "required": ["value", "unit", "system", "code"],
-                    "mustSupport": true
-                  }
+                    ]
+                  },
+                  "mustSupport": true
                 },
-                "required": ["code"],
-                "mustSupport": true
+                "valueQuantity": {
+                  "type": "Quantity",
+                  "short": "Vital Sign Component Value",
+                  "elements": {
+                    "code": {
+                      "max": 1,
+                      "type": "code",
+                      "fixed": "mm[Hg]",
+                      "mustSupport": true
+                    },
+                    "unit": {
+                      "max": 1,
+                      "type": "string",
+                      "mustSupport": true
+                    },
+                    "value": {
+                      "max": 1,
+                      "type": "decimal",
+                      "mustSupport": true
+                    },
+                    "system": {
+                      "max": 1,
+                      "type": "uri",
+                      "fixed": "http://unitsofmeasure.org",
+                      "mustSupport": true
+                    }
+                  },
+                  "required": ["value", "unit", "system", "code"],
+                  "mustSupport": true
+                }
               }
             }
           }
@@ -331,15 +298,176 @@
     }
   },
   "result": {
-    "base": "http://hl7.org/fhir/us/core/StructureDefinition/us-core-vital-signs",
     "name": "us-core-blood-pressure",
     "kind": "resource",
     "type": "Observation",
+    "base": "http://hl7.org/fhir/us/core/StructureDefinition/us-core-vital-signs",
     "elements": {
       "component": {
         "array": true,
         "short": "Component observations",
+        "definition": "Used when reporting component observation such as systolic and diastolic blood pressure.",
         "mustSupport": true,
+        "elements": {
+          "dataAbsentReason": {
+            "mustSupport": true
+          },
+          "code": {
+            "short": "Coded vital sign result type",
+            "binding": {
+              "strength": "extensible",
+              "valueSet": "http://cts.nlm.nih.gov/fhir/ValueSet/2.16.840.1.113883.3.88.12.80.62"
+            },
+            "mustSupport": true
+          },
+          "value": {
+            "choices": [
+              "valueQuantity",
+              "valueCodeableConcept",
+              "valueString",
+              "valueBoolean",
+              "valueInteger",
+              "valueRange",
+              "valueRatio",
+              "valueSampledData",
+              "valueTime",
+              "valueDateTime",
+              "valuePeriod"
+            ]
+          },
+          "valuePeriod": {
+            "type": "Period",
+            "short": "Vital Sign Component Value",
+            "binding": {
+              "strength": "extensible",
+              "valueSet": "http://hl7.org/fhir/ValueSet/ucum-vitals-common",
+              "valueSetVersion": "4.0.1"
+            },
+            "choiceOf": "value",
+            "definition": "Vital Signs value are typically recorded using the Quantity data type. For supporting observations such as cuff size could use other datatypes such as CodeableConcept.",
+            "mustSupport": true
+          },
+          "valueSampledData": {
+            "type": "SampledData",
+            "short": "Vital Sign Component Value",
+            "binding": {
+              "strength": "extensible",
+              "valueSet": "http://hl7.org/fhir/ValueSet/ucum-vitals-common",
+              "valueSetVersion": "4.0.1"
+            },
+            "choiceOf": "value",
+            "definition": "Vital Signs value are typically recorded using the Quantity data type. For supporting observations such as cuff size could use other datatypes such as CodeableConcept.",
+            "mustSupport": true
+          },
+          "valueString": {
+            "type": "string",
+            "short": "Vital Sign Component Value",
+            "binding": {
+              "strength": "extensible",
+              "valueSet": "http://hl7.org/fhir/ValueSet/ucum-vitals-common",
+              "valueSetVersion": "4.0.1"
+            },
+            "choiceOf": "value",
+            "definition": "Vital Signs value are typically recorded using the Quantity data type. For supporting observations such as cuff size could use other datatypes such as CodeableConcept.",
+            "mustSupport": true
+          },
+          "valueRatio": {
+            "type": "Ratio",
+            "short": "Vital Sign Component Value",
+            "binding": {
+              "strength": "extensible",
+              "valueSet": "http://hl7.org/fhir/ValueSet/ucum-vitals-common",
+              "valueSetVersion": "4.0.1"
+            },
+            "choiceOf": "value",
+            "definition": "Vital Signs value are typically recorded using the Quantity data type. For supporting observations such as cuff size could use other datatypes such as CodeableConcept.",
+            "mustSupport": true
+          },
+          "valueRange": {
+            "type": "Range",
+            "short": "Vital Sign Component Value",
+            "binding": {
+              "strength": "extensible",
+              "valueSet": "http://hl7.org/fhir/ValueSet/ucum-vitals-common",
+              "valueSetVersion": "4.0.1"
+            },
+            "choiceOf": "value",
+            "definition": "Vital Signs value are typically recorded using the Quantity data type. For supporting observations such as cuff size could use other datatypes such as CodeableConcept.",
+            "mustSupport": true
+          },
+          "valueDateTime": {
+            "type": "dateTime",
+            "short": "Vital Sign Component Value",
+            "binding": {
+              "strength": "extensible",
+              "valueSet": "http://hl7.org/fhir/ValueSet/ucum-vitals-common",
+              "valueSetVersion": "4.0.1"
+            },
+            "choiceOf": "value",
+            "definition": "Vital Signs value are typically recorded using the Quantity data type. For supporting observations such as cuff size could use other datatypes such as CodeableConcept.",
+            "mustSupport": true
+          },
+          "valueBoolean": {
+            "type": "boolean",
+            "short": "Vital Sign Component Value",
+            "binding": {
+              "strength": "extensible",
+              "valueSet": "http://hl7.org/fhir/ValueSet/ucum-vitals-common",
+              "valueSetVersion": "4.0.1"
+            },
+            "choiceOf": "value",
+            "definition": "Vital Signs value are typically recorded using the Quantity data type. For supporting observations such as cuff size could use other datatypes such as CodeableConcept.",
+            "mustSupport": true
+          },
+          "valueCodeableConcept": {
+            "type": "CodeableConcept",
+            "short": "Vital Sign Component Value",
+            "binding": {
+              "strength": "extensible",
+              "valueSet": "http://hl7.org/fhir/ValueSet/ucum-vitals-common",
+              "valueSetVersion": "4.0.1"
+            },
+            "choiceOf": "value",
+            "definition": "Vital Signs value are typically recorded using the Quantity data type. For supporting observations such as cuff size could use other datatypes such as CodeableConcept.",
+            "mustSupport": true
+          },
+          "valueTime": {
+            "type": "time",
+            "short": "Vital Sign Component Value",
+            "binding": {
+              "strength": "extensible",
+              "valueSet": "http://hl7.org/fhir/ValueSet/ucum-vitals-common",
+              "valueSetVersion": "4.0.1"
+            },
+            "choiceOf": "value",
+            "definition": "Vital Signs value are typically recorded using the Quantity data type. For supporting observations such as cuff size could use other datatypes such as CodeableConcept.",
+            "mustSupport": true
+          },
+          "valueQuantity": {
+            "type": "Quantity",
+            "short": "Vital Sign Component Value",
+            "binding": {
+              "strength": "extensible",
+              "valueSet": "http://hl7.org/fhir/ValueSet/ucum-vitals-common",
+              "valueSetVersion": "4.0.1"
+            },
+            "choiceOf": "value",
+            "definition": "Vital Signs value are typically recorded using the Quantity data type. For supporting observations such as cuff size could use other datatypes such as CodeableConcept.",
+            "mustSupport": true
+          },
+          "valueInteger": {
+            "type": "integer",
+            "short": "Vital Sign Component Value",
+            "binding": {
+              "strength": "extensible",
+              "valueSet": "http://hl7.org/fhir/ValueSet/ucum-vitals-common",
+              "valueSetVersion": "4.0.1"
+            },
+            "choiceOf": "value",
+            "definition": "Vital Signs value are typically recorded using the Quantity data type. For supporting observations such as cuff size could use other datatypes such as CodeableConcept.",
+            "mustSupport": true
+          }
+        },
         "slicing": {
           "discriminator": [{ "path": "code", "type": "value" }],
           "ordered": false,
@@ -348,139 +476,105 @@
             "systolic": {
               "max": 1,
               "min": 1,
-              "match": [
-                {
-                  "type": "pattern",
-                  "value": {
+              "short": "Systolic Blood Pressure",
+              "required": ["code"],
+              "mustSupport": true,
+              "elements": {
+                "code": {
+                  "max": 1,
+                  "short": "Systolic Blood Pressure Code",
+                  "mustSupport": true,
+                  "patternCodeableConcept": {
+                    "coding": [
+                      {
+                        "code": "8480-6",
+                        "system": "http://loinc.org"
+                      }
+                    ]
+                  }
+                },
+                "valueQuantity": {
+                  "type": "Quantity",
+                  "short": "Vital Sign Component Value",
+                  "required": ["value", "unit", "system", "code"],
+                  "mustSupport": true,
+                  "elements": {
                     "code": {
-                      "coding": [
-                        {
-                          "code": "8480-6",
-                          "system": "http://loinc.org"
-                        }
-                      ]
+                      "max": 1,
+                      "type": "code",
+                      "fixed": "mm[Hg]",
+                      "mustSupport": true
+                    },
+                    "unit": {
+                      "max": 1,
+                      "type": "string",
+                      "mustSupport": true
+                    },
+                    "value": {
+                      "max": 1,
+                      "type": "decimal",
+                      "mustSupport": true
+                    },
+                    "system": {
+                      "max": 1,
+                      "type": "uri",
+                      "fixed": "http://unitsofmeasure.org",
+                      "mustSupport": true
                     }
                   }
                 }
-              ],
-              "schema": {
-                "short": "Systolic Blood Pressure",
-                "elements": {
-                  "code": {
-                    "max": 1,
-                    "short": "Systolic Blood Pressure Code",
-                    "patternCodeableConcept": {
-                      "coding": [
-                        {
-                          "code": "8480-6",
-                          "system": "http://loinc.org"
-                        }
-                      ]
-                    },
-                    "mustSupport": true
-                  },
-                  "valueQuantity": {
-                    "type": "Quantity",
-                    "short": "Vital Sign Component Value",
-                    "elements": {
-                      "code": {
-                        "max": 1,
-                        "type": "code",
-                        "fixed": "mm[Hg]",
-                        "mustSupport": true
-                      },
-                      "unit": {
-                        "max": 1,
-                        "type": "string",
-                        "mustSupport": true
-                      },
-                      "value": {
-                        "max": 1,
-                        "type": "decimal",
-                        "mustSupport": true
-                      },
-                      "system": {
-                        "max": 1,
-                        "type": "uri",
-                        "fixed": "http://unitsofmeasure.org",
-                        "mustSupport": true
-                      }
-                    },
-                    "required": ["value", "unit", "system", "code"],
-                    "mustSupport": true
-                  }
-                },
-                "required": ["code"],
-                "mustSupport": true
               }
             },
             "diastolic": {
               "max": 1,
               "min": 1,
-              "match": [
-                {
-                  "type": "pattern",
-                  "value": {
-                    "code": {
-                      "coding": [
-                        {
-                          "code": "8462-4",
-                          "system": "http://loinc.org"
-                        }
-                      ]
-                    }
-                  }
-                }
-              ],
-              "schema": {
-                "short": "Diastolic Blood Pressure",
-                "elements": {
-                  "code": {
-                    "max": 1,
-                    "short": "Diastolic Blood Pressure Code",
-                    "patternCodeableConcept": {
-                      "coding": [
-                        {
-                          "code": "8462-4",
-                          "system": "http://loinc.org"
-                        }
-                      ]
-                    },
-                    "mustSupport": true
-                  },
-                  "valueQuantity": {
-                    "type": "Quantity",
-                    "short": "Vital Sign Component Value",
-                    "elements": {
-                      "code": {
-                        "max": 1,
-                        "type": "code",
-                        "fixed": "mm[Hg]",
-                        "mustSupport": true
-                      },
-                      "unit": {
-                        "max": 1,
-                        "type": "string",
-                        "mustSupport": true
-                      },
-                      "value": {
-                        "max": 1,
-                        "type": "decimal",
-                        "mustSupport": true
-                      },
-                      "system": {
-                        "max": 1,
-                        "type": "uri",
-                        "fixed": "http://unitsofmeasure.org",
-                        "mustSupport": true
+              "short": "Diastolic Blood Pressure",
+              "required": ["code"],
+              "mustSupport": true,
+              "elements": {
+                "code": {
+                  "max": 1,
+                  "short": "Diastolic Blood Pressure Code",
+                  "patternCodeableConcept": {
+                    "coding": [
+                      {
+                        "code": "8462-4",
+                        "system": "http://loinc.org"
                       }
-                    },
-                    "required": ["value", "unit", "system", "code"],
-                    "mustSupport": true
-                  }
+                    ]
+                  },
+                  "mustSupport": true
                 },
-                "required": ["code"],
-                "mustSupport": true
+                "valueQuantity": {
+                  "type": "Quantity",
+                  "short": "Vital Sign Component Value",
+                  "elements": {
+                    "code": {
+                      "max": 1,
+                      "type": "code",
+                      "fixed": "mm[Hg]",
+                      "mustSupport": true
+                    },
+                    "unit": {
+                      "max": 1,
+                      "type": "string",
+                      "mustSupport": true
+                    },
+                    "value": {
+                      "max": 1,
+                      "type": "decimal",
+                      "mustSupport": true
+                    },
+                    "system": {
+                      "max": 1,
+                      "type": "uri",
+                      "fixed": "http://unitsofmeasure.org",
+                      "mustSupport": true
+                    }
+                  },
+                  "required": ["value", "unit", "system", "code"],
+                  "mustSupport": true
+                }
               }
             }
           }

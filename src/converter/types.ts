@@ -102,63 +102,63 @@ export interface StructureDefinition {
 type FhirOpenTypeSufix =
   // https://hl7.org/fhir/datatypes.html#open
   // Primitive Types
-  | "Base64Binary"
-  | "Boolean"
-  | "Canonical"
-  | "Code"
-  | "Date"
-  | "DateTime"
-  | "Decimal"
-  | "Id"
-  | "Instant"
-  | "Integer"
-  | "Integer64"
-  | "Markdown"
-  | "Oid"
-  | "PositiveInt"
-  | "String"
-  | "Time"
-  | "UnsignedInt"
-  | "Uri"
-  | "Url"
-  | "Uuid"
+  | 'Base64Binary'
+  | 'Boolean'
+  | 'Canonical'
+  | 'Code'
+  | 'Date'
+  | 'DateTime'
+  | 'Decimal'
+  | 'Id'
+  | 'Instant'
+  | 'Integer'
+  | 'Integer64'
+  | 'Markdown'
+  | 'Oid'
+  | 'PositiveInt'
+  | 'String'
+  | 'Time'
+  | 'UnsignedInt'
+  | 'Uri'
+  | 'Url'
+  | 'Uuid'
   // Datatypes
-  | "Address"
-  | "Age"
-  | "Annotation"
-  | "Attachment"
-  | "CodeableConcept"
-  | "CodeableReference"
-  | "Coding"
-  | "ContactPoint"
-  | "Count"
-  | "Distance"
-  | "Duration"
-  | "HumanName"
-  | "Identifier"
-  | "Money"
-  | "Period"
-  | "Quantity"
-  | "Range"
-  | "Ratio"
-  | "RatioRange"
-  | "Reference"
-  | "SampledData"
-  | "Signature"
-  | "Timing"
+  | 'Address'
+  | 'Age'
+  | 'Annotation'
+  | 'Attachment'
+  | 'CodeableConcept'
+  | 'CodeableReference'
+  | 'Coding'
+  | 'ContactPoint'
+  | 'Count'
+  | 'Distance'
+  | 'Duration'
+  | 'HumanName'
+  | 'Identifier'
+  | 'Money'
+  | 'Period'
+  | 'Quantity'
+  | 'Range'
+  | 'Ratio'
+  | 'RatioRange'
+  | 'Reference'
+  | 'SampledData'
+  | 'Signature'
+  | 'Timing'
   // MetaDataTypes
-  | "ContactDetail"
-  | "DataRequirement"
-  | "Expression"
-  | "ParameterDefinition"
-  | "RelatedArtifact"
-  | "TriggerDefinition"
-  | "UsageContext"
-  | "Availability"
-  | "ExtendedContactDetail"
+  | 'ContactDetail'
+  | 'DataRequirement'
+  | 'Expression'
+  | 'ParameterDefinition'
+  | 'RelatedArtifact'
+  | 'TriggerDefinition'
+  | 'UsageContext'
+  | 'Availability'
+  | 'ExtendedContactDetail'
   // Special Types
-  | "Dosage"
-  | "Meta";
+  | 'Dosage'
+  | 'Meta';
 
 export type FHIRSchemaElement = {
   type?: string;
@@ -192,14 +192,7 @@ export type FHIRSchemaElement = {
     discriminator?: { type: string; path: string }[];
     rules?: string;
     ordered?: boolean;
-    slices?: {
-      [key in string]: {
-        match?: { type: string; value: unknown }[];
-        schema?: FHIRSchemaElement;
-        min?: number;
-        max?: number;
-      };
-    };
+    slices?: { [key in string]: FHIRSchemaElement };
   };
   extensions?: Record<string, FHIRSchemaElement>;
   required?: string[];
@@ -236,7 +229,7 @@ export interface FHIRSchema {
   package_version?: string;
   package_id?: string;
   package_meta?: PackageMeta;
-  elements?: { [key in string]?: FHIRSchemaElement };
+  elements?: { [key in string]: FHIRSchemaElement };
   required?: string[];
   excluded?: string[];
   extensions?: Record<string, FHIRSchemaElement>;
@@ -258,10 +251,10 @@ export interface PathComponent {
 }
 
 export type Action =
-  | { type: "enter"; el: string }
-  | { type: "exit"; el: string }
-  | { type: "enter-slice"; sliceName: string }
-  | { type: "exit-slice"; sliceName: string; slicing?: any; slice?: any };
+  | { type: 'enter'; el: string }
+  | { type: 'exit'; el: string }
+  | { type: 'enter-slice'; sliceName: string }
+  | { type: 'exit-slice'; sliceName: string; slicing?: any; slice?: any };
 
 export interface ConversionContext {
   package_meta?: any;
