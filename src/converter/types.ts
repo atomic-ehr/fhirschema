@@ -263,3 +263,33 @@ export type Action =
 export interface ConversionContext {
   package_meta?: any;
 }
+
+// FHIR types
+
+export type Coding = {
+  code?: string;
+  display?: string;
+  system?: string;
+};
+
+export type CodeableConcept = {
+  coding?: Coding[];
+  text?: string;
+};
+
+export type OperationOutcomeIssue = {
+  severity: string;
+  code: string;
+  details?: CodeableConcept;
+  diagnostics?: string;
+  expression?: string[];
+  id?: string;
+  location?: string[];
+};
+
+export type Resource = { resourceType: string };
+
+export type OperationOutcome = Resource & { 
+  resourceType: 'OperationOutcome';
+  issue?: OperationOutcomeIssue[] 
+};

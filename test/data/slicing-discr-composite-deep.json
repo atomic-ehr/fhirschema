@@ -1,0 +1,74 @@
+{
+  "data": [
+    {
+      "coding": [
+        {
+          "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+          "code": "vital-signs",
+          "display": "Vital Signs"
+        }
+      ],
+      "text": "Vital Signs"
+    },
+    {
+      "coding": [
+        {
+          "system": "http://example.com/CodeSystem/cs1",
+          "code": "example-code",
+          "display": "Example Code"
+        }
+      ]
+    }
+  ],
+  "spec": {
+    "slicing": {
+      "discriminator": [
+        { "path": "coding.code", "type": "value" },
+        { "path": "coding.system", "type": "value" }
+      ],
+      "slices": {
+        "VSCat": {
+          "elements": {
+            "coding": {
+              "elements": {
+                "code": {
+                  "type": "code",
+                  "fixedCode": "vital-signs"
+                },
+                "system": {
+                  "type": "uri",
+                  "fixedUri": "http://terminology.hl7.org/CodeSystem/observation-category"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "result": {
+    "VSCat": [
+      {
+        "coding": [
+          {
+            "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+            "code": "vital-signs",
+            "display": "Vital Signs"
+          }
+        ],
+        "text": "Vital Signs"
+      }
+    ],
+    "@default": [
+      {
+        "coding": [
+          {
+            "system": "http://example.com/CodeSystem/cs1",
+            "code": "example-code",
+            "display": "Example Code"
+          }
+        ]
+      }
+    ]
+  }
+}
