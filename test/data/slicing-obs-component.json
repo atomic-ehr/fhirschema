@@ -173,7 +173,7 @@
       }
     }
   },
-  "derived": {
+  "overlay": {
     "base": "http://hl7.org/fhir/us/core/StructureDefinition/us-core-vital-signs",
     "name": "us-core-blood-pressure",
     "kind": "resource",

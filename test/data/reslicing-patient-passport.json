@@ -1,0 +1,166 @@
+{
+  "base": {
+    "url": "http://example.org/fhir/StructureDefinition/PatientWithIdentifiers",
+    "base": "http://hl7.org/fhir/StructureDefinition/Patient",
+    "name": "PatientWithIdentifiers",
+    "kind": "resource",
+    "type": "Patient",
+    "elements": {
+      "identifier": {
+        "type": "Identifier",
+        "array": true,
+        "short": "An identifier for this patient",
+        "definition": "An identifier for this patient.",
+        "slicing": {
+          "discriminator": [{ "path": "type", "type": "value" }],
+          "ordered": false,
+          "rules": "open",
+          "slices": {
+            "passport": {
+              "min": 0,
+              "max": "*",
+              "short": "Passport identifier",
+              "definition": "A passport number used to identify the patient",
+              "elements": {
+                "type": {
+                  "short": "Passport identifier type",
+                  "patternCodeableConcept": {
+                    "coding": [
+                      {
+                        "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+                        "code": "PPN"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "overlay": {
+    "base": "http://example.org/fhir/StructureDefinition/PatientWithIdentifiers",
+    "name": "PatientWithCountryPassports",
+    "kind": "resource",
+    "type": "Patient",
+    "elements": {
+      "identifier": {
+        "slicing": {
+          "discriminator": [{ "path": "type", "type": "value" }],
+          "ordered": false,
+          "rules": "open",
+          "slices": {
+            "passport": {
+              "slicing": {
+                "discriminator": [{ "path": "system", "type": "value" }],
+                "ordered": false,
+                "rules": "open",
+                "slices": {
+                  "usPassport": {
+                    "min": 0,
+                    "max": 1,
+                    "short": "US Passport",
+                    "definition": "United States passport number",
+                    "elements": {
+                      "system": {
+                        "type": "uri",
+                        "fixed": "http://hl7.org/fhir/sid/us-passport",
+                        "short": "US passport system identifier"
+                      }
+                    }
+                  },
+                  "spainPassport": {
+                    "min": 0,
+                    "max": 1,
+                    "short": "Spain Passport",
+                    "definition": "Spanish passport number",
+                    "elements": {
+                      "system": {
+                        "type": "uri",
+                        "fixed": "http://hl7.org/fhir/sid/es-passport",
+                        "short": "Spanish passport system identifier"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "result": {
+    "kind": "resource",
+    "type": "Patient",
+    "elements": {
+      "identifier": {
+        "type": "Identifier",
+        "array": true,
+        "short": "An identifier for this patient",
+        "definition": "An identifier for this patient.",
+        "slicing": {
+          "discriminator": [{ "path": "type", "type": "value" }],
+          "ordered": false,
+          "rules": "open",
+          "slices": {
+            "passport": {
+              "min": 0,
+              "max": "*",
+              "short": "Passport identifier",
+              "definition": "A passport number used to identify the patient",
+              "elements": {
+                "type": {
+                  "short": "Passport identifier type",
+                  "patternCodeableConcept": {
+                    "coding": [
+                      {
+                        "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+                        "code": "PPN"
+                      }
+                    ]
+                  }
+                }
+              },
+              "slicing": {
+                "discriminator": [{ "path": "system", "type": "value" }],
+                "ordered": false,
+                "rules": "open",
+                "slices": {
+                  "usPassport": {
+                    "min": 0,
+                    "max": 1,
+                    "short": "US Passport",
+                    "definition": "United States passport number",
+                    "elements": {
+                      "system": {
+                        "type": "uri",
+                        "fixed": "http://hl7.org/fhir/sid/us-passport",
+                        "short": "US passport system identifier"
+                      }
+                    }
+                  },
+                  "spainPassport": {
+                    "min": 0,
+                    "max": 1,
+                    "short": "Spain Passport",
+                    "definition": "Spanish passport number",
+                    "elements": {
+                      "system": {
+                        "type": "uri",
+                        "fixed": "http://hl7.org/fhir/sid/es-passport",
+                        "short": "Spanish passport system identifier"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

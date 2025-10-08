@@ -25,3 +25,27 @@ polymorphyc types has been changed from the original aidbox representation. E.g:
 -> DomainResource.fs.json
 -> Resource.fs.js.json
 ```
+
+### slicing-obs-component
+
+Test data for merging slicing definitions in Observation.component.
+
+```
+* slicing-obs-component.json
+  - base: us-core-vital-signs profile with general component constraints
+  - overlay: us-core-blood-pressure profile with systolic/diastolic slices
+  - result: merged profile with both general constraints and specific slices
+```
+
+### reslicing-patient-passport
+
+Test data for merging slicing and reslicing definitions in Patient.identifier.
+
+```
+* reslicing-patient-passport.json
+  - base: Patient profile with passport identifier slice (discriminated by type)
+  - overlay: Profile adding reslicing to passport slice for country-specific passports (discriminated by system)
+    - usPassport: US passport with fixed system
+    - spainPassport: Spanish passport with fixed system
+  - result: merged profile with nested slicing hierarchy (identifier → passport → country-specific)
+```

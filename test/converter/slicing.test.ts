@@ -8,7 +8,7 @@ describe("Slicing merge", () => {
     test("Can merge slicing data into base definition", () => {
       const result = sut.merge(
         slicingObsComponent.base,
-        slicingObsComponent.derived
+        slicingObsComponent.overlay
       );
 
       expect(result).toEqual(slicingObsComponent.result);
