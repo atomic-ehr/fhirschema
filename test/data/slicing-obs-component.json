@@ -217,7 +217,7 @@
                     "code": {
                       "max": 1,
                       "type": "code",
-                      "fixed": "mm[Hg]",
+                      "fixedCode": "mm[Hg]",
                       "mustSupport": true
                     },
                     "unit": {
@@ -233,7 +233,7 @@
                     "system": {
                       "max": 1,
                       "type": "uri",
-                      "fixed": "http://unitsofmeasure.org",
+                      "fixedUri": "http://unitsofmeasure.org",
                       "mustSupport": true
                     }
                   }
@@ -267,7 +267,7 @@
                     "code": {
                       "max": 1,
                       "type": "code",
-                      "fixed": "mm[Hg]",
+                      "fixedCode": "mm[Hg]",
                       "mustSupport": true
                     },
                     "unit": {
@@ -283,7 +283,7 @@
                     "system": {
                       "max": 1,
                       "type": "uri",
-                      "fixed": "http://unitsofmeasure.org",
+                      "fixedUri": "http://unitsofmeasure.org",
                       "mustSupport": true
                     }
                   },
@@ -502,7 +502,7 @@
                     "code": {
                       "max": 1,
                       "type": "code",
-                      "fixed": "mm[Hg]",
+                      "fixedCode": "mm[Hg]",
                       "mustSupport": true
                     },
                     "unit": {
@@ -518,7 +518,7 @@
                     "system": {
                       "max": 1,
                       "type": "uri",
-                      "fixed": "http://unitsofmeasure.org",
+                      "fixedUri": "http://unitsofmeasure.org",
                       "mustSupport": true
                     }
                   }
@@ -552,7 +552,7 @@
                     "code": {
                       "max": 1,
                       "type": "code",
-                      "fixed": "mm[Hg]",
+                      "fixedCode": "mm[Hg]",
                       "mustSupport": true
                     },
                     "unit": {
@@ -568,7 +568,7 @@
                     "system": {
                       "max": 1,
                       "type": "uri",
-                      "fixed": "http://unitsofmeasure.org",
+                      "fixedUri": "http://unitsofmeasure.org",
                       "mustSupport": true
                     }
                   },

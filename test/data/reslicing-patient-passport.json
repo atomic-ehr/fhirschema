@@ -65,7 +65,7 @@
                     "elements": {
                       "system": {
                         "type": "uri",
-                        "fixed": "http://hl7.org/fhir/sid/us-passport",
+                        "fixedUri": "http://hl7.org/fhir/sid/us-passport",
                         "short": "US passport system identifier"
                       }
                     }
@@ -78,7 +78,7 @@
                     "elements": {
                       "system": {
                         "type": "uri",
-                        "fixed": "http://hl7.org/fhir/sid/es-passport",
+                        "fixedUri": "http://hl7.org/fhir/sid/es-passport",
                         "short": "Spanish passport system identifier"
                       }
                     }
@@ -137,7 +137,7 @@
                     "elements": {
                       "system": {
                         "type": "uri",
-                        "fixed": "http://hl7.org/fhir/sid/us-passport",
+                        "fixedUri": "http://hl7.org/fhir/sid/us-passport",
                         "short": "US passport system identifier"
                       }
                     }
@@ -150,7 +150,7 @@
                     "elements": {
                       "system": {
                         "type": "uri",
-                        "fixed": "http://hl7.org/fhir/sid/es-passport",
+                        "fixedUri": "http://hl7.org/fhir/sid/es-passport",
                         "short": "Spanish passport system identifier"
                       }
                     }

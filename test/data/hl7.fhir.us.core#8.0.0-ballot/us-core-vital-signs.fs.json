@@ -374,14 +374,14 @@
                   "code": {
                     "max": 1,
                     "type": "code",
-                    "fixed": "vital-signs",
+                    "fixedCode": "vital-signs",
                     "short": "Symbol in syntax defined by the system",
                     "mustSupport": true
                   },
                   "system": {
                     "max": 1,
                     "type": "uri",
-                    "fixed": "http://terminology.hl7.org/CodeSystem/observation-category",
+                    "fixedUri": "http://terminology.hl7.org/CodeSystem/observation-category",
                     "short": "Identity of the terminology system",
                     "mustSupport": true
                   }

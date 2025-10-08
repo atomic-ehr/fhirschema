@@ -695,13 +695,13 @@
                   "type": "Quantity",
                   "short": "Vital Sign Component Value",
                   "elements": {
-                    "code": { "max": 1, "type": "code", "fixed": "mm[Hg]", "mustSupport": true },
+                    "code": { "max": 1, "type": "code", "fixedCode": "mm[Hg]", "mustSupport": true },
                     "unit": { "max": 1, "type": "string", "mustSupport": true },
                     "value": { "max": 1, "type": "decimal", "mustSupport": true },
                     "system": {
                       "max": 1,
                       "type": "uri",
-                      "fixed": "http://unitsofmeasure.org",
+                      "fixedUri": "http://unitsofmeasure.org",
                       "mustSupport": true
                     }
                   },
@@ -729,13 +729,13 @@
                   "type": "Quantity",
                   "short": "Vital Sign Component Value",
                   "elements": {
-                    "code": { "max": 1, "type": "code", "fixed": "mm[Hg]", "mustSupport": true },
+                    "code": { "max": 1, "type": "code", "fixedCode": "mm[Hg]", "mustSupport": true },
                     "unit": { "max": 1, "type": "string", "mustSupport": true },
                     "value": { "max": 1, "type": "decimal", "mustSupport": true },
                     "system": {
                       "max": 1,
                       "type": "uri",
-                      "fixed": "http://unitsofmeasure.org",
+                      "fixedUri": "http://unitsofmeasure.org",
                       "mustSupport": true
                     }
                   },
@@ -982,14 +982,14 @@
                     "code": {
                       "max": 1,
                       "type": "code",
-                      "fixed": "vital-signs",
+                      "fixedCode": "vital-signs",
                       "mustSupport": true,
                       "short": "Symbol in syntax defined by the system"
                     },
                     "system": {
                       "max": 1,
                       "type": "uri",
-                      "fixed": "http://terminology.hl7.org/CodeSystem/observation-category",
+                      "fixedUri": "http://terminology.hl7.org/CodeSystem/observation-category",
                       "mustSupport": true,
                       "short": "Identity of the terminology system"
                     }

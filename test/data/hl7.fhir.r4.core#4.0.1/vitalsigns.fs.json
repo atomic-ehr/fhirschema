@@ -175,13 +175,13 @@
                   "code": {
                     "max": 1,
                     "type": "code",
-                    "fixed": "vital-signs",
+                    "fixedCode": "vital-signs",
                     "mustSupport": true
                   },
                   "system": {
                     "max": 1,
                     "type": "uri",
-                    "fixed": "http://terminology.hl7.org/CodeSystem/observation-category",
+                    "fixedUri": "http://terminology.hl7.org/CodeSystem/observation-category",
                     "mustSupport": true
                   }
                 },
