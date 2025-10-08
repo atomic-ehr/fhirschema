@@ -12,6 +12,7 @@ import reslicingPatPassport from '../data/reslicing-patient-passport.json';
 import usCoreBloodPreasureProfilesChain from '../data/uscore-blood-preasure-profiles-chain.json';
 import goodPatternObs1 from '../data/slicing-good-pattern-obs1.json';
 import slicingDicrCompositeDeep from '../data/slicing-discr-composite-deep.json';
+import slicingDiscrSimple from '../data/slicing-discr-simple.json';
 
 const profilesIndex: { [key in string]: FHIRSchema } = {
   'http://hl7.org/fhir/us/core/StructureDefinition/us-core-blood-pressure|8.0.0-ballot':
@@ -28,14 +29,12 @@ describe('Slicing merge', () => {
   describe('Observation.component at us-core vital-signs', () => {
     test('Can merge slicing data into base definition', () => {
       const result = sut.merge(slicingObsComponent.base, slicingObsComponent.overlay);
-
       expect(result).toEqual(slicingObsComponent.result);
     });
   });
   describe('Patient.identifier (synthetic example)', () => {
     test('Can merge reslicing data into base definition', () => {
       const result = sut.merge(reslicingPatPassport.base, reslicingPatPassport.overlay);
-
       expect(result).toEqual(reslicingPatPassport.result);
     });
   });
@@ -44,7 +43,6 @@ describe('Slicing merge', () => {
       const result = usCoreBloodPreasureProfilesChain.profiles
         .map((canon) => profilesIndex[canon])
         .reduce((p1, p2) => sut.merge(p1, p2) as FHIRSchema);
-
       expect(result).toEqual(usCoreBloodPreasureProfilesChain.result);
     });
   });
@@ -53,8 +51,11 @@ describe('Slicing merge', () => {
 describe('Slicing discrimination', () => {
   test('Composite discriminator & deep paths', () => {
     const result = sut.slice(slicingDicrCompositeDeep.data, slicingDicrCompositeDeep.spec as sut.Slicing);
-
     expect(result).toEqual(slicingDicrCompositeDeep.result as any);
+  });
+  test('Simple pattern discriminator on Patient.identifier', () => {
+    const result = sut.slice(slicingDiscrSimple.data, slicingDiscrSimple.spec as sut.Slicing);
+    expect(result).toEqual(slicingDiscrSimple.result as any);
   });
 });
 
@@ -66,7 +67,6 @@ describe('Slicing validation', () => {
   describe('good pattern discrimination', () => {
     test('US core blood preasure component', () => {
       const result = sut.validate(goodPatternObs1.resource, usCoreBloodPreasure);
-
       expect(result).toEqual(goodPatternObs1.result as OperationOutcome);
     });
   });

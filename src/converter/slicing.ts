@@ -37,6 +37,8 @@ const slice = <T extends object>(data: T[], spec: Slicing): Slices<T>  => {
   // the slices when processing an instance.
   const elemByPath = (sliceSpec: FHIRSchemaElement, path: string) => {
     const pathTokens = path.split('.').map((value) => {
+      // simple support for simple fhirpath
+      // https://hl7.org/fhir/fhirpath.html#simple
       const match = value.match(/^\s*(?<fn>[A-Za-z][A-Za-z0-9]*)\s*\(\s*(?<params>[^()]*)\s*\)\s*$/);
       const token: PathToken = {
         type: match ? 'fn' : 'field',
@@ -114,6 +116,7 @@ const slice = <T extends object>(data: T[], spec: Slicing): Slices<T>  => {
                   const elemVal = (elem as any)[patternKey];
                   return itemValues.some((v: any) => matches(v, elemVal));
                 } else throw new Error('Not supported value');
+              // TODO: add support for: exists, type, profile, position
             }
           });
         }
