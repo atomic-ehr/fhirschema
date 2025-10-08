@@ -61,139 +61,105 @@
           "systolic": {
             "max": 1,
             "min": 1,
-            "match": [
-              {
-                "type": "pattern",
-                "value": {
-                  "code": {
-                    "coding": [
-                      {
-                        "code": "8480-6",
-                        "system": "http://loinc.org"
-                      }
-                    ]
-                  }
-                }
-              }
-            ],
-            "schema": {
-              "short": "Systolic Blood Pressure",
-              "elements": {
-                "code": {
-                  "max": 1,
-                  "short": "Systolic Blood Pressure Code",
-                  "patternCodeableConcept": {
-                    "coding": [
-                      {
-                        "code": "8480-6",
-                        "system": "http://loinc.org"
-                      }
-                    ]
-                  },
-                  "mustSupport": true
-                },
-                "valueQuantity": {
-                  "type": "Quantity",
-                  "short": "Vital Sign Component Value",
-                  "elements": {
-                    "code": {
-                      "max": 1,
-                      "type": "code",
-                      "fixed": "mm[Hg]",
-                      "mustSupport": true
-                    },
-                    "unit": {
-                      "max": 1,
-                      "type": "string",
-                      "mustSupport": true
-                    },
-                    "value": {
-                      "max": 1,
-                      "type": "decimal",
-                      "mustSupport": true
-                    },
-                    "system": {
-                      "max": 1,
-                      "type": "uri",
-                      "fixed": "http://unitsofmeasure.org",
-                      "mustSupport": true
+            "short": "Systolic Blood Pressure",
+            "required": ["code"],
+            "mustSupport": true,
+            "elements": {
+              "code": {
+                "max": 1,
+                "short": "Systolic Blood Pressure Code",
+                "patternCodeableConcept": {
+                  "coding": [
+                    {
+                      "code": "8480-6",
+                      "system": "http://loinc.org"
                     }
-                  },
-                  "required": ["value", "unit", "system", "code"],
-                  "mustSupport": true
-                }
+                  ]
+                },
+                "mustSupport": true
               },
-              "required": ["code"],
-              "mustSupport": true
+              "valueQuantity": {
+                "type": "Quantity",
+                "short": "Vital Sign Component Value",
+                "elements": {
+                  "code": {
+                    "max": 1,
+                    "type": "code",
+                    "fixed": "mm[Hg]",
+                    "mustSupport": true
+                  },
+                  "unit": {
+                    "max": 1,
+                    "type": "string",
+                    "mustSupport": true
+                  },
+                  "value": {
+                    "max": 1,
+                    "type": "decimal",
+                    "mustSupport": true
+                  },
+                  "system": {
+                    "max": 1,
+                    "type": "uri",
+                    "fixed": "http://unitsofmeasure.org",
+                    "mustSupport": true
+                  }
+                },
+                "required": ["value", "unit", "system", "code"],
+                "mustSupport": true
+              }
             }
           },
           "diastolic": {
             "max": 1,
             "min": 1,
-            "match": [
-              {
-                "type": "pattern",
-                "value": {
-                  "code": {
-                    "coding": [
-                      {
-                        "code": "8462-4",
-                        "system": "http://loinc.org"
-                      }
-                    ]
-                  }
-                }
-              }
-            ],
-            "schema": {
-              "short": "Diastolic Blood Pressure",
-              "elements": {
-                "code": {
-                  "max": 1,
-                  "short": "Diastolic Blood Pressure Code",
-                  "patternCodeableConcept": {
-                    "coding": [
-                      {
-                        "code": "8462-4",
-                        "system": "http://loinc.org"
-                      }
-                    ]
-                  },
-                  "mustSupport": true
-                },
-                "valueQuantity": {
-                  "type": "Quantity",
-                  "short": "Vital Sign Component Value",
-                  "elements": {
-                    "code": {
-                      "max": 1,
-                      "type": "code",
-                      "fixed": "mm[Hg]",
-                      "mustSupport": true
-                    },
-                    "unit": {
-                      "max": 1,
-                      "type": "string",
-                      "mustSupport": true
-                    },
-                    "value": {
-                      "max": 1,
-                      "type": "decimal",
-                      "mustSupport": true
-                    },
-                    "system": {
-                      "max": 1,
-                      "type": "uri",
-                      "fixed": "http://unitsofmeasure.org",
-                      "mustSupport": true
+            "short": "Diastolic Blood Pressure",
+            "required": ["code"],
+            "mustSupport": true,
+            "elements": {
+              "code": {
+                "max": 1,
+                "short": "Diastolic Blood Pressure Code",
+                "patternCodeableConcept": {
+                  "coding": [
+                    {
+                      "code": "8462-4",
+                      "system": "http://loinc.org"
                     }
-                  },
-                  "required": ["value", "unit", "system", "code"],
-                  "mustSupport": true
-                }
+                  ]
+                },
+                "mustSupport": true
               },
-              "required": ["code"],
-              "mustSupport": true
+              "valueQuantity": {
+                "type": "Quantity",
+                "short": "Vital Sign Component Value",
+                "elements": {
+                  "code": {
+                    "max": 1,
+                    "type": "code",
+                    "fixed": "mm[Hg]",
+                    "mustSupport": true
+                  },
+                  "unit": {
+                    "max": 1,
+                    "type": "string",
+                    "mustSupport": true
+                  },
+                  "value": {
+                    "max": 1,
+                    "type": "decimal",
+                    "mustSupport": true
+                  },
+                  "system": {
+                    "max": 1,
+                    "type": "uri",
+                    "fixed": "http://unitsofmeasure.org",
+                    "mustSupport": true
+                  }
+                },
+                "required": ["value", "unit", "system", "code"],
+                "mustSupport": true
+              }
             }
           }
         },

@@ -164,41 +164,30 @@
           "VSCat": {
             "max": 1,
             "min": 1,
-            "match": {
-              "type": "pattern",
-              "value": {
-                "coding": {
-                  "code": "vital-signs",
-                  "system": "http://terminology.hl7.org/CodeSystem/observation-category"
-                }
-              }
-            },
-            "schema": {
-              "type": "CodeableConcept",
-              "elements": {
-                "coding": {
-                  "type": "Coding",
-                  "array": true,
-                  "elements": {
-                    "code": {
-                      "max": 1,
-                      "type": "code",
-                      "fixed": "vital-signs",
-                      "mustSupport": true
-                    },
-                    "system": {
-                      "max": 1,
-                      "type": "uri",
-                      "fixed": "http://terminology.hl7.org/CodeSystem/observation-category",
-                      "mustSupport": true
-                    }
+            "type": "CodeableConcept",
+            "required": ["coding"],
+            "mustSupport": true,
+            "elements": {
+              "coding": {
+                "type": "Coding",
+                "array": true,
+                "elements": {
+                  "code": {
+                    "max": 1,
+                    "type": "code",
+                    "fixed": "vital-signs",
+                    "mustSupport": true
                   },
-                  "required": ["system", "code"],
-                  "mustSupport": true
-                }
-              },
-              "required": ["coding"],
-              "mustSupport": true
+                  "system": {
+                    "max": 1,
+                    "type": "uri",
+                    "fixed": "http://terminology.hl7.org/CodeSystem/observation-category",
+                    "mustSupport": true
+                  }
+                },
+                "required": ["system", "code"],
+                "mustSupport": true
+              }
             }
           }
         },
