@@ -76,10 +76,9 @@ describe('Slicing validation', () => {
     .map((canon) => profilesIndex[canon])
     .reduce((p1, p2) => sut.merge(p1, p2) as FHIRSchema);
 
-  const patientWithPassports = sut.merge(
-    reslicingPatPassport.base,
-    reslicingPatPassport.overlay
-  ) as FHIRSchema;
+  const multiCitizenPatient = multiCitizenPatientProfilesChain.profiles
+    .map((canon) => profilesIndex[canon])
+    .reduce((p1, p2) => sut.merge(p1, p2) as FHIRSchema);
 
   describe('good pattern discrimination', () => {
     test('US core blood preasure component', () => {
@@ -87,8 +86,8 @@ describe('Slicing validation', () => {
       expect(result).toEqual(goodPatternObs1.result as OperationOutcome);
     });
 
-    test.todo('Patient with passport identifiers (reslicing)', () => {
-      const result = sut.validate(goodPatternPatient1.resource, patientWithPassports);
+    test('Patient with passport identifiers (reslicing)', () => {
+      const result = sut.validate(goodPatternPatient1.resource, multiCitizenPatient);
       expect(result).toEqual(goodPatternPatient1.result as OperationOutcome);
     });
   });

@@ -137,9 +137,9 @@ const slice = <T extends object>(data: T[], spec: Slicing): Slices<T>  => {
 
 const validate = (resource: Resource, profile: FHIRSchema): OperationOutcome => {
   const validateInternal = (data: any, spec: ValidationSpec, fieldPath: string[] = [], slices?: Slices<any>): OperationOutcomeIssue[] => {
-    if (spec.elements == undefined && spec.slicing == undefined)
+    const { elements, slicing, ...moreSpec } = spec; 
+    if (elements == undefined && slicing == undefined)
       return []; //TODO: implement type validation
-    const { slicing, ...elemSpec } = spec; 
     // iterate slicing
     const slicingIssues = ((slicing) => {
       if (slicing == undefined) 
@@ -149,13 +149,19 @@ const validate = (resource: Resource, profile: FHIRSchema): OperationOutcome => 
       const result = Object.entries(slices)
         .flatMap(([sliceName, dataSlice]) => {
           const sliceSpec = slicing.slices?.[sliceName]!;
-          return validateInternal(dataSlice, sliceSpec, [...fieldPath, sliceName], slices);
+          const result = sliceSpec == undefined ? [] : 
+            validateInternal(dataSlice, sliceSpec, [...fieldPath, sliceName], slices);
+          return result;
         });
       return result;
     })(slicing);
     // validate array items
     if (Array.isArray(data)) {
-      return data.flatMap((item) => validateInternal(item, elemSpec, fieldPath, slices));
+      const itemSpec = {elements, ...moreSpec}
+      return data.flatMap((item) => {
+        const result = validateInternal(item, itemSpec, fieldPath, slices);
+        return result;
+      });
     }
     //
     const specFields = new Set(Object.keys(spec.elements || {}))
@@ -164,6 +170,8 @@ const validate = (resource: Resource, profile: FHIRSchema): OperationOutcome => 
       .keys(data || {})
       .filter((field) => field != 'resourceType'));
     const extraFields = dataFields.difference(specFields);// TODO: extra fields may be included in type schema
+    // TODO: change path component: {type: 'field' | 'slice' | 'reslice', name: string}
+    //       in order to be able to generate strPath: 'identifier:passport/usPassport'
     const strPath = fieldPath.join(".");
     // iterate fields
     const fields = [...dataFields.intersection(specFields)];
@@ -171,7 +179,8 @@ const validate = (resource: Resource, profile: FHIRSchema): OperationOutcome => 
       .flatMap((field) => { 
         const sourceVal = data?.[field];
         const specVal = spec.elements?.[field] as ValidationSpec;
-        const issues = validateInternal(sourceVal, specVal, [...fieldPath, field], slices);
+        const issues = specVal == undefined ? [] : 
+          validateInternal(sourceVal, specVal, [...fieldPath, field], slices);
         return issues;
       });
     // validation checks
