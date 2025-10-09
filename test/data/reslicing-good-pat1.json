@@ -1,0 +1,57 @@
+{
+  "resource": {
+    "resourceType": "Patient",
+    "id": "patient-with-passports",
+    "name": [
+      {
+        "use": "official",
+        "family": "Doe",
+        "given": ["John"]
+      }
+    ],
+    "gender": "male",
+    "birthDate": "1985-03-20",
+    "identifier": [
+      {
+        "type": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+              "code": "PPN"
+            }
+          ]
+        },
+        "system": "http://hl7.org/fhir/sid/us-passport",
+        "value": "123456789"
+      },
+      {
+        "type": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+              "code": "PPN"
+            }
+          ]
+        },
+        "system": "http://hl7.org/fhir/sid/es-passport",
+        "value": "ESP-AAA000111"
+      },
+      {
+        "type": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+              "code": "MR"
+            }
+          ]
+        },
+        "system": "http://hospital.example.org",
+        "value": "MRN-987654"
+      }
+    ]
+  },
+  "result": {
+    "resourceType": "OperationOutcome",
+    "issue": []
+  }
+}

@@ -73,3 +73,19 @@ Test data for slicing discrimination with simple pattern-based discriminator.
     - passport slice: matches identifiers with PPN (Passport Number) type code
   - result: Sliced data with passport slice (2 items) and @default slice (1 item)
 ```
+
+### slicing-good-pattern-patient1
+
+Test data for validating a Patient resource with passport identifier slicing and reslicing.
+
+```
+* reslicing-good-pat1.json
+  - resource: Patient resource with 3 identifiers
+    - US passport (PPN type, us-passport system)
+    - Spanish passport (PPN type, es-passport system)
+    - Medical record number (MR type)
+  - result: OperationOutcome with no issues (valid resource)
+  - profile: Uses merged PatientWithCountryPassports profile (from reslicing-patient-passport)
+    - Tests passport slice discrimination by type
+    - Tests passport reslicing by system (usPassport, spainPassport)
+```

@@ -7,12 +7,16 @@ import r4VitalSignsProfile from '../data/hl7.fhir.r4.core#4.0.1/vitalsigns.fs.js
 import r4ObsProfile from '../data/hl7.fhir.r4.core#4.0.1/Observation.fs.json';
 import r4DomainResProfile from '../data/hl7.fhir.r4.core#4.0.1/DomainResource.fs.json';
 import r4ResourceProfile from '../data/hl7.fhir.r4.core#4.0.1/Resource.fs.json';
+import r4PatientProfile from '../data/hl7.fhir.r4.core#4.0.1/Patient.fs.json';
 import slicingObsComponent from '../data/slicing-obs-component.json';
 import reslicingPatPassport from '../data/reslicing-patient-passport.json';
 import usCoreBloodPreasureProfilesChain from '../data/uscore-blood-preasure-profiles-chain.json';
+import multiCitizenPatientProfilesChain from '../data/multicitizen-patient-profiles-chain.json';
 import goodPatternObs1 from '../data/slicing-good-pattern-obs1.json';
 import slicingDicrCompositeDeep from '../data/slicing-discr-composite-deep.json';
 import slicingDiscrSimple from '../data/slicing-discr-simple.json';
+import goodPatternPatient1 from '../data/reslicing-good-pat1.json';
+import multiCitizenPatientProfile from '../data/MultiCitizenPatient.fs.json';
 
 const profilesIndex: { [key in string]: FHIRSchema } = {
   'http://hl7.org/fhir/us/core/StructureDefinition/us-core-blood-pressure|8.0.0-ballot':
@@ -23,6 +27,8 @@ const profilesIndex: { [key in string]: FHIRSchema } = {
   'http://hl7.org/fhir/StructureDefinition/Observation|4.0.1': r4ObsProfile,
   'http://hl7.org/fhir/StructureDefinition/DomainResource|4.0.1': r4DomainResProfile,
   'http://hl7.org/fhir/StructureDefinition/Resource|4.0.1': r4ResourceProfile,
+  'http://hl7.org/fhir/StructureDefinition/Patient|4.0.1': r4PatientProfile,
+  'http://example.org/fhir/StructureDefinition/MultiCitizenPatient|0.1.0': multiCitizenPatientProfile,
 };
 
 describe('Slicing merge', () => {
@@ -45,6 +51,12 @@ describe('Slicing merge', () => {
         .reduce((p1, p2) => sut.merge(p1, p2) as FHIRSchema);
       expect(result).toEqual(usCoreBloodPreasureProfilesChain.result);
     });
+    test('multicitizen-patient profile chain (custom)', () => {
+      const result = multiCitizenPatientProfilesChain.profiles
+        .map((canon) => profilesIndex[canon])
+        .reduce((p1, p2) => sut.merge(p1, p2) as FHIRSchema);
+      expect(result).toEqual(multiCitizenPatientProfilesChain.result);
+    });
   });
 });
 
@@ -64,10 +76,20 @@ describe('Slicing validation', () => {
     .map((canon) => profilesIndex[canon])
     .reduce((p1, p2) => sut.merge(p1, p2) as FHIRSchema);
 
+  const patientWithPassports = sut.merge(
+    reslicingPatPassport.base,
+    reslicingPatPassport.overlay
+  ) as FHIRSchema;
+
   describe('good pattern discrimination', () => {
     test('US core blood preasure component', () => {
       const result = sut.validate(goodPatternObs1.resource, usCoreBloodPreasure);
       expect(result).toEqual(goodPatternObs1.result as OperationOutcome);
+    });
+
+    test.todo('Patient with passport identifiers (reslicing)', () => {
+      const result = sut.validate(goodPatternPatient1.resource, patientWithPassports);
+      expect(result).toEqual(goodPatternPatient1.result as OperationOutcome);
     });
   });
 });
