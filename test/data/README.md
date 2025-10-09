@@ -49,3 +49,27 @@ Test data for merging slicing and reslicing definitions in Patient.identifier.
     - spainPassport: Spanish passport with fixed system
   - result: merged profile with nested slicing hierarchy (identifier → passport → country-specific)
 ```
+
+### slicing-discr-composite-deep
+
+Test data for slicing discrimination with composite discriminators and deep paths.
+
+```
+* slicing-discr-composite-deep.json
+  - data: Array of CodeableConcept items (category observations)
+  - spec: Slicing specification with composite discriminator on coding.code and coding.system
+    - VSCat slice: matches vital-signs category
+  - result: Sliced data with VSCat slice and @default slice
+```
+
+### slicing-discr-simple
+
+Test data for slicing discrimination with simple pattern-based discriminator.
+
+```
+* slicing-discr-simple.json
+  - data: Array of Patient identifiers (passports and medical record number)
+  - spec: Slicing specification with pattern discriminator on type field
+    - passport slice: matches identifiers with PPN (Passport Number) type code
+  - result: Sliced data with passport slice (2 items) and @default slice (1 item)
+```

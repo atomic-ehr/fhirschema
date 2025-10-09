@@ -83,9 +83,9 @@ const slice = <T extends object>(data: T[], spec: Slicing): Slices<T>  => {
     Object.keys(obj).filter((k) => k.startsWith(prefix))[0]
 
   const sliceFns = Object
-    .entries(spec.slicing.slices)
+    .entries(spec.slices)
     .map(([sliceName, sliceSpec]) => {
-      const discrElems = (spec.slicing.discriminator || [])
+      const discrElems = (spec.discriminator || [])
         .map(({type, path}) => ({ type, ...elemByPath(sliceSpec, path) }));
 
       return {
@@ -136,24 +136,26 @@ const slice = <T extends object>(data: T[], spec: Slicing): Slices<T>  => {
 }
 
 const validate = (resource: Resource, profile: FHIRSchema): OperationOutcome => {
-  const validateInternal = (data: any, spec: ValidationSpec, fieldPath: string[] = [], slicing?: Slicing1): OperationOutcomeIssue[] => {
+  const validateInternal = (data: any, spec: ValidationSpec, fieldPath: string[] = [], slices?: Slices<any>): OperationOutcomeIssue[] => {
     if (spec.elements == undefined && spec.slicing == undefined)
       return []; //TODO: implement type validation
+    const { slicing, ...elemSpec } = spec; 
     // iterate slicing
-    const slicingIssues = Object
-      .entries(spec.slicing?.slices || {})
-      .flatMap(([name, slice]) => {
-        const slicing: Slicing1 = { 
-          sliceName: name, 
-          discriminator: spec.slicing?.discriminator,
-          atDefault: data
-        };
-        const issues = validateInternal(data, slice, fieldPath, slicing);
-        return issues;
-      });
+    const slicingIssues = ((slicing) => {
+      if (slicing == undefined) 
+        return [];
+      // TODO: ensure data is array
+      const slices = slice(data, slicing as Slicing);
+      const result = Object.entries(slices)
+        .flatMap(([sliceName, dataSlice]) => {
+          const sliceSpec = slicing.slices?.[sliceName]!;
+          return validateInternal(dataSlice, sliceSpec, [...fieldPath, sliceName], slices);
+        });
+      return result;
+    })(slicing);
     // validate array items
     if (Array.isArray(data)) {
-      return data.flatMap((item) => validateInternal(item, spec, fieldPath, slicing));
+      return data.flatMap((item) => validateInternal(item, elemSpec, fieldPath, slices));
     }
     //
     const specFields = new Set(Object.keys(spec.elements || {}))
@@ -169,7 +171,7 @@ const validate = (resource: Resource, profile: FHIRSchema): OperationOutcome => 
       .flatMap((field) => { 
         const sourceVal = data?.[field];
         const specVal = spec.elements?.[field] as ValidationSpec;
-        const issues = validateInternal(sourceVal, specVal, [...fieldPath, field], slicing);
+        const issues = validateInternal(sourceVal, specVal, [...fieldPath, field], slices);
         return issues;
       });
     // validation checks
@@ -195,11 +197,6 @@ const validate = (resource: Resource, profile: FHIRSchema): OperationOutcome => 
           expression: [fieldPath]
         };
     });
-    // match: fixed[x] (https://hl7.org/fhir/elementdefinition-definitions.html#ElementDefinition.fixed_x_)
-    const [fixedField] = Object.keys(spec).filter((k) => k.startsWith('fixed'))
-    if (fixedField != undefined) {
-      const a = 1;
-    }
 
     const issues = [
       ...missingFieldIssues,
@@ -220,22 +217,13 @@ const validate = (resource: Resource, profile: FHIRSchema): OperationOutcome => 
 };
 
 type FhirSchemaNode = Pick<FHIRSchemaElement, 'elements' | 'slicing'> & Partial<Pick<FHIRSchema, 'name' | 'base' | 'url'>>;
-type FhirSchemaElements = FhirSchemaNode['elements'];
-type FhirSchemaSlicing = FhirSchemaNode['slicing'];
-type Slicing1 = {
-  discriminator?: FhirSchemaSlicingDiscriminator[];
-  sliceName: string;
-  atDefault?: any
-};
 type ValidationSpec = Partial<FHIRSchema> & Partial<FHIRSchemaElement>;
 type Slicing = { 
-  slicing: { 
-    discriminator: { 
-      path: string; 
-      type: 'value' | 'exists' | 'pattern' | 'type' | 'profile' | 'position'; 
-    }[]; 
-    slices: { [key in string]: FHIRSchemaElement}; 
-  }; 
+  discriminator: { 
+    path: string; 
+    type: 'value' | 'exists' | 'pattern' | 'type' | 'profile' | 'position'; 
+  }[]; 
+  slices: { [key in string]: FHIRSchemaElement}; 
 };
 type Slices<T> = { [key in string]: T[]};
 type PathToken = {

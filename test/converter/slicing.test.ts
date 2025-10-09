@@ -50,11 +50,11 @@ describe('Slicing merge', () => {
 
 describe('Slicing discrimination', () => {
   test('Composite discriminator & deep paths', () => {
-    const result = sut.slice(slicingDicrCompositeDeep.data, slicingDicrCompositeDeep.spec as sut.Slicing);
+    const result = sut.slice(slicingDicrCompositeDeep.data, slicingDicrCompositeDeep.spec.slicing as sut.Slicing);
     expect(result).toEqual(slicingDicrCompositeDeep.result as any);
   });
   test('Simple pattern discriminator on Patient.identifier', () => {
-    const result = sut.slice(slicingDiscrSimple.data, slicingDiscrSimple.spec as sut.Slicing);
+    const result = sut.slice(slicingDiscrSimple.data, slicingDiscrSimple.spec.slicing as sut.Slicing);
     expect(result).toEqual(slicingDiscrSimple.result as any);
   });
 });
