@@ -333,7 +333,7 @@ export interface StructureDefinition {
   version?: string;
   name: string;
   title?: string;
-  status: string;
+  status: 'draft' | 'active' | 'retired' | 'unknown';
   date?: string;
   description?: string;
   kind: string;
