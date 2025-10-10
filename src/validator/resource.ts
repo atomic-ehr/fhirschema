@@ -6,6 +6,8 @@ import {
   Resource,
 } from '../converter/types';
 import * as fp from './fieldPath';
+import * as primitive from './primitive';
+import * as complex from './complex';
 
 // simple support for simple fhirpath
 // https://hl7.org/fhir/fhirpath.html#simple
@@ -117,7 +119,11 @@ const slice = <T extends object>(data: T[], spec: Slicing): Slices<T> => {
   return result;
 };
 
-const validate = (resource: Resource, profile: FHIRSchema): OperationOutcome => {
+const validate = (
+  resource: Resource,
+  profile: FHIRSchema,
+  typeProfiles: { [key in string]: FHIRSchema }
+): OperationOutcome => {
   const validate = (
     data: any,
     spec: ValidationSpec,
@@ -156,31 +162,40 @@ const validate = (resource: Resource, profile: FHIRSchema): OperationOutcome => 
     const dataFields = new Set(
       spec.elements && Object.keys(data || {}).filter((field) => field != 'resourceType')
     );
-    const extraFields = dataFields.difference(specFields); // TODO: extra fields may be included in type schema
+    const extraFields = dataFields.difference(specFields);
     // iterate fields
     const fields = [...dataFields.intersection(specFields)];
     const fieldIssues = fields.flatMap((field) => {
+      const fieldLoc = [...fieldPath, { type: 'field', name: field } as fp.FieldPathComponent];
       const sourceVal = data?.[field];
-      const specVal = spec.elements?.[field] as ValidationSpec;
-      const fieldPathItem: fp.FieldPathComponent = { type: 'field', name: field };
-      const issues =
-        specVal == undefined
-          ? []
-          : validate(sourceVal, specVal, [...fieldPath, fieldPathItem], parentSlices);
-      return issues;
+      const elemSpec = spec.elements?.[field]!;
+
+      const elemSchema = typeProfiles[elemSpec.type!];
+      if (elemSchema == undefined) {
+        return validate(sourceVal, elemSpec, fieldLoc, parentSlices);
+      }
+
+      // https://hl7.org/fhir/valueset-structure-definition-kind.html
+      switch (elemSchema.kind) {
+        case 'primitive-type':
+          return primitive.validate(sourceVal, elemSchema, fieldLoc).issue || [];
+        case 'complex-type':
+          return complex.validate(sourceVal, elemSchema, fieldLoc, typeProfiles).issue || [];
+        case 'resource':
+          return validate(sourceVal, elemSchema, fieldLoc, parentSlices);
+        default:
+          throw new Error(`Not supported kind: ${elemSchema.kind}`);
+      }
+      // TODO: what about element constraints?
     });
-    // validation checks
     // required fields
     const missingFieldIssues = [...requiredFields.difference(dataFields)].map((field) => {
-      const pathComponents = [
-        ...fieldPath,
-        { type: 'field', name: field } as fp.FieldPathComponent,
-      ];
+      const fieldLoc = [...fieldPath, { type: 'field', name: field } as fp.FieldPathComponent];
       return {
         severity: 'error',
         code: 'required',
-        details: { text: `Field: ${fp.stringify(pathComponents)}, is required` },
-        expression: [fp.stringify(pathComponents.filter(({ type }) => 'field' == type))],
+        details: { text: `Field: ${fp.stringify(fieldLoc)}, is required` },
+        expression: [fp.stringify(fieldLoc.filter(({ type }) => 'field' == type))],
       } as OperationOutcomeIssue;
     });
     // extra fields (not in the schema)
@@ -197,7 +212,7 @@ const validate = (resource: Resource, profile: FHIRSchema): OperationOutcome => 
       } as OperationOutcomeIssue;
     });
 
-    const issues = [...missingFieldIssues, ...extraFieldIssues, ...fieldIssues, ...slicesIssues];
+    const issues = [...fieldIssues, ...missingFieldIssues, ...extraFieldIssues, ...slicesIssues];
 
     return issues;
   };

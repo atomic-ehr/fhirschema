@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'bun:test';
-import { profilesIndex } from './fixture';
+import { profilesIndex, typesIndex } from './fixture';
 import * as sut from '../../src/validator/resource';
 import * as profile from '../../src/validator/profile';
 import { FHIRSchema, OperationOutcome } from '../../src/converter/types';
@@ -12,11 +12,17 @@ import goodPatternPatient1 from '../data/reslicing-good-pat1.json';
 
 describe('Slicing discrimination', () => {
   test('Composite discriminator & deep paths', () => {
-    const result = sut.slice(slicingDicrCompositeDeep.data, slicingDicrCompositeDeep.spec.slicing as sut.Slicing);
+    const result = sut.slice(
+      slicingDicrCompositeDeep.data,
+      slicingDicrCompositeDeep.spec.slicing as sut.Slicing
+    );
     expect(result).toEqual(slicingDicrCompositeDeep.result as any);
   });
   test('Simple pattern discriminator on Patient.identifier', () => {
-    const result = sut.slice(slicingDiscrSimple.data, slicingDiscrSimple.spec.slicing as sut.Slicing);
+    const result = sut.slice(
+      slicingDiscrSimple.data,
+      slicingDiscrSimple.spec.slicing as sut.Slicing
+    );
     expect(result).toEqual(slicingDiscrSimple.result as any);
   });
 });
@@ -32,12 +38,12 @@ describe('Slicing validation', () => {
 
   describe('good pattern discrimination', () => {
     test('US core blood preasure component', () => {
-      const result = sut.validate(goodPatternObs1.resource, usCoreBloodPreasure);
+      const result = sut.validate(goodPatternObs1.resource, usCoreBloodPreasure, typesIndex);
       expect(result).toEqual(goodPatternObs1.result as OperationOutcome);
     });
 
     test('Patient with passport identifiers (reslicing)', () => {
-      const result = sut.validate(goodPatternPatient1.resource, multiCitizenPatient);
+      const result = sut.validate(goodPatternPatient1.resource, multiCitizenPatient, typesIndex);
       expect(result).toEqual(goodPatternPatient1.result as OperationOutcome);
     });
   });

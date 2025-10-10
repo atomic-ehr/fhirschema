@@ -8,6 +8,14 @@ const validate = (
   location: fp.FieldPathComponent[],
   typeProfiles: { [key in string]: FHIRSchema }
 ): OperationOutcome => {
+  // validate array items
+  if (Array.isArray(data)) {
+    const itemIssues = data.flatMap(
+      (item) => validate(item, spec, location, typeProfiles).issue || []
+    );
+    return { resourceType: 'OperationOutcome', issue: itemIssues };
+  }
+
   const specFields = new Set(Object.keys(spec.elements || {}));
   const requiredFields = new Set(spec.required);
   const dataFields = new Set(

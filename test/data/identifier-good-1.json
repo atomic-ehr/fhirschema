@@ -1,0 +1,21 @@
+{
+  "type": "Identifier",
+  "value": {
+    "use": "official",
+    "type": {
+      "coding": [
+        {
+          "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+          "code": "PPN",
+          "display": "Passport number"
+        }
+      ]
+    },
+    "system": "http://hl7.org/fhir/sid/us-passport",
+    "value": "123456789"
+  },
+  "result": {
+    "resourceType": "OperationOutcome",
+    "issue": []
+  }
+}

@@ -4,6 +4,7 @@ import { typesIndex } from './fixture';
 import * as sut from '../../src/validator/complex';
 import codingGood1 from '../data/coding-good-1.json';
 import codingBadExtraField from '../data/coding-bad-extra-field.json';
+import identifierGood1 from '../data/identifier-good-1.json';
 
 describe('Complex-type validations', () => {
   describe('Single level types', () => {
@@ -20,5 +21,12 @@ describe('Complex-type validations', () => {
       expect(result).toEqual(codingBadExtraField.result as OperationOutcome);
     });
   });
-  describe('Multi level types', () => {});
+  describe('Multi level types', () => {
+    test('Identifier good', () => {
+      const spec = typesIndex[identifierGood1.type];
+      const result = sut.validate(identifierGood1.value, spec, [], typesIndex);
+
+      expect(result).toEqual(identifierGood1.result as OperationOutcome);
+    });
+  });
 });

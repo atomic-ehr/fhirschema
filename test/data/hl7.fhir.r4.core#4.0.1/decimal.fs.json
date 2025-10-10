@@ -1,0 +1,27 @@
+{
+  "url": "http://hl7.org/fhir/StructureDefinition/decimal",
+  "derivedFrom": "StructureDefinition/dfba2f46-00f4-44fb-b436-8b33f14382ee",
+  "scalar": true,
+  "regex": "-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?",
+  "id": "cad4cf3e-01fa-4785-8515-a54026de71a1",
+  "base": "http://hl7.org/fhir/StructureDefinition/Element",
+  "short": "Primitive value for decimal",
+  "name": "decimal",
+  "extension": [
+    {
+      "url": "http://hl7.org/fhir/StructureDefinition/structuredefinition-standards-status",
+      "valueCode": "normative"
+    },
+    {
+      "url": "http://hl7.org/fhir/StructureDefinition/structuredefinition-normative-version",
+      "valueCode": "4.0.0"
+    }
+  ],
+  "definition": "Primitive value for decimal",
+  "kind": "primitive-type",
+  "type": "decimal",
+  "version": "4.0.1",
+  "resourceType": "FHIRSchema",
+  "derivation": "specialization",
+  "system-type": "http://hl7.org/fhirpath/System.Decimal"
+}

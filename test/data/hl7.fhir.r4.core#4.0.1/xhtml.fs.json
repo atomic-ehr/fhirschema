@@ -1,0 +1,28 @@
+{
+  "url": "http://hl7.org/fhir/StructureDefinition/xhtml",
+  "derivedFrom": "StructureDefinition/722286b4-2b15-43a1-9653-d7b501fb836f",
+  "scalar": true,
+  "max": 1,
+  "id": "0f55422e-9a32-4a5a-ad3d-8600f44eb004",
+  "base": "http://hl7.org/fhir/StructureDefinition/Element",
+  "short": "Actual xhtml",
+  "name": "xhtml",
+  "extension": [
+    {
+      "url": "http://hl7.org/fhir/StructureDefinition/structuredefinition-standards-status",
+      "valueCode": "normative"
+    },
+    {
+      "url": "http://hl7.org/fhir/StructureDefinition/structuredefinition-normative-version",
+      "valueCode": "4.0.0"
+    }
+  ],
+  "definition": "Actual xhtml",
+  "kind": "primitive-type",
+  "required-element": true,
+  "type": "xhtml",
+  "version": "4.0.1",
+  "resourceType": "FHIRSchema",
+  "derivation": "specialization",
+  "system-type": "http://hl7.org/fhirpath/System.String"
+}

@@ -1,0 +1,27 @@
+{
+  "url": "http://hl7.org/fhir/StructureDefinition/canonical",
+  "derivedFrom": "StructureDefinition/48b2788e-078e-400e-a8aa-211ced281a72",
+  "scalar": true,
+  "regex": "\\S*",
+  "id": "474b8276-0076-46c6-8c90-2c8bafd1cc3b",
+  "base": "http://hl7.org/fhir/StructureDefinition/uri",
+  "short": "Primitive value for canonical",
+  "name": "canonical",
+  "extension": [
+    {
+      "url": "http://hl7.org/fhir/StructureDefinition/structuredefinition-standards-status",
+      "valueCode": "normative"
+    },
+    {
+      "url": "http://hl7.org/fhir/StructureDefinition/structuredefinition-normative-version",
+      "valueCode": "4.0.0"
+    }
+  ],
+  "definition": "Primitive value for canonical",
+  "kind": "primitive-type",
+  "type": "canonical",
+  "version": "4.0.1",
+  "resourceType": "FHIRSchema",
+  "derivation": "specialization",
+  "system-type": "http://hl7.org/fhirpath/System.String"
+}

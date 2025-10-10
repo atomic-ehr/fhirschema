@@ -1,0 +1,27 @@
+{
+  "url": "http://hl7.org/fhir/StructureDefinition/date",
+  "derivedFrom": "StructureDefinition/1ab9b3a9-985e-435e-bb6f-79a9e43d6d81",
+  "scalar": true,
+  "regex": "([0-9]([0-9]([0-9][1-9]|[1-9]0)|[1-9]00)|[1-9]000)(-(0[1-9]|1[0-2])(-(0[1-9]|[1-2][0-9]|3[0-1]))?)?",
+  "id": "ba9191af-6e1d-4ddf-b86c-00d0affe89a1",
+  "base": "http://hl7.org/fhir/StructureDefinition/Element",
+  "short": "Primitive value for date",
+  "name": "date",
+  "extension": [
+    {
+      "url": "http://hl7.org/fhir/StructureDefinition/structuredefinition-standards-status",
+      "valueCode": "normative"
+    },
+    {
+      "url": "http://hl7.org/fhir/StructureDefinition/structuredefinition-normative-version",
+      "valueCode": "4.0.0"
+    }
+  ],
+  "definition": "Primitive value for date",
+  "kind": "primitive-type",
+  "type": "date",
+  "version": "4.0.1",
+  "resourceType": "FHIRSchema",
+  "derivation": "specialization",
+  "system-type": "http://hl7.org/fhirpath/System.Date"
+}
