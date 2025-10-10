@@ -1,0 +1,47 @@
+{
+  "url": "http://hl7.org/fhir/StructureDefinition/Period",
+  "derivedFrom": "StructureDefinition/0f303936-ce47-4148-ac1f-ef487d8e37c0",
+  "constraints": {
+    "per-1": {
+      "human": "If present, start SHALL have a lower value than end",
+      "severity": "error",
+      "expression": "start.hasValue().not() or end.hasValue().not() or (start <= end)"
+    }
+  },
+  "id": "9a9bcf95-3d6b-42e2-bdc5-709676758c65",
+  "base": "http://hl7.org/fhir/StructureDefinition/Element",
+  "name": "Period",
+  "extension": [
+    {
+      "url": "http://hl7.org/fhir/StructureDefinition/structuredefinition-standards-status",
+      "valueCode": "normative"
+    },
+    {
+      "url": "http://hl7.org/fhir/StructureDefinition/structuredefinition-normative-version",
+      "valueCode": "4.0.0"
+    }
+  ],
+  "kind": "complex-type",
+  "type": "Period",
+  "version": "4.0.1",
+  "resourceType": "FHIRSchema",
+  "elements": {
+    "end": {
+      "type": "dateTime",
+      "short": "End time with inclusive boundary, if not ongoing",
+      "scalar": true,
+      "comment": "The high value includes any matching date/time. i.e. 2012-02-03T10:00:00 is in a period that has an end value of 2012-02-03.",
+      "summary": true,
+      "definition": "The end of the period. If the end of the period is missing, it means no end was known or planned at the time the instance was created. The start may be in the past, and the end date in the future, which means that period is expected/planned to end at that time."
+    },
+    "start": {
+      "type": "dateTime",
+      "short": "Starting time with inclusive boundary",
+      "scalar": true,
+      "comment": "If the low element is missing, the meaning is that the low boundary is not known.",
+      "summary": true,
+      "definition": "The start of the period. The boundary is inclusive."
+    }
+  },
+  "derivation": "specialization"
+}

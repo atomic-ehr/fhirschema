@@ -1,0 +1,42 @@
+{
+  "url": "http://hl7.org/fhir/StructureDefinition/CodeableConcept",
+  "derivedFrom": "StructureDefinition/c26fde27-bd64-41ab-a0e5-553233b4e62f",
+  "id": "f216a052-44b2-4249-9e1c-c53742ec62a9",
+  "base": "http://hl7.org/fhir/StructureDefinition/Element",
+  "name": "CodeableConcept",
+  "extension": [
+    {
+      "url": "http://hl7.org/fhir/StructureDefinition/structuredefinition-standards-status",
+      "valueCode": "normative"
+    },
+    {
+      "url": "http://hl7.org/fhir/StructureDefinition/structuredefinition-normative-version",
+      "valueCode": "4.0.0"
+    }
+  ],
+  "kind": "complex-type",
+  "type": "CodeableConcept",
+  "version": "4.0.1",
+  "resourceType": "FHIRSchema",
+  "elements": {
+    "text": {
+      "type": "string",
+      "short": "Plain text representation of the concept",
+      "scalar": true,
+      "comment": "Very often the text is the same as a displayName of one of the codings.",
+      "summary": true,
+      "definition": "A human language representation of the concept as seen/selected/uttered by the user who entered the data and/or which represents the intended meaning of the user.",
+      "requirements": "The codes from the terminologies do not always capture the correct meaning with all the nuances of the human using them, or sometimes there is no appropriate code at all. In these cases, the text is used to capture the full meaning of the source."
+    },
+    "coding": {
+      "type": "Coding",
+      "array": true,
+      "short": "Code defined by a terminology system",
+      "comment": "Codes may be defined very casually in enumerations, or code lists, up to very formal definitions such as SNOMED CT - see the HL7 v3 Core Principles for more information.  Ordering of codings is undefined and SHALL NOT be used to infer meaning. Generally, at most only one of the coding values will be labeled as UserSelected = true.",
+      "summary": true,
+      "definition": "A reference to a code defined by a terminology system.",
+      "requirements": "Allows for alternative encodings within a code system, and translations to other code systems."
+    }
+  },
+  "derivation": "specialization"
+}

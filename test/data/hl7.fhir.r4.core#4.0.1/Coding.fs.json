@@ -1,0 +1,66 @@
+{
+  "url": "http://hl7.org/fhir/StructureDefinition/Coding",
+  "derivedFrom": "StructureDefinition/001a14e5-8f4b-4cd2-a9be-af2a2c1ada49",
+  "id": "dbb43d22-c05b-4b64-984b-efd397062b1e",
+  "base": "http://hl7.org/fhir/StructureDefinition/Element",
+  "name": "Coding",
+  "extension": [
+    {
+      "url": "http://hl7.org/fhir/StructureDefinition/structuredefinition-standards-status",
+      "valueCode": "normative"
+    },
+    {
+      "url": "http://hl7.org/fhir/StructureDefinition/structuredefinition-normative-version",
+      "valueCode": "4.0.0"
+    }
+  ],
+  "kind": "complex-type",
+  "type": "Coding",
+  "version": "4.0.1",
+  "resourceType": "FHIRSchema",
+  "elements": {
+    "code": {
+      "type": "code",
+      "short": "Symbol in syntax defined by the system",
+      "scalar": true,
+      "summary": true,
+      "definition": "A symbol in syntax defined by the system. The symbol may be a predefined code or an expression in a syntax defined by the coding system (e.g. post-coordination).",
+      "requirements": "Need to refer to a particular code in the system."
+    },
+    "system": {
+      "type": "uri",
+      "short": "Identity of the terminology system",
+      "scalar": true,
+      "comment": "The URI may be an OID (urn:oid:...) or a UUID (urn:uuid:...).  OIDs and UUIDs SHALL be references to the HL7 OID registry. Otherwise, the URI should come from HL7's list of FHIR defined special URIs or it should reference to some definition that establishes the system clearly and unambiguously.",
+      "summary": true,
+      "definition": "The identification of the code system that defines the meaning of the symbol in the code.",
+      "requirements": "Need to be unambiguous about the source of the definition of the symbol."
+    },
+    "display": {
+      "type": "string",
+      "short": "Representation defined by the system",
+      "scalar": true,
+      "summary": true,
+      "definition": "A representation of the meaning of the code in the system, following the rules of the system.",
+      "requirements": "Need to be able to carry a human-readable meaning of the code for readers that do not know  the system."
+    },
+    "version": {
+      "type": "string",
+      "short": "Version of the system - if relevant",
+      "scalar": true,
+      "comment": "Where the terminology does not clearly define what string should be used to identify code system versions, the recommendation is to use the date (expressed in FHIR date format) on which that version was officially published as the version date.",
+      "summary": true,
+      "definition": "The version of the code system which was used when choosing this code. Note that a well-maintained code system does not need the version reported, because the meaning of codes is consistent across versions. However this cannot consistently be assured, and when the meaning is not guaranteed to be consistent, the version SHOULD be exchanged."
+    },
+    "userSelected": {
+      "type": "boolean",
+      "short": "If this coding was chosen directly by the user",
+      "scalar": true,
+      "comment": "Amongst a set of alternatives, a directly chosen code is the most appropriate starting point for new translations. There is some ambiguity about what exactly 'directly chosen' implies, and trading partner agreement may be needed to clarify the use of this element and its consequences more completely.",
+      "summary": true,
+      "definition": "Indicates that this coding was chosen by a user directly - e.g. off a pick list of available items (codes or displays).",
+      "requirements": "This has been identified as a clinical safety criterium - that this exact system/code pair was chosen explicitly, rather than inferred by the system based on some rules or language processing."
+    }
+  },
+  "derivation": "specialization"
+}

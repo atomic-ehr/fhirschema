@@ -1,4 +1,4 @@
-import { FHIRSchema, FHIRSchemaElement, FhirSchemaSlicingDiscriminator, OperationOutcome, OperationOutcomeIssue, Resource } from './types';
+import { FHIRSchema, FHIRSchemaElement, OperationOutcome, OperationOutcomeIssue, Resource } from './types';
 
 const merge = (base?: FhirSchemaNode, overlay?: FhirSchemaNode): FhirSchemaNode | undefined => {
   if (base == overlay == undefined) return;
@@ -135,8 +135,12 @@ const slice = <T extends object>(data: T[], spec: Slicing): Slices<T>  => {
   return result;
 }
 
-const validate = (resource: Resource, profile: FHIRSchema): OperationOutcome => {
-  const validateInternal = (data: any, spec: ValidationSpec, fieldPath: FieldPathComponent[] = [], parentSlices?: Slices<any>): OperationOutcomeIssue[] => {
+const validateType = (data: any, spec: FHIRSchemaElement, typeProfiles: {[key in string]: FHIRSchema}) => {
+
+}
+
+const validateResource = (resource: Resource, profile: FHIRSchema): OperationOutcome => {
+  const validate = (data: any, spec: ValidationSpec, fieldPath: FieldPathComponent[] = [], parentSlices?: Slices<any>): OperationOutcomeIssue[] => {
     const { elements, slicing, ...moreSpec } = spec; 
     if (elements == undefined && slicing == undefined)
       return []; //TODO: implement type validation
@@ -153,7 +157,7 @@ const validate = (resource: Resource, profile: FHIRSchema): OperationOutcome => 
           // Merge parent elements with slice elements (slices refine, not replace)
           const mergedSpec = { ...sliceSpec, elements: {...elements, ...sliceSpec.elements} };
           const fieldPathItem: FieldPathComponent = { name: sliceName, type: parentSlices == undefined ? 'slice' : 'reslice' };
-          const result = validateInternal(dataSlice, mergedSpec, [...fieldPath, fieldPathItem], slices);
+          const result = validate(dataSlice, mergedSpec, [...fieldPath, fieldPathItem], slices);
           return result;
         });
       return result;
@@ -161,7 +165,7 @@ const validate = (resource: Resource, profile: FHIRSchema): OperationOutcome => 
     // validate array items
     if (Array.isArray(data)) {
       const itemSpec = {elements, ...moreSpec}
-      const itemIssues = data.flatMap((item) => validateInternal(item, itemSpec, fieldPath, parentSlices));
+      const itemIssues = data.flatMap((item) => validate(item, itemSpec, fieldPath, parentSlices));
       return [...slicesIssues, ...itemIssues];
     }
     //
@@ -192,7 +196,7 @@ const validate = (resource: Resource, profile: FHIRSchema): OperationOutcome => 
         const specVal = spec.elements?.[field] as ValidationSpec;
         const fieldPathItem: FieldPathComponent = { type: 'field', name: field };
         const issues = specVal == undefined ? [] : 
-          validateInternal(sourceVal, specVal, [...fieldPath, fieldPathItem], parentSlices);
+          validate(sourceVal, specVal, [...fieldPath, fieldPathItem], parentSlices);
         return issues;
       });
     // validation checks
@@ -227,7 +231,7 @@ const validate = (resource: Resource, profile: FHIRSchema): OperationOutcome => 
     return issues;
   }
 
-  const issues = validateInternal(resource, profile);
+  const issues = validate(resource, profile);
 
   return {
     resourceType: 'OperationOutcome',
@@ -256,5 +260,5 @@ type FieldPathComponent = {
   name: string
 }
 
-export { merge, slice, validate, Slicing, Slices };
+export { merge, slice, validateResource as validate, Slicing, Slices };
 
