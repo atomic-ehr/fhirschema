@@ -1,0 +1,20 @@
+{
+  "type": "Coding",
+  "value": {
+    "system": "http://loinc.org",
+    "code": "8480-6",
+    "display": "Systolic blood pressure",
+    "extraField": "foo"
+  },
+  "result": {
+    "resourceType": "OperationOutcome",
+    "issue": [
+      {
+        "severity": "error",
+        "code": "invalid",
+        "details": { "text": "Extra field detected: extraField" },
+        "expression": ["extraField"]
+      }
+    ]
+  }
+}
