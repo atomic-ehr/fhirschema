@@ -671,4 +671,110 @@ describe('Converter Algorithm Tests', () => {
       expect(result.elements?.component.slicing?.slices?.diastolic).toBeDefined();
     });
   });
+
+  describe('Use contentReference in SD', () => {
+    const bundle: StructureDefinition = {
+      resourceType: 'StructureDefinition',
+      id: 'Bundle',
+      status: 'draft',
+      url: 'http://hl7.org/fhir/StructureDefinition/Bundle',
+      version: '6.0.0-ballot3',
+      name: 'Bundle',
+      kind: 'resource',
+      type: 'Bundle',
+      baseDefinition: 'http://hl7.org/fhir/StructureDefinition/Resource',
+      derivation: 'specialization',
+      differential: {
+        element: [
+          {
+            id: 'Bundle',
+            path: 'Bundle',
+            min: 0,
+            max: '*',
+          },
+          {
+            id: 'Bundle.link',
+            path: 'Bundle.link',
+            min: 0,
+            max: '*',
+            type: [{ code: 'BackboneElement' }],
+          },
+          {
+            id: 'Bundle.link.relation',
+            path: 'Bundle.link.relation',
+            min: 1,
+            max: '1',
+            type: [{ code: 'code' }],
+          },
+          {
+            id: 'Bundle.link.url',
+            path: 'Bundle.link.url',
+            min: 1,
+            max: '1',
+            type: [{ code: 'uri' }],
+          },
+          {
+            id: 'Bundle.entry',
+            path: 'Bundle.entry',
+            min: 0,
+            max: '*',
+            type: [{ code: 'BackboneElement' }],
+          },
+          {
+            id: 'Bundle.entry.link',
+            path: 'Bundle.entry.link',
+            min: 0,
+            max: '*',
+            contentReference: '#Bundle.link',
+          },
+          {
+            id: 'Bundle.entry.fullUrl',
+            path: 'Bundle.entry.fullUrl',
+            min: 0,
+            max: '1',
+            type: [{ code: 'uri' }],
+          },
+        ],
+      },
+    };
+    it('Element references should be saved.', () => {
+      const result = translate(bundle);
+      expect(result).toMatchObject({
+        name: 'Bundle',
+        type: 'Bundle',
+        url: 'http://hl7.org/fhir/StructureDefinition/Bundle',
+        version: '6.0.0-ballot3',
+        kind: 'resource',
+        derivation: 'specialization',
+        base: 'http://hl7.org/fhir/StructureDefinition/Resource',
+        class: 'resource',
+        elements: {
+          link: {
+            type: 'BackboneElement',
+            array: true,
+            elements: {
+              relation: { type: 'code', index: 1 },
+              url: { type: 'uri', index: 2 },
+            },
+            required: ['relation', 'url'],
+          },
+          entry: {
+            type: 'BackboneElement',
+            array: true,
+            elements: {
+              link: {
+                elementReference: [
+                  'http://hl7.org/fhir/StructureDefinition/Bundle',
+                  'elements',
+                  'link',
+                ],
+                array: true,
+              },
+              fullUrl: { type: 'uri', index: 5 },
+            },
+          },
+        },
+      });
+    });
+  });
 });
