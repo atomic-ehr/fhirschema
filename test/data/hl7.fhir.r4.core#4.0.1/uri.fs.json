@@ -1,0 +1,27 @@
+{
+  "url": "http://hl7.org/fhir/StructureDefinition/uri",
+  "derivedFrom": "StructureDefinition/638ecf8f-774a-4cea-8b91-20a02fecc089",
+  "scalar": true,
+  "regex": "\\S*",
+  "id": "6d34a192-fa52-4b88-9d76-0c814411279e",
+  "base": "http://hl7.org/fhir/StructureDefinition/Element",
+  "short": "Primitive value for uri",
+  "name": "uri",
+  "extension": [
+    {
+      "url": "http://hl7.org/fhir/StructureDefinition/structuredefinition-standards-status",
+      "valueCode": "normative"
+    },
+    {
+      "url": "http://hl7.org/fhir/StructureDefinition/structuredefinition-normative-version",
+      "valueCode": "4.0.0"
+    }
+  ],
+  "definition": "Primitive value for uri",
+  "kind": "primitive-type",
+  "type": "uri",
+  "version": "4.0.1",
+  "resourceType": "FHIRSchema",
+  "derivation": "specialization",
+  "system-type": "http://hl7.org/fhirpath/System.String"
+}

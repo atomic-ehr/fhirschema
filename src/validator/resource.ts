@@ -5,6 +5,7 @@ import {
   OperationOutcomeIssue,
   Resource,
 } from '../converter/types';
+import * as fp from './fieldPath';
 
 // simple support for simple fhirpath
 // https://hl7.org/fhir/fhirpath.html#simple
@@ -120,7 +121,7 @@ const validate = (resource: Resource, profile: FHIRSchema): OperationOutcome => 
   const validate = (
     data: any,
     spec: ValidationSpec,
-    fieldPath: FieldPathComponent[] = [],
+    fieldPath: fp.FieldPathComponent[] = [],
     parentSlices?: Slices<any>
   ): OperationOutcomeIssue[] => {
     const { elements, slicing, ...moreSpec } = spec;
@@ -135,7 +136,7 @@ const validate = (resource: Resource, profile: FHIRSchema): OperationOutcome => 
         if (sliceSpec == undefined) return [];
         // Merge parent elements with slice elements (slices refine, not replace)
         const mergedSpec = { ...sliceSpec, elements: { ...elements, ...sliceSpec.elements } };
-        const fieldPathItem: FieldPathComponent = {
+        const fieldPathItem: fp.FieldPathComponent = {
           name: sliceName,
           type: parentSlices == undefined ? 'slice' : 'reslice',
         };
@@ -150,20 +151,6 @@ const validate = (resource: Resource, profile: FHIRSchema): OperationOutcome => 
       const itemIssues = data.flatMap((item) => validate(item, itemSpec, fieldPath, parentSlices));
       return [...slicesIssues, ...itemIssues];
     }
-    //
-    const strFieldPath = (fieldPath: FieldPathComponent[]): string => {
-      const separators: { [key in FieldPathComponent['type']]: string } = {
-        field: '.',
-        slice: ':',
-        reslice: '/',
-      };
-
-      const result = fieldPath.reduce((acc, { type, name }, idx) => {
-        return `${acc}${idx == 0 ? '' : separators[type]}${name}`;
-      }, '');
-
-      return result;
-    };
     const specFields = new Set(Object.keys(spec.elements || {}));
     const requiredFields = new Set(spec.required);
     const dataFields = new Set(
@@ -175,7 +162,7 @@ const validate = (resource: Resource, profile: FHIRSchema): OperationOutcome => 
     const fieldIssues = fields.flatMap((field) => {
       const sourceVal = data?.[field];
       const specVal = spec.elements?.[field] as ValidationSpec;
-      const fieldPathItem: FieldPathComponent = { type: 'field', name: field };
+      const fieldPathItem: fp.FieldPathComponent = { type: 'field', name: field };
       const issues =
         specVal == undefined
           ? []
@@ -185,22 +172,28 @@ const validate = (resource: Resource, profile: FHIRSchema): OperationOutcome => 
     // validation checks
     // required fields
     const missingFieldIssues = [...requiredFields.difference(dataFields)].map((field) => {
-      const pathComponents = [...fieldPath, { type: 'field', name: field } as FieldPathComponent];
+      const pathComponents = [
+        ...fieldPath,
+        { type: 'field', name: field } as fp.FieldPathComponent,
+      ];
       return {
         severity: 'error',
         code: 'required',
-        details: { text: `Field: ${strFieldPath(pathComponents)}, is required` },
-        expression: [strFieldPath(pathComponents.filter(({ type }) => 'field' == type))],
+        details: { text: `Field: ${fp.stringify(pathComponents)}, is required` },
+        expression: [fp.stringify(pathComponents.filter(({ type }) => 'field' == type))],
       } as OperationOutcomeIssue;
     });
     // extra fields (not in the schema)
     const extraFieldIssues = [...extraFields].map((field) => {
-      const pathComponents = [...fieldPath, { type: 'field', name: field } as FieldPathComponent];
+      const pathComponents = [
+        ...fieldPath,
+        { type: 'field', name: field } as fp.FieldPathComponent,
+      ];
       return {
         severity: 'error',
         code: 'invalid',
-        details: { text: `Extra field detected: ${strFieldPath(pathComponents)}` },
-        expression: [strFieldPath(pathComponents.filter(({ type }) => 'field' == type))],
+        details: { text: `Extra field detected: ${fp.stringify(pathComponents)}` },
+        expression: [fp.stringify(pathComponents.filter(({ type }) => 'field' == type))],
       } as OperationOutcomeIssue;
     });
 
@@ -229,10 +222,6 @@ type PathToken = {
   value: string;
   fn?: string;
   params?: string;
-};
-type FieldPathComponent = {
-  type: 'field' | 'slice' | 'reslice';
-  name: string;
 };
 
 export { slice, validate, Slicing, Slices };

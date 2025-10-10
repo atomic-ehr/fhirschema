@@ -11,6 +11,9 @@ import r4CodeableConceptType from '../data/hl7.fhir.r4.core#4.0.1/CodeableConcep
 import r4CodingType from '../data/hl7.fhir.r4.core#4.0.1/Coding.fs.json';
 import r4PeriodType from '../data/hl7.fhir.r4.core#4.0.1/Period.fs.json';
 import r4ReferenceType from '../data/hl7.fhir.r4.core#4.0.1/Reference.fs.json';
+import r4UriType from '../data/hl7.fhir.r4.core#4.0.1/uri.fs.json';
+import r4CodeType from '../data/hl7.fhir.r4.core#4.0.1/code.fs.json';
+import r4StringType from '../data/hl7.fhir.r4.core#4.0.1/string.fs.json';
 import multiCitizenPatientProfile from '../data/MultiCitizenPatient.fs.json';
 
 const profilesIndex: { [key in string]: FHIRSchema } = {
@@ -23,15 +26,19 @@ const profilesIndex: { [key in string]: FHIRSchema } = {
   'http://hl7.org/fhir/StructureDefinition/DomainResource|4.0.1': r4DomainResProfile,
   'http://hl7.org/fhir/StructureDefinition/Resource|4.0.1': r4ResourceProfile,
   'http://hl7.org/fhir/StructureDefinition/Patient|4.0.1': r4PatientProfile,
-  'http://example.org/fhir/StructureDefinition/MultiCitizenPatient|0.1.0': multiCitizenPatientProfile,
+  'http://example.org/fhir/StructureDefinition/MultiCitizenPatient|0.1.0':
+    multiCitizenPatientProfile,
 };
 
 const typesIndex: { [key in string]: FHIRSchema } = {
-  'Identifier': r4IdentifierType,
-  'CodeableConcept': r4CodeableConceptType,
-  'Coding': r4CodingType,
-  'Period': r4PeriodType,
-  'Reference': r4ReferenceType,
+  string: r4StringType,
+  code: r4CodeType,
+  uri: r4UriType,
+  Identifier: r4IdentifierType,
+  CodeableConcept: r4CodeableConceptType,
+  Coding: r4CodingType,
+  Period: r4PeriodType,
+  Reference: r4ReferenceType,
 };
 
-export { profilesIndex, typesIndex }
+export { profilesIndex, typesIndex };

@@ -1,8 +1,74 @@
-import { FHIRSchema, FHIRSchemaElement } from './types';
+import { OperationOutcome, OperationOutcomeIssue, FHIRSchema } from '../converter/types';
+import * as fp from './fieldPath';
+import * as primitive from './primitive';
 
-const validate = (data: any, spec: FHIRSchemaElement, typeProfiles: {[key in string]: FHIRSchema}) => {
+const validate = (
+  data: any,
+  spec: FHIRSchema,
+  location: fp.FieldPathComponent[],
+  typeProfiles: { [key in string]: FHIRSchema }
+): OperationOutcome => {
+  const specFields = new Set(Object.keys(spec.elements || {}));
+  const requiredFields = new Set(spec.required);
+  const dataFields = new Set(
+    spec.elements && Object.keys(data || {}).filter((field) => field != 'resourceType')
+  );
+  const extraFields = dataFields.difference(specFields);
+  // iterate fields
+  const fields = [...dataFields.intersection(specFields)];
+  const fieldIssues = fields.flatMap((field) => {
+    const fieldLoc = [...location, { type: 'field', name: field } as fp.FieldPathComponent];
+    const sourceVal = data?.[field];
+    const elemSpec = spec.elements?.[field]!;
 
-}
+    const elemSchema = typeProfiles[elemSpec.type!];
+    if (elemSchema == undefined) {
+      return {
+        severity: 'error',
+        code: 'not-supported',
+        details: {
+          text: `Element type not supported: ${elemSpec.type}, for field: ${fp.stringify(
+            fieldLoc
+          )}`,
+        },
+      } as OperationOutcomeIssue;
+    }
+
+    // https://hl7.org/fhir/valueset-structure-definition-kind.html
+    switch (elemSchema.kind) {
+      case 'primitive-type':
+        return primitive.validate(sourceVal, elemSchema, fieldLoc).issue || [];
+      case 'complex-type':
+        return validate(sourceVal, elemSchema, fieldLoc, typeProfiles).issue || [];
+      default:
+        throw new Error(`Not supported kind: ${elemSchema.kind}`);
+    }
+    // TODO: what about element constraints?
+  });
+  // required fields
+  const missingFieldIssues = [...requiredFields.difference(dataFields)].map((field) => {
+    const fieldLoc = [...location, { type: 'field', name: field } as fp.FieldPathComponent];
+    return {
+      severity: 'error',
+      code: 'required',
+      details: { text: `Field: ${fp.stringify(fieldLoc)}, is required` },
+      expression: [fp.stringify(fieldLoc.filter(({ type }) => 'field' == type))],
+    } as OperationOutcomeIssue;
+  });
+  // extra fields (not in the schema)
+  const extraFieldIssues = [...extraFields].map((field) => {
+    const pathComponents = [...location, { type: 'field', name: field } as fp.FieldPathComponent];
+    return {
+      severity: 'error',
+      code: 'invalid',
+      details: { text: `Extra field detected: ${fp.stringify(pathComponents)}` },
+      expression: [fp.stringify(pathComponents.filter(({ type }) => 'field' == type))],
+    } as OperationOutcomeIssue;
+  });
+
+  const issues = [...missingFieldIssues, ...extraFieldIssues, ...fieldIssues];
+
+  return { resourceType: 'OperationOutcome', issue: issues };
+};
 
 export { validate };
-
