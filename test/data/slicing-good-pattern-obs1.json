@@ -87,6 +87,19 @@
   },
   "result": {
     "resourceType": "OperationOutcome",
-    "issue": []
+    "issue": [
+      {
+        "severity": "error",
+        "code": "invalid",
+        "details": { "text": "Extra field detected: category:VSCat.text" },
+        "expression": ["category.text"]
+      },
+      {
+        "severity": "error",
+        "code": "invalid",
+        "details": { "text": "Extra field detected: category:VSCat.coding.display" },
+        "expression": ["category.coding.display"]
+      }
+    ]
   }
 }

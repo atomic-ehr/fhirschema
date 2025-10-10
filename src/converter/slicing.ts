@@ -136,12 +136,12 @@ const slice = <T extends object>(data: T[], spec: Slicing): Slices<T>  => {
 }
 
 const validate = (resource: Resource, profile: FHIRSchema): OperationOutcome => {
-  const validateInternal = (data: any, spec: ValidationSpec, fieldPath: string[] = [], slices?: Slices<any>): OperationOutcomeIssue[] => {
+  const validateInternal = (data: any, spec: ValidationSpec, fieldPath: FieldPathComponent[] = [], parentSlices?: Slices<any>): OperationOutcomeIssue[] => {
     const { elements, slicing, ...moreSpec } = spec; 
     if (elements == undefined && slicing == undefined)
       return []; //TODO: implement type validation
     // iterate slicing
-    const slicingIssues = ((slicing) => {
+    const slicesIssues = ((slicing) => {
       if (slicing == undefined) 
         return [];
       // TODO: ensure data is array
@@ -149,8 +149,11 @@ const validate = (resource: Resource, profile: FHIRSchema): OperationOutcome => 
       const result = Object.entries(slices)
         .flatMap(([sliceName, dataSlice]) => {
           const sliceSpec = slicing.slices?.[sliceName]!;
-          const result = sliceSpec == undefined ? [] : 
-            validateInternal(dataSlice, sliceSpec, [...fieldPath, sliceName], slices);
+          if (sliceSpec == undefined) return [];
+          // Merge parent elements with slice elements (slices refine, not replace)
+          const mergedSpec = { ...sliceSpec, elements: {...elements, ...sliceSpec.elements} };
+          const fieldPathItem: FieldPathComponent = { name: sliceName, type: parentSlices == undefined ? 'slice' : 'reslice' };
+          const result = validateInternal(dataSlice, mergedSpec, [...fieldPath, fieldPathItem], slices);
           return result;
         });
       return result;
@@ -158,60 +161,67 @@ const validate = (resource: Resource, profile: FHIRSchema): OperationOutcome => 
     // validate array items
     if (Array.isArray(data)) {
       const itemSpec = {elements, ...moreSpec}
-      return data.flatMap((item) => {
-        const result = validateInternal(item, itemSpec, fieldPath, slices);
-        return result;
-      });
+      const itemIssues = data.flatMap((item) => validateInternal(item, itemSpec, fieldPath, parentSlices));
+      return [...slicesIssues, ...itemIssues];
     }
     //
+    const strFieldPath = (fieldPath: FieldPathComponent[]): string => {
+      const separators: {[key in FieldPathComponent['type']]: string} = { 
+        'field': '.', 
+        'slice': ':', 
+        'reslice': '/' 
+      };
+
+      const result = fieldPath.reduce((acc, {type, name}, idx) => {
+        return `${acc}${(idx == 0 ? '' : separators[type])}${name}`;
+      }, '');
+
+      return result;
+    };
     const specFields = new Set(Object.keys(spec.elements || {}))
     const requiredFields = new Set(spec.required);
     const dataFields = new Set(spec.elements && Object
       .keys(data || {})
       .filter((field) => field != 'resourceType'));
     const extraFields = dataFields.difference(specFields);// TODO: extra fields may be included in type schema
-    // TODO: change path component: {type: 'field' | 'slice' | 'reslice', name: string}
-    //       in order to be able to generate strPath: 'identifier:passport/usPassport'
-    const strPath = fieldPath.join(".");
     // iterate fields
     const fields = [...dataFields.intersection(specFields)];
     const fieldIssues = fields
       .flatMap((field) => { 
         const sourceVal = data?.[field];
         const specVal = spec.elements?.[field] as ValidationSpec;
+        const fieldPathItem: FieldPathComponent = { type: 'field', name: field };
         const issues = specVal == undefined ? [] : 
-          validateInternal(sourceVal, specVal, [...fieldPath, field], slices);
+          validateInternal(sourceVal, specVal, [...fieldPath, fieldPathItem], parentSlices);
         return issues;
       });
     // validation checks
     // required fields
     const missingFieldIssues = [...requiredFields.difference(dataFields)].map((field) => {
-        const fieldPath = `${strPath}.${field}`;
+        const pathComponents = [...fieldPath, { type: 'field', name: field } as FieldPathComponent];
         return {
           severity: 'error',
           code: 'required',
-          details: { text: `Field: ${fieldPath}, is required` },
-          location: [fieldPath],
-          expression: [fieldPath]
+          details: { text: `Field: ${strFieldPath(pathComponents)}, is required` },
+          expression: [strFieldPath(pathComponents.filter(({type}) => 'field' == type))]
         } as OperationOutcomeIssue;
       });
     // extra fields (not in the schema)
     const extraFieldIssues = [...extraFields].map((field) => {
-        const fieldPath = `${strPath}.${field}`;
+        const pathComponents = [...fieldPath, { type: 'field', name: field } as FieldPathComponent];
         return {
           severity: 'error',
           code: 'invalid',
-          details: { text: `Extra field detected: ${fieldPath}` },
-          location: [fieldPath],
-          expression: [fieldPath]
-        };
+          details: { text: `Extra field detected: ${strFieldPath(pathComponents)}` },
+          expression: [strFieldPath(pathComponents.filter(({type}) => 'field' == type))]
+        } as OperationOutcomeIssue;
     });
 
     const issues = [
       ...missingFieldIssues,
       ...extraFieldIssues,
       ...fieldIssues,
-      ...slicingIssues
+      ...slicesIssues
     ];
 
     return issues;
@@ -240,6 +250,10 @@ type PathToken = {
   value: string,
   fn?: string,
   params?: string
+}
+type FieldPathComponent = {
+  type: 'field' | 'slice' | 'reslice';
+  name: string
 }
 
 export { merge, slice, validate, Slicing, Slices };

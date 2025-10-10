@@ -52,6 +52,43 @@
   },
   "result": {
     "resourceType": "OperationOutcome",
-    "issue": []
+    "issue": [
+      {
+        "severity": "error",
+        "code": "invalid",
+        "details": { "text": "Extra field detected: identifier:passport/usPassport.value" },
+        "expression": ["identifier.value"]
+      },
+      {
+        "severity": "error",
+        "code": "invalid",
+        "details": { "text": "Extra field detected: identifier:passport/spainPassport.value" },
+        "expression": ["identifier.value"]
+      },
+      {
+        "severity": "error",
+        "code": "invalid",
+        "details": { "text": "Extra field detected: identifier:passport.system" },
+        "expression": ["identifier.system"]
+      },
+      {
+        "severity": "error",
+        "code": "invalid",
+        "details": { "text": "Extra field detected: identifier:passport.value" },
+        "expression": ["identifier.value"]
+      },
+      {
+        "severity": "error",
+        "code": "invalid",
+        "details": { "text": "Extra field detected: identifier:passport.system" },
+        "expression": ["identifier.system"]
+      },
+      {
+        "severity": "error",
+        "code": "invalid",
+        "details": { "text": "Extra field detected: identifier:passport.value" },
+        "expression": ["identifier.value"]
+      }
+    ]
   }
 }
