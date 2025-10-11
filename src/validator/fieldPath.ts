@@ -4,10 +4,15 @@ const separators: { [key in FieldPathComponent['type']]: string } = {
   reslice: '/',
 };
 
-const stringify = (fieldPath: FieldPathComponent[]): string => {
-  const result = fieldPath.reduce((acc, { type, name }, idx) => {
-    return `${acc}${idx == 0 ? '' : separators[type]}${name}`;
-  }, '');
+const stringify = (
+  fieldPath: FieldPathComponent[],
+  opts: { asFhirPath: boolean } = { asFhirPath: false }
+): string => {
+  const result = fieldPath
+    .filter(({ type }) => !opts.asFhirPath || 'field' == type)
+    .reduce((acc, { type, name }, idx) => {
+      return `${acc}${idx == 0 ? '' : separators[type]}${name}`;
+    }, '');
 
   return result;
 };

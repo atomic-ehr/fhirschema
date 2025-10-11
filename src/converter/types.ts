@@ -160,14 +160,14 @@ type FhirOpenTypeSufix =
   | 'Dosage'
   | 'Meta';
 
-export type FhirSchemaSlicingDiscriminator = { type: string; path: string }
+export type FhirSchemaSlicingDiscriminator = { type: string; path: string };
 
 export type FhirSchemaSlicing = {
   discriminator?: FhirSchemaSlicingDiscriminator[];
   rules?: string;
   ordered?: boolean;
   slices?: { [key in string]: FHIRSchemaElement };
-}
+};
 
 export type FHIRSchemaElement = {
   type?: string;
@@ -226,6 +226,7 @@ export interface FHIRSchema {
   type: string;
   kind: string;
   derivation?: 'specialization' | 'constraint';
+  regex?: string;
   base?: string;
   abstract?: boolean;
   description?: string;
@@ -289,7 +290,7 @@ export type OperationOutcomeIssue = {
 
 export type Resource = { resourceType: string };
 
-export type OperationOutcome = Resource & { 
+export type OperationOutcome = Resource & {
   resourceType: 'OperationOutcome';
-  issue?: OperationOutcomeIssue[] 
+  issue?: OperationOutcomeIssue[];
 };

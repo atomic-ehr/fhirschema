@@ -195,7 +195,7 @@ const validate = (
         severity: 'error',
         code: 'required',
         details: { text: `Field: ${fp.stringify(fieldLoc)}, is required` },
-        expression: [fp.stringify(fieldLoc.filter(({ type }) => 'field' == type))],
+        expression: [fp.stringify(fieldLoc, { asFhirPath: true })],
       } as OperationOutcomeIssue;
     });
     // extra fields (not in the schema)
@@ -208,7 +208,7 @@ const validate = (
         severity: 'error',
         code: 'invalid',
         details: { text: `Extra field detected: ${fp.stringify(pathComponents)}` },
-        expression: [fp.stringify(pathComponents.filter(({ type }) => 'field' == type))],
+        expression: [fp.stringify(pathComponents, { asFhirPath: true })],
       } as OperationOutcomeIssue;
     });
 
