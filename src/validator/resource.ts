@@ -8,6 +8,7 @@ import {
 import * as fp from './fieldPath';
 import * as primitive from './primitive';
 import * as complex from './complex';
+import * as cardinality from './cardinality';
 
 // simple support for simple fhirpath
 // https://hl7.org/fhir/fhirpath.html#simple
@@ -17,21 +18,19 @@ const FHIR_PATH_SIMPLE_REGEX = /^\s*(?<fn>[A-Za-z][A-Za-z0-9]*)\s*\(\s*(?<params
 // When pattern[x] is used to constrain a complex object, it means
 // that each property in the pattern must be present in the complex
 // object, and its value must recursively match
-const matchPattern = (a: any, b: any): boolean => {
-  const isObject = typeof b === 'object';
-  const isArray = Array.isArray(b);
-  if (!isObject && !isArray) {
-    return a == b;
-  } else if (a == undefined) {
-    return false;
-  } else if (isArray) {
-    return b.every((bItem) => a.some((aItem: any) => matchPattern(aItem, bItem)));
-  } else {
-    return Object.keys(b).reduce(
-      (acc, curr) => acc && matchPattern(a[curr], b[curr]),
-      true as boolean
-    ) as boolean;
-  }
+const matchPattern = (value: any, pattern: any): boolean => {
+  const isObject = typeof pattern === 'object';
+  const isArray = Array.isArray(pattern);
+  if (!isObject && !isArray) return value == pattern;
+  if (value == undefined) return false;
+  if (isArray)
+    return pattern.every((patternItem) =>
+      value.some((valueItem: any) => matchPattern(valueItem, patternItem))
+    );
+  return Object.keys(pattern).reduce(
+    (acc, curr) => acc && matchPattern(value[curr], pattern[curr]),
+    true
+  );
 };
 
 // simple support for simple fhirpath
@@ -127,11 +126,10 @@ const validate = (
   const validate = (
     data: any,
     spec: ValidationSpec,
-    fieldPath: fp.FieldPathComponent[] = [],
+    location: fp.FieldPathComponent[] = [],
     parentSlices?: Slices<any>
   ): OperationOutcomeIssue[] => {
     const { elements, slicing, ...moreSpec } = spec;
-    if (elements == undefined && slicing == undefined) return []; //TODO: implement type validation
     // iterate slicing
     const slicesIssues = ((slicing) => {
       if (slicing == undefined) return [];
@@ -146,51 +144,59 @@ const validate = (
           name: sliceName,
           type: parentSlices == undefined ? 'slice' : 'reslice',
         };
-        const result = validate(dataSlice, mergedSpec, [...fieldPath, fieldPathItem], slices);
+        const result = validate(dataSlice, mergedSpec, [...location, fieldPathItem], slices);
         return result;
       });
       return result;
     })(slicing);
-    // validate array items
+
+    // iterate array
     if (Array.isArray(data)) {
       const itemSpec = { elements, ...moreSpec };
-      const itemIssues = data.flatMap((item) => validate(item, itemSpec, fieldPath, parentSlices));
+      const itemIssues = data.flatMap((item, idx) => {
+        const pathIndex: fp.FieldPathComponent = { type: 'index', name: `${idx}` };
+        return validate(item, itemSpec, [...location, pathIndex], parentSlices);
+      });
       return [...slicesIssues, ...itemIssues];
     }
+    // iterate fields
     const specFields = new Set(Object.keys(spec.elements || {}));
-    const requiredFields = new Set(spec.required);
     const dataFields = new Set(
       spec.elements && Object.keys(data || {}).filter((field) => field != 'resourceType')
     );
-    const extraFields = dataFields.difference(specFields);
     // iterate fields
     const fields = [...dataFields.intersection(specFields)];
     const fieldIssues = fields.flatMap((field) => {
-      const fieldLoc = [...fieldPath, { type: 'field', name: field } as fp.FieldPathComponent];
-      const sourceVal = data?.[field];
+      const fieldLoc = [...location, { type: 'field', name: field } as fp.FieldPathComponent];
+      const fieldVal = data?.[field];
       const elemSpec = spec.elements?.[field]!;
 
-      const elemSchema = typeProfiles[elemSpec.type!];
-      if (elemSchema == undefined) {
-        return validate(sourceVal, elemSpec, fieldLoc, parentSlices);
-      }
+      const cardinalityIssues = cardinality.validate(fieldVal, elemSpec, fieldLoc).issue || [];
 
-      // https://hl7.org/fhir/valueset-structure-definition-kind.html
-      switch (elemSchema.kind) {
-        case 'primitive-type':
-          return primitive.validate(sourceVal, elemSchema, fieldLoc).issue || [];
-        case 'complex-type':
-          return complex.validate(sourceVal, elemSchema, fieldLoc, typeProfiles).issue || [];
-        case 'resource':
-          return validate(sourceVal, elemSchema, fieldLoc, parentSlices);
-        default:
-          throw new Error(`Not supported kind: ${elemSchema.kind}`);
-      }
-      // TODO: what about element constraints?
+      const itemIssues = (() => {
+        if (!elemSpec.type || elemSpec.type == 'BackboneElement') {
+          return validate(fieldVal, elemSpec, fieldLoc, parentSlices);
+        }
+        // https://hl7.org/fhir/valueset-structure-definition-kind.html
+        const elemSchema = typeProfiles[elemSpec.type!];
+        switch (elemSchema.kind) {
+          case 'primitive-type':
+            return primitive.validate(fieldVal, elemSchema, fieldLoc).issue || [];
+          case 'complex-type':
+            return complex.validate(fieldVal, elemSchema, fieldLoc, typeProfiles).issue || [];
+          case 'resource':
+            return validate(fieldVal, elemSchema, fieldLoc, parentSlices);
+          default:
+            throw new Error(`Not supported kind: ${elemSchema.kind}`);
+        }
+      })();
+
+      return [...cardinalityIssues, ...itemIssues];
     });
     // required fields
+    const requiredFields = new Set(spec.required);
     const missingFieldIssues = [...requiredFields.difference(dataFields)].map((field) => {
-      const fieldLoc = [...fieldPath, { type: 'field', name: field } as fp.FieldPathComponent];
+      const fieldLoc = [...location, { type: 'field', name: field } as fp.FieldPathComponent];
       return {
         severity: 'error',
         code: 'required',
@@ -199,11 +205,9 @@ const validate = (
       } as OperationOutcomeIssue;
     });
     // extra fields (not in the schema)
+    const extraFields = dataFields.difference(specFields);
     const extraFieldIssues = [...extraFields].map((field) => {
-      const pathComponents = [
-        ...fieldPath,
-        { type: 'field', name: field } as fp.FieldPathComponent,
-      ];
+      const pathComponents = [...location, { type: 'field', name: field } as fp.FieldPathComponent];
       return {
         severity: 'error',
         code: 'invalid',
@@ -212,9 +216,7 @@ const validate = (
       } as OperationOutcomeIssue;
     });
 
-    const issues = [...fieldIssues, ...missingFieldIssues, ...extraFieldIssues, ...slicesIssues];
-
-    return issues;
+    return [...fieldIssues, ...missingFieldIssues, ...extraFieldIssues, ...slicesIssues];
   };
 
   const issues = validate(resource, profile);

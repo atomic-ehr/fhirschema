@@ -2,6 +2,7 @@ const separators: { [key in FieldPathComponent['type']]: string } = {
   field: '.',
   slice: ':',
   reslice: '/',
+  index: '.'
 };
 
 const stringify = (
@@ -17,6 +18,6 @@ const stringify = (
   return result;
 };
 
-type FieldPathComponent = { type: 'field' | 'slice' | 'reslice'; name: string };
+type FieldPathComponent = { type: 'field' | 'slice' | 'reslice' | 'index'; name: string };
 
 export { stringify, FieldPathComponent };

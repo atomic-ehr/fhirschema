@@ -1,0 +1,43 @@
+{
+  "profiles": [
+    "http://hl7.org/fhir/StructureDefinition/Resource|4.0.1",
+    "http://hl7.org/fhir/StructureDefinition/DomainResource|4.0.1",
+    "http://hl7.org/fhir/StructureDefinition/Patient|4.0.1",
+    "http://example.org/fhir/StructureDefinition/PatientWithCardinalityConstraints|1.0.0"
+  ],
+  "resource": {
+    "resourceType": "Patient",
+    "id": "patient-no-contacts",
+    "identifier": [
+      {
+        "system": "http://hospital.example.org",
+        "value": "MRN-12345"
+      },
+      {
+        "system": "http://national-id.example.gov",
+        "value": "NID-67890"
+      }
+    ],
+    "name": [
+      {
+        "family": "Smith",
+        "given": ["John"]
+      }
+    ],
+    "gender": "male",
+    "contact": []
+  },
+  "result": {
+    "resourceType": "OperationOutcome",
+    "issue": [
+      {
+        "severity": "error",
+        "code": "invariant",
+        "details": {
+          "text": "Cardinality violation: contact, expected min: 1, actual: 0"
+        },
+        "expression": ["contact"]
+      }
+    ]
+  }
+}

@@ -53,7 +53,7 @@ describe('Primitive validations', () => {
             severity: 'error',
             code: 'invalid',
             details: {
-              text: "Regex violation for field: value, regex: '-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?', value: not a number",
+              text: "Field: value, contains invalid value: not a number, doesn't match regex: '-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?'",
             },
             expression: ['value'],
           },
@@ -74,7 +74,7 @@ describe('Primitive validations', () => {
             severity: 'error',
             code: 'invalid',
             details: {
-              text: "Regex violation for field: value, regex: '[ \\r\\n\\t\\S]+', value: ",
+              text: "Field: value, contains invalid value: , doesn't match regex: '[ \\r\\n\\t\\S]+'",
             },
             expression: ['value'],
           },
@@ -100,7 +100,7 @@ describe('Primitive validations', () => {
             severity: 'error',
             code: 'invalid',
             details: {
-              text: "Regex violation for field: value, regex: '[^\\s]+(\\s[^\\s]+)*', value:    ",
+              text: "Field: value, contains invalid value:    , doesn't match regex: '[^\\s]+(\\s[^\\s]+)*'",
             },
             expression: ['value'],
           },
@@ -135,7 +135,7 @@ describe('Primitive validations', () => {
             severity: 'error',
             code: 'invalid',
             details: {
-              text: "Regex violation for field: value, regex: '([0-9]([0-9]([0-9][1-9]|[1-9]0)|[1-9]00)|[1-9]000)(-(0[1-9]|1[0-2])(-(0[1-9]|[1-2][0-9]|3[0-1]))?)?', value: not-a-date",
+              text: "Field: value, contains invalid value: not-a-date, doesn't match regex: '([0-9]([0-9]([0-9][1-9]|[1-9]0)|[1-9]00)|[1-9]000)(-(0[1-9]|1[0-2])(-(0[1-9]|[1-2][0-9]|3[0-1]))?)?'",
             },
             expression: ['value'],
           },
@@ -161,7 +161,7 @@ describe('Primitive validations', () => {
             severity: 'error',
             code: 'invalid',
             details: {
-              text: "Regex violation for field: value, regex: '([0-9]([0-9]([0-9][1-9]|[1-9]0)|[1-9]00)|[1-9]000)(-(0[1-9]|1[0-2])(-(0[1-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:([0-5][0-9]|60)(\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?', value: not-a-datetime",
+              text: "Field: value, contains invalid value: not-a-datetime, doesn't match regex: '([0-9]([0-9]([0-9][1-9]|[1-9]0)|[1-9]00)|[1-9]000)(-(0[1-9]|1[0-2])(-(0[1-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:([0-5][0-9]|60)(\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?'",
             },
             expression: ['value'],
           },
@@ -189,7 +189,7 @@ describe('Primitive validations', () => {
             severity: 'error',
             code: 'invalid',
             details: {
-              text: "Regex violation for field: value, regex: '([0-9]([0-9]([0-9][1-9]|[1-9]0)|[1-9]00)|[1-9]000)-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])T([01][0-9]|2[0-3]):[0-5][0-9]:([0-5][0-9]|60)(\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00))', value: 2024-03-15",
+              text: "Field: value, contains invalid value: 2024-03-15, doesn't match regex: '([0-9]([0-9]([0-9][1-9]|[1-9]0)|[1-9]00)|[1-9]000)-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])T([01][0-9]|2[0-3]):[0-5][0-9]:([0-5][0-9]|60)(\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00))'",
             },
             expression: ['value'],
           },

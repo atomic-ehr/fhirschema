@@ -24,7 +24,12 @@ import r4XhtmlType from '../data/hl7.fhir.r4.core#4.0.1/xhtml.fs.json';
 import r4MetaType from '../data/hl7.fhir.r4.core#4.0.1/Meta.fs.json';
 import r4InstantType from '../data/hl7.fhir.r4.core#4.0.1/instant.fs.json';
 import r4CanonicalType from '../data/hl7.fhir.r4.core#4.0.1/canonical.fs.json';
+import r4AttachmentType from '../data/hl7.fhir.r4.core#4.0.1/Attachment.fs.json';
+import r4Base64BinaryType from '../data/hl7.fhir.r4.core#4.0.1/base64Binary.fs.json';
+import r4UnsignedIntType from '../data/hl7.fhir.r4.core#4.0.1/unsignedInt.fs.json';
+import r4UrlType from '../data/hl7.fhir.r4.core#4.0.1/url.fs.json';
 import multiCitizenPatientProfile from '../data/MultiCitizenPatient.fs.json';
+import patientWithCardinalityConstraintsProfile from '../data/PatientWithCardinalityConstraints.fs.json';
 
 const profilesIndex: { [key in string]: FHIRSchema } = {
   'http://hl7.org/fhir/us/core/StructureDefinition/us-core-blood-pressure|8.0.0-ballot':
@@ -38,6 +43,8 @@ const profilesIndex: { [key in string]: FHIRSchema } = {
   'http://hl7.org/fhir/StructureDefinition/Patient|4.0.1': r4PatientProfile,
   'http://example.org/fhir/StructureDefinition/MultiCitizenPatient|0.1.0':
     multiCitizenPatientProfile,
+  'http://example.org/fhir/StructureDefinition/PatientWithCardinalityConstraints|1.0.0':
+    patientWithCardinalityConstraintsProfile,
 };
 
 const typesIndex: { [key in string]: FHIRSchema } = {
@@ -59,6 +66,10 @@ const typesIndex: { [key in string]: FHIRSchema } = {
   HumanName: r4HumanNameType,
   Narrative: r4NarrativeType,
   Meta: r4MetaType,
+  Attachment: r4AttachmentType,
+  base64Binary: r4Base64BinaryType,
+  unsignedInt: r4UnsignedIntType,
+  url: r4UrlType,
 };
 
 export { profilesIndex, typesIndex };

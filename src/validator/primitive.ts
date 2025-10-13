@@ -9,11 +9,19 @@ const SPEC_TO_NATIVE_TYPES: { [key in string]: string } = {
 };
 
 const validate = (
-  value: any,
+  data: any,
   spec: FHIRSchema,
   location: fp.FieldPathComponent[]
 ): OperationOutcome => {
-  const valueType = typeof value;
+  if (Array.isArray(data)) {
+    const issues = data.flatMap((item, idx) => {
+      const pathIndex: fp.FieldPathComponent = { type: 'index', name: `${idx}` };
+      return validate(item, spec, [...location, pathIndex]).issue || [];
+    });
+    return { resourceType: 'OperationOutcome', issue: issues };
+  }
+
+  const valueType = typeof data;
 
   const typeIssues = (() => {
     const nativeType = SPEC_TO_NATIVE_TYPES[spec.type];
@@ -34,26 +42,24 @@ const validate = (
 
   const regexIssues = (() => {
     if (valueType != 'string' || !spec.regex) return;
-    if (!value.match(spec.regex))
+    if (!data.match(spec.regex))
       return [
         {
           severity: 'error',
           code: 'invalid',
           details: {
-            text: `Regex violation for field: ${fp.stringify(location)}, regex: '${
-              spec.regex
-            }', value: ${value}`,
+            text: `Field: ${fp.stringify(
+              location
+            )}, contains invalid value: ${data}, doesn't match regex: '${spec.regex}'`,
           },
           expression: [fp.stringify(location, { asFhirPath: true })],
         } as OperationOutcomeIssue,
       ];
   })();
 
-  const issues: OperationOutcomeIssue[] = [...(typeIssues || []), ...(regexIssues || [])];
-
   return {
     resourceType: 'OperationOutcome',
-    issue: issues,
+    issue: [...(typeIssues || []), ...(regexIssues || [])],
   };
 };
 

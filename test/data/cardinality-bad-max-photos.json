@@ -1,0 +1,70 @@
+{
+  "profiles": [
+    "http://hl7.org/fhir/StructureDefinition/Resource|4.0.1",
+    "http://hl7.org/fhir/StructureDefinition/DomainResource|4.0.1",
+    "http://hl7.org/fhir/StructureDefinition/Patient|4.0.1",
+    "http://example.org/fhir/StructureDefinition/PatientWithCardinalityConstraints|1.0.0"
+  ],
+  "resource": {
+    "resourceType": "Patient",
+    "id": "patient-max-violation",
+    "identifier": [
+      {
+        "system": "http://hospital.example.org",
+        "value": "MRN-12345"
+      },
+      {
+        "system": "http://national-id.example.gov",
+        "value": "NID-67890"
+      }
+    ],
+    "name": [
+      {
+        "family": "Smith",
+        "given": ["John"]
+      }
+    ],
+    "gender": "male",
+    "photo": [
+      {
+        "contentType": "image/jpeg",
+        "url": "http://example.org/photo1.jpg"
+      },
+      {
+        "contentType": "image/jpeg",
+        "url": "http://example.org/photo2.jpg"
+      }
+    ],
+    "contact": [
+      {
+        "name": {
+          "family": "Doe",
+          "given": ["Jane"]
+        },
+        "relationship": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/v2-0131",
+                "code": "E"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "result": {
+    "resourceType": "OperationOutcome",
+    "issue": [
+      {
+        "severity": "error",
+        "code": "invariant",
+        "details": {
+          "text": "Cardinality violation: photo, expected max: 1, actual: 2"
+        },
+        "expression": ["photo"]
+      }
+    ]
+  }
+}

@@ -1,0 +1,108 @@
+{
+  "profiles": [
+    "http://hl7.org/fhir/StructureDefinition/Resource|4.0.1",
+    "http://hl7.org/fhir/StructureDefinition/DomainResource|4.0.1",
+    "http://hl7.org/fhir/StructureDefinition/Patient|4.0.1",
+    "http://example.org/fhir/StructureDefinition/PatientWithCardinalityConstraints|1.0.0"
+  ],
+  "resource": {
+    "resourceType": "Patient",
+    "id": "patient-too-many-contacts",
+    "identifier": [
+      {
+        "system": "http://hospital.example.org",
+        "value": "MRN-12345"
+      },
+      {
+        "system": "http://national-id.example.gov",
+        "value": "NID-67890"
+      }
+    ],
+    "name": [
+      {
+        "family": "Smith",
+        "given": ["John"]
+      }
+    ],
+    "gender": "male",
+    "contact": [
+      {
+        "name": {
+          "family": "Doe",
+          "given": ["Jane"]
+        },
+        "relationship": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/v2-0131",
+                "code": "E"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": {
+          "family": "Johnson",
+          "given": ["Bob"]
+        },
+        "relationship": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/v2-0131",
+                "code": "C"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": {
+          "family": "Williams",
+          "given": ["Mary"]
+        },
+        "relationship": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/v2-0131",
+                "code": "N"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": {
+          "family": "Brown",
+          "given": ["David"]
+        },
+        "relationship": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/v2-0131",
+                "code": "O"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "result": {
+    "resourceType": "OperationOutcome",
+    "issue": [
+      {
+        "severity": "error",
+        "code": "invariant",
+        "details": {
+          "text": "Cardinality violation: contact, expected max: 3, actual: 4"
+        },
+        "expression": ["contact"]
+      }
+    ]
+  }
+}

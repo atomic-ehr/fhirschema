@@ -9,6 +9,12 @@ import goodPatternObs1 from '../data/slicing-good-pattern-obs1.json';
 import slicingDicrCompositeDeep from '../data/slicing-discr-composite-deep.json';
 import slicingDiscrSimple from '../data/slicing-discr-simple.json';
 import goodPatternPatient1 from '../data/reslicing-good-pat1.json';
+import cardinalityBadMinIdentifiers from '../data/cardinality-bad-min-identifiers.json';
+import cardinalityBadMaxPhotos from '../data/cardinality-bad-max-photos.json';
+import cardinalityGoodPatient from '../data/cardinality-good-patient.json';
+import cardinalityBadEmptyIdentifiers from '../data/cardinality-bad-empty-identifiers.json';
+import cardinalityBadMaxContacts from '../data/cardinality-bad-max-contacts.json';
+import cardinalityBadMinContacts from '../data/cardinality-bad-min-contacts.json';
 
 describe('Slicing discrimination', () => {
   test('Composite discriminator & deep paths', () => {
@@ -46,5 +52,63 @@ describe('Slicing validation', () => {
       const result = sut.validate(goodPatternPatient1.resource, multiCitizenPatient, typesIndex);
       expect(result).toEqual(goodPatternPatient1.result as OperationOutcome);
     });
+  });
+});
+
+describe('Cardinality validation', () => {
+  test('min violation - identifier (1 provided, 2 required)', () => {
+    const patientWithCardinalityConstraints = cardinalityBadMinIdentifiers.profiles
+      .map((canon) => profilesIndex[canon])
+      .reduce((p1, p2) => profile.merge(p1, p2) as FHIRSchema);
+    const result = sut.validate(
+      cardinalityBadMinIdentifiers.resource,
+      patientWithCardinalityConstraints,
+      typesIndex
+    );
+    expect(result).toEqual(cardinalityBadMinIdentifiers.result as OperationOutcome);
+  });
+
+  test('min violation - identifier (empty array, 2 required)', () => {
+    const mergedProfiles = cardinalityBadEmptyIdentifiers.profiles
+      .map((canon) => profilesIndex[canon])
+      .reduce((p1, p2) => profile.merge(p1, p2) as FHIRSchema);
+    const result = sut.validate(
+      cardinalityBadEmptyIdentifiers.resource,
+      mergedProfiles,
+      typesIndex
+    );
+    expect(result).toEqual(cardinalityBadEmptyIdentifiers.result as OperationOutcome);
+  });
+
+  test('max violation - photo (2 provided, 1 allowed)', () => {
+    const mergedProfiles = cardinalityBadMaxPhotos.profiles
+      .map((canon) => profilesIndex[canon])
+      .reduce((p1, p2) => profile.merge(p1, p2) as FHIRSchema);
+    const result = sut.validate(cardinalityBadMaxPhotos.resource, mergedProfiles, typesIndex);
+    expect(result).toEqual(cardinalityBadMaxPhotos.result as OperationOutcome);
+  });
+
+  test('min violation - contact (empty array, 1 required)', () => {
+    const mergedProfiles = cardinalityBadMinContacts.profiles
+      .map((canon) => profilesIndex[canon])
+      .reduce((p1, p2) => profile.merge(p1, p2) as FHIRSchema);
+    const result = sut.validate(cardinalityBadMinContacts.resource, mergedProfiles, typesIndex);
+    expect(result).toEqual(cardinalityBadMinContacts.result as OperationOutcome);
+  });
+
+  test('max violation - contact (4 provided, 3 allowed)', () => {
+    const mergedProfiles = cardinalityBadMaxContacts.profiles
+      .map((canon) => profilesIndex[canon])
+      .reduce((p1, p2) => profile.merge(p1, p2) as FHIRSchema);
+    const result = sut.validate(cardinalityBadMaxContacts.resource, mergedProfiles, typesIndex);
+    expect(result).toEqual(cardinalityBadMaxContacts.result as OperationOutcome);
+  });
+
+  test('valid cardinality - all constraints satisfied', () => {
+    const mergedProfiles = cardinalityGoodPatient.profiles
+      .map((canon) => profilesIndex[canon])
+      .reduce((p1, p2) => profile.merge(p1, p2) as FHIRSchema);
+    const result = sut.validate(cardinalityGoodPatient.resource, mergedProfiles, typesIndex);
+    expect(result).toEqual(cardinalityGoodPatient.result as OperationOutcome);
   });
 });
