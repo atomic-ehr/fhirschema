@@ -135,17 +135,20 @@ const validate = (
       if (slicing == undefined) return [];
       // TODO: ensure data is array
       const slices = slice(data, slicing as Slicing);
-      const result = Object.entries(slices).flatMap(([sliceName, dataSlice]) => {
+      const result = Object.keys(slicing.slices || {}).flatMap((sliceName) => {
+        const dataSlice = slices[sliceName];
         const sliceSpec = slicing.slices?.[sliceName]!;
         if (sliceSpec == undefined) return [];
         // Merge parent elements with slice elements (slices refine, not replace)
         const mergedSpec = { ...sliceSpec, elements: { ...elements, ...sliceSpec.elements } };
-        const fieldPathItem: fp.FieldPathComponent = {
+        const pathItem: fp.FieldPathComponent = {
           name: sliceName,
           type: parentSlices == undefined ? 'slice' : 'reslice',
         };
-        const result = validate(dataSlice, mergedSpec, [...location, fieldPathItem], slices);
-        return result;
+        const sliceLoc = [...location, pathItem];
+        const cardinalityIssues = cardinality.validate(dataSlice, sliceSpec, sliceLoc).issue || [];
+        const sliceIssues = validate(dataSlice, mergedSpec, sliceLoc, slices);
+        return [...cardinalityIssues, ...sliceIssues];
       });
       return result;
     })(slicing);

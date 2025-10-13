@@ -15,6 +15,7 @@ import cardinalityGoodPatient from '../data/cardinality-good-patient.json';
 import cardinalityBadEmptyIdentifiers from '../data/cardinality-bad-empty-identifiers.json';
 import cardinalityBadMaxContacts from '../data/cardinality-bad-max-contacts.json';
 import cardinalityBadMinContacts from '../data/cardinality-bad-min-contacts.json';
+import cardinalityBadBpNoDiastolic from '../data/cardinality-bad-bp-no-diastolic.json';
 
 describe('Slicing discrimination', () => {
   test('Composite discriminator & deep paths', () => {
@@ -110,5 +111,17 @@ describe('Cardinality validation', () => {
       .reduce((p1, p2) => profile.merge(p1, p2) as FHIRSchema);
     const result = sut.validate(cardinalityGoodPatient.resource, mergedProfiles, typesIndex);
     expect(result).toEqual(cardinalityGoodPatient.result as OperationOutcome);
+  });
+
+  test('min violation - blood pressure without diastolic component (slice)', () => {
+    const mergedProfiles = cardinalityBadBpNoDiastolic.profiles
+      .map((canon) => profilesIndex[canon])
+      .reduce((p1, p2) => profile.merge(p1, p2) as FHIRSchema);
+    const result = sut.validate(
+      cardinalityBadBpNoDiastolic.resource,
+      mergedProfiles,
+      typesIndex
+    );
+    expect(result).toEqual(cardinalityBadBpNoDiastolic.result as OperationOutcome);
   });
 });

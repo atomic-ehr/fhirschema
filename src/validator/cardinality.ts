@@ -6,7 +6,10 @@ const validate = (
   spec: FHIRSchemaElement,
   location: fp.FieldPathComponent[]
 ): OperationOutcome => {
-  if (!Array.isArray(data)) return validate([data], spec, location);
+  if (!Array.isArray(data)) {
+    const arrayData = [data].filter((item) => item);
+    return validate(arrayData, spec, location);
+  }
 
   if (spec.min && data.length < spec.min) {
     const issues: OperationOutcomeIssue[] = [

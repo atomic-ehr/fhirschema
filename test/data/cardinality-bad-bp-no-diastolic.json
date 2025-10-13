@@ -1,0 +1,77 @@
+{
+  "profiles": [
+    "http://hl7.org/fhir/StructureDefinition/Resource|4.0.1",
+    "http://hl7.org/fhir/StructureDefinition/DomainResource|4.0.1",
+    "http://hl7.org/fhir/StructureDefinition/Observation|4.0.1",
+    "http://hl7.org/fhir/StructureDefinition/vitalsigns|4.0.1",
+    "http://hl7.org/fhir/us/core/StructureDefinition/us-core-vital-signs|8.0.0-ballot",
+    "http://hl7.org/fhir/us/core/StructureDefinition/us-core-blood-pressure|8.0.0-ballot"
+  ],
+  "resource": {
+    "resourceType": "Observation",
+    "id": "blood-pressure-no-diastolic",
+    "status": "final",
+    "category": [
+      {
+        "coding": [
+          {
+            "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+            "code": "vital-signs",
+            "display": "Vital Signs"
+          }
+        ]
+      }
+    ],
+    "code": {
+      "coding": [
+        {
+          "system": "http://loinc.org",
+          "code": "85354-9",
+          "display": "Blood pressure panel"
+        }
+      ]
+    },
+    "subject": {
+      "reference": "Patient/example"
+    },
+    "effectiveDateTime": "2024-01-15",
+    "component": [
+      {
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "8480-6",
+              "display": "Systolic blood pressure"
+            }
+          ]
+        },
+        "valueQuantity": {
+          "value": 120,
+          "unit": "mmHg",
+          "system": "http://unitsofmeasure.org",
+          "code": "mm[Hg]"
+        }
+      }
+    ]
+  },
+  "result": {
+    "resourceType": "OperationOutcome",
+    "issue": [
+      {
+        "severity": "error",
+        "code": "invariant",
+        "details": {
+          "text": "Cardinality violation: component:diastolic, expected min: 1, actual: 0"
+        },
+        "expression": ["component"]
+      },
+      {
+        "severity": "error",
+        "code": "required",
+        "details": { "text": "Field: component:diastolic.code, is required" },
+        "expression": ["component.code"]
+      }
+    ]
+  }
+}
