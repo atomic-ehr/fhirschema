@@ -1,0 +1,27 @@
+{
+  "url": "http://hl7.org/fhir/StructureDefinition/unsignedInt",
+  "derivedFrom": "StructureDefinition/1d6d769d-2ce1-404b-bd6d-594e136bdcee",
+  "scalar": true,
+  "regex": "[0]|([1-9][0-9]*)",
+  "id": "a55c9e15-11f9-44a9-8263-5a2dd737278d",
+  "base": "http://hl7.org/fhir/StructureDefinition/integer",
+  "short": "Primitive value for unsignedInt",
+  "name": "unsignedInt",
+  "extension": [
+    {
+      "url": "http://hl7.org/fhir/StructureDefinition/structuredefinition-standards-status",
+      "valueCode": "normative"
+    },
+    {
+      "url": "http://hl7.org/fhir/StructureDefinition/structuredefinition-normative-version",
+      "valueCode": "4.0.0"
+    }
+  ],
+  "definition": "Primitive value for unsignedInt",
+  "kind": "primitive-type",
+  "type": "unsignedInt",
+  "version": "4.0.1",
+  "resourceType": "FHIRSchema",
+  "derivation": "specialization",
+  "system-type": "http://hl7.org/fhirpath/System.String"
+}

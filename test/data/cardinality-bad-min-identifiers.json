@@ -1,0 +1,56 @@
+{
+  "profiles": [
+    "http://hl7.org/fhir/StructureDefinition/Resource|4.0.1",
+    "http://hl7.org/fhir/StructureDefinition/DomainResource|4.0.1",
+    "http://hl7.org/fhir/StructureDefinition/Patient|4.0.1",
+    "http://example.org/fhir/StructureDefinition/PatientWithCardinalityConstraints|1.0.0"
+  ],
+  "resource": {
+    "resourceType": "Patient",
+    "id": "patient-min-violation",
+    "identifier": [
+      {
+        "system": "http://hospital.example.org",
+        "value": "MRN-12345"
+      }
+    ],
+    "name": [
+      {
+        "family": "Smith",
+        "given": ["John"]
+      }
+    ],
+    "gender": "male",
+    "contact": [
+      {
+        "name": {
+          "family": "Doe",
+          "given": ["Jane"]
+        },
+        "relationship": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/v2-0131",
+                "code": "E"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "result": {
+    "resourceType": "OperationOutcome",
+    "issue": [
+      {
+        "severity": "error",
+        "code": "invariant",
+        "details": {
+          "text": "Cardinality violation: identifier, expected min: 2, actual: 1"
+        },
+        "expression": ["identifier"]
+      }
+    ]
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "type": "Coding",
+  "value": {
+    "system": "http://loinc.org",
+    "code": "8480-6",
+    "display": "Systolic blood pressure"
+  },
+  "result": {
+    "resourceType": "OperationOutcome",
+    "issue": []
+  }
+}

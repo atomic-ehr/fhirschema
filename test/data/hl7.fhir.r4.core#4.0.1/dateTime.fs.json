@@ -1,0 +1,27 @@
+{
+  "url": "http://hl7.org/fhir/StructureDefinition/dateTime",
+  "derivedFrom": "StructureDefinition/93ea4828-576f-4104-a0ea-ef8360746d1c",
+  "scalar": true,
+  "regex": "([0-9]([0-9]([0-9][1-9]|[1-9]0)|[1-9]00)|[1-9]000)(-(0[1-9]|1[0-2])(-(0[1-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:([0-5][0-9]|60)(\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?",
+  "id": "b380d794-492d-4db8-bd8d-28d926ab7462",
+  "base": "http://hl7.org/fhir/StructureDefinition/Element",
+  "short": "Primitive value for dateTime",
+  "name": "dateTime",
+  "extension": [
+    {
+      "url": "http://hl7.org/fhir/StructureDefinition/structuredefinition-standards-status",
+      "valueCode": "normative"
+    },
+    {
+      "url": "http://hl7.org/fhir/StructureDefinition/structuredefinition-normative-version",
+      "valueCode": "4.0.0"
+    }
+  ],
+  "definition": "Primitive value for dateTime",
+  "kind": "primitive-type",
+  "type": "dateTime",
+  "version": "4.0.1",
+  "resourceType": "FHIRSchema",
+  "derivation": "specialization",
+  "system-type": "http://hl7.org/fhirpath/System.DateTime"
+}

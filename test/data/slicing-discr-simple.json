@@ -1,0 +1,117 @@
+{
+  "data": [
+    {
+      "use": "official",
+      "type": {
+        "coding": [
+          {
+            "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+            "code": "PPN",
+            "display": "Passport Number"
+          }
+        ]
+      },
+      "system": "http://hl7.org/fhir/sid/us-passport",
+      "value": "123456789"
+    },
+    {
+      "use": "official",
+      "type": {
+        "coding": [
+          {
+            "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+            "code": "MR",
+            "display": "Medical Record Number"
+          }
+        ]
+      },
+      "system": "http://hospital.example.org",
+      "value": "MRN-987654"
+    },
+    {
+      "use": "official",
+      "type": {
+        "coding": [
+          {
+            "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+            "code": "PPN",
+            "display": "Passport Number"
+          }
+        ]
+      },
+      "system": "http://hl7.org/fhir/sid/es-passport",
+      "value": "ESP-AAA000111"
+    }
+  ],
+  "spec": {
+    "slicing": {
+      "discriminator": [
+        { "path": "type", "type": "pattern" }
+      ],
+      "slices": {
+        "passport": {
+          "elements": {
+            "type": {
+              "patternCodeableConcept": {
+                "coding": [
+                  {
+                    "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+                    "code": "PPN"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "result": {
+    "passport": [
+      {
+        "use": "official",
+        "type": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+              "code": "PPN",
+              "display": "Passport Number"
+            }
+          ]
+        },
+        "system": "http://hl7.org/fhir/sid/us-passport",
+        "value": "123456789"
+      },
+      {
+        "use": "official",
+        "type": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+              "code": "PPN",
+              "display": "Passport Number"
+            }
+          ]
+        },
+        "system": "http://hl7.org/fhir/sid/es-passport",
+        "value": "ESP-AAA000111"
+      }
+    ],
+    "@default": [
+      {
+        "use": "official",
+        "type": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+              "code": "MR",
+              "display": "Medical Record Number"
+            }
+          ]
+        },
+        "system": "http://hospital.example.org",
+        "value": "MRN-987654"
+      }
+    ]
+  }
+}

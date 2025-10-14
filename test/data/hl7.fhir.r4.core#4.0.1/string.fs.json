@@ -1,0 +1,28 @@
+{
+  "url": "http://hl7.org/fhir/StructureDefinition/string",
+  "derivedFrom": "StructureDefinition/6784292b-c1ef-4e10-b6d8-673574f7d2fb",
+  "scalar": true,
+  "regex": "[ \\r\\n\\t\\S]+",
+  "id": "48c6b496-995c-4c8b-ad23-02568cf142e9",
+  "base": "http://hl7.org/fhir/StructureDefinition/Element",
+  "short": "Primitive value for string",
+  "maxLength": 1048576,
+  "name": "string",
+  "extension": [
+    {
+      "url": "http://hl7.org/fhir/StructureDefinition/structuredefinition-standards-status",
+      "valueCode": "normative"
+    },
+    {
+      "url": "http://hl7.org/fhir/StructureDefinition/structuredefinition-normative-version",
+      "valueCode": "4.0.0"
+    }
+  ],
+  "definition": "Primitive value for string",
+  "kind": "primitive-type",
+  "type": "string",
+  "version": "4.0.1",
+  "resourceType": "FHIRSchema",
+  "derivation": "specialization",
+  "system-type": "http://hl7.org/fhirpath/System.String"
+}

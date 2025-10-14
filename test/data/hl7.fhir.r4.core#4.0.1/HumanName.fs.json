@@ -1,0 +1,86 @@
+{
+  "url": "http://hl7.org/fhir/StructureDefinition/HumanName",
+  "derivedFrom": "StructureDefinition/f5513c5e-4844-4f57-95d9-718b0931750f",
+  "id": "40fbefe0-9cc9-4188-a856-8f128ef7c0ba",
+  "base": "http://hl7.org/fhir/StructureDefinition/Element",
+  "name": "HumanName",
+  "extension": [
+    {
+      "url": "http://hl7.org/fhir/StructureDefinition/structuredefinition-standards-status",
+      "valueCode": "normative"
+    },
+    {
+      "url": "http://hl7.org/fhir/StructureDefinition/structuredefinition-normative-version",
+      "valueCode": "4.0.0"
+    }
+  ],
+  "kind": "complex-type",
+  "type": "HumanName",
+  "version": "4.0.1",
+  "resourceType": "FHIRSchema",
+  "elements": {
+    "use": {
+      "binding": {
+        "strength": "required",
+        "valueSet": "http://hl7.org/fhir/ValueSet/name-use",
+        "valueSetVersion": "4.0.1"
+      },
+      "scalar": true,
+      "requirements": "Allows the appropriate name for a particular context of use to be selected from among a set of names.",
+      "short": "usual | official | temp | nickname | anonymous | old | maiden",
+      "summary": true,
+      "modifier": true,
+      "definition": "Identifies the purpose for this name.",
+      "type": "code",
+      "comment": "Applications can assume that a name is current unless it explicitly says that it is temporary or old."
+    },
+    "text": {
+      "type": "string",
+      "short": "Text representation of the full name",
+      "scalar": true,
+      "comment": "Can provide both a text representation and parts. Applications updating a name SHALL ensure that when both text and parts are present,  no content is included in the text that isn't found in a part.",
+      "summary": true,
+      "definition": "Specifies the entire name as it should be displayed e.g. on an application UI. This may be provided instead of or as well as the specific parts.",
+      "requirements": "A renderable, unencoded form."
+    },
+    "given": {
+      "type": "string",
+      "array": true,
+      "short": "Given names (not always 'first'). Includes middle names",
+      "comment": "If only initials are recorded, they may be used in place of the full name parts. Initials may be separated into multiple given names but often aren't due to paractical limitations.  This element is not called \"first name\" since given names do not always come first.",
+      "summary": true,
+      "definition": "Given name."
+    },
+    "family": {
+      "type": "string",
+      "short": "Family name (often called 'Surname')",
+      "scalar": true,
+      "comment": "Family Name may be decomposed into specific parts using extensions (de, nl, es related cultures).",
+      "summary": true,
+      "definition": "The part of a name that links to the genealogy. In some cultures (e.g. Eritrea) the family name of a son is the first name of his father."
+    },
+    "period": {
+      "type": "Period",
+      "short": "Time period when name was/is in use",
+      "scalar": true,
+      "summary": true,
+      "definition": "Indicates the period of time when this name was valid for the named person.",
+      "requirements": "Allows names to be placed in historical context."
+    },
+    "prefix": {
+      "type": "string",
+      "array": true,
+      "short": "Parts that come before the name",
+      "summary": true,
+      "definition": "Part of the name that is acquired as a title due to academic, legal, employment or nobility status, etc. and that appears at the start of the name."
+    },
+    "suffix": {
+      "type": "string",
+      "array": true,
+      "short": "Parts that come after the name",
+      "summary": true,
+      "definition": "Part of the name that is acquired as a title due to academic, legal, employment or nobility status, etc. and that appears at the end of the name."
+    }
+  },
+  "derivation": "specialization"
+}

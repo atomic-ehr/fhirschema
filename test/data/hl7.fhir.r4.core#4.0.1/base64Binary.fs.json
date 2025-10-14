@@ -1,0 +1,27 @@
+{
+  "url": "http://hl7.org/fhir/StructureDefinition/base64Binary",
+  "derivedFrom": "StructureDefinition/770d4a76-0376-46b1-b332-b404a1a799f7",
+  "scalar": true,
+  "regex": "(\\s*([0-9a-zA-Z\\+/=]){4}\\s*)+",
+  "id": "c53dfde8-76ba-45f1-aad0-dee656b0ee23",
+  "base": "http://hl7.org/fhir/StructureDefinition/Element",
+  "short": "Primitive value for base64Binary",
+  "name": "base64Binary",
+  "extension": [
+    {
+      "url": "http://hl7.org/fhir/StructureDefinition/structuredefinition-standards-status",
+      "valueCode": "normative"
+    },
+    {
+      "url": "http://hl7.org/fhir/StructureDefinition/structuredefinition-normative-version",
+      "valueCode": "4.0.0"
+    }
+  ],
+  "definition": "Primitive value for base64Binary",
+  "kind": "primitive-type",
+  "type": "base64Binary",
+  "version": "4.0.1",
+  "resourceType": "FHIRSchema",
+  "derivation": "specialization",
+  "system-type": "http://hl7.org/fhirpath/System.String"
+}

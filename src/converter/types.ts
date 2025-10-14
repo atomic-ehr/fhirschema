@@ -99,7 +99,77 @@ export interface StructureDefinition {
   };
 }
 
-export interface FHIRSchemaElement {
+type FhirOpenTypeSufix =
+  // https://hl7.org/fhir/datatypes.html#open
+  // Primitive Types
+  | 'Base64Binary'
+  | 'Boolean'
+  | 'Canonical'
+  | 'Code'
+  | 'Date'
+  | 'DateTime'
+  | 'Decimal'
+  | 'Id'
+  | 'Instant'
+  | 'Integer'
+  | 'Integer64'
+  | 'Markdown'
+  | 'Oid'
+  | 'PositiveInt'
+  | 'String'
+  | 'Time'
+  | 'UnsignedInt'
+  | 'Uri'
+  | 'Url'
+  | 'Uuid'
+  // Datatypes
+  | 'Address'
+  | 'Age'
+  | 'Annotation'
+  | 'Attachment'
+  | 'CodeableConcept'
+  | 'CodeableReference'
+  | 'Coding'
+  | 'ContactPoint'
+  | 'Count'
+  | 'Distance'
+  | 'Duration'
+  | 'HumanName'
+  | 'Identifier'
+  | 'Money'
+  | 'Period'
+  | 'Quantity'
+  | 'Range'
+  | 'Ratio'
+  | 'RatioRange'
+  | 'Reference'
+  | 'SampledData'
+  | 'Signature'
+  | 'Timing'
+  // MetaDataTypes
+  | 'ContactDetail'
+  | 'DataRequirement'
+  | 'Expression'
+  | 'ParameterDefinition'
+  | 'RelatedArtifact'
+  | 'TriggerDefinition'
+  | 'UsageContext'
+  | 'Availability'
+  | 'ExtendedContactDetail'
+  // Special Types
+  | 'Dosage'
+  | 'Meta';
+
+export type FhirSchemaSlicingDiscriminator = { type: string; path: string };
+
+export type FhirSchemaSlicing = {
+  discriminator?: FhirSchemaSlicingDiscriminator[];
+  rules?: string;
+  ordered?: boolean;
+  slices?: { [key in string]: FHIRSchemaElement };
+};
+
+export type FHIRSchemaElement = {
   type?: string;
   array?: boolean;
   min?: number;
@@ -111,19 +181,14 @@ export interface FHIRSchemaElement {
     valueSet?: string;
     bindingName?: string;
   };
-  pattern?: {
-    type: string;
-    value: any;
-  };
-  constraint?: Record<
-    string,
-    {
+  constraint?: {
+    [key in string]: {
       expression: string;
       human: string;
       severity: string;
-    }
-  >;
-  elements?: Record<string, FHIRSchemaElement>;
+    };
+  };
+  elements?: { [key in string]: FHIRSchemaElement };
   choiceOf?: string;
   choices?: string[];
   url?: string;
@@ -132,29 +197,22 @@ export interface FHIRSchemaElement {
   isModifierReason?: string;
   isSummary?: boolean;
   elementReference?: string[];
-  slicing?: {
-    discriminator?: Array<{
-      type: string;
-      path: string;
-    }>;
-    rules?: string;
-    ordered?: boolean;
-    slices?: Record<
-      string,
-      {
-        match?: any;
-        schema?: FHIRSchemaElement;
-        min?: number;
-        max?: number;
-      }
-    >;
-  };
+  slicing?: FhirSchemaSlicing;
   extensions?: Record<string, FHIRSchemaElement>;
   required?: string[];
   excluded?: string[];
   _required?: boolean; // Internal flag
   index?: number; // For tracking element order
-}
+} & {
+  //defaultValue[x] (https://hl7.org/fhir/elementdefinition-definitions.html#ElementDefinition.defaultValue_x_)
+  [key in `defaultValue${FhirOpenTypeSufix}`]?: unknown;
+} & {
+  //fixed[x] (https://hl7.org/fhir/elementdefinition-definitions.html#ElementDefinition.fixed_x_)
+  [key in `fixed${FhirOpenTypeSufix}`]?: unknown;
+} & {
+  //pattern[x] (https://hl7.org/fhir/elementdefinition-definitions.html#ElementDefinition.pattern_x_)
+  [key in `pattern${FhirOpenTypeSufix}`]?: unknown;
+};
 
 export interface PackageMeta {
   package: string;
@@ -168,15 +226,15 @@ export interface FHIRSchema {
   type: string;
   kind: string;
   derivation?: 'specialization' | 'constraint';
+  regex?: string;
   base?: string;
   abstract?: boolean;
-  class: string;
   description?: string;
   package_name?: string;
   package_version?: string;
   package_id?: string;
   package_meta?: PackageMeta;
-  elements?: Record<string, FHIRSchemaElement>;
+  elements?: { [key in string]: FHIRSchemaElement };
   required?: string[];
   excluded?: string[];
   extensions?: Record<string, FHIRSchemaElement>;
@@ -188,7 +246,7 @@ export interface FHIRSchema {
       severity: string;
     }
   >;
-}
+};
 
 export interface PathComponent {
   el: string;
@@ -206,3 +264,33 @@ export type Action =
 export interface ConversionContext {
   package_meta?: any;
 }
+
+// FHIR types
+
+export type Coding = {
+  code?: string;
+  display?: string;
+  system?: string;
+};
+
+export type CodeableConcept = {
+  coding?: Coding[];
+  text?: string;
+};
+
+export type OperationOutcomeIssue = {
+  severity: string;
+  code: string;
+  details?: CodeableConcept;
+  diagnostics?: string;
+  expression?: string[];
+  id?: string;
+  location?: string[];
+};
+
+export type Resource = { resourceType: string };
+
+export type OperationOutcome = Resource & {
+  resourceType: 'OperationOutcome';
+  issue?: OperationOutcomeIssue[];
+};
