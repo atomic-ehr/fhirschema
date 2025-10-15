@@ -251,7 +251,6 @@ export interface FHIRSchemaSlicing {
   >;
 }
 
-
 export interface StructureDefinitionElement {
   id?: string;
   path: string;
@@ -484,7 +483,8 @@ export interface FHIRSchema {
   name: string;
   type: string;
   kind: string;
-  derivation?: string;
+  derivation?: 'specialization' | 'constraint';
+  regex?: string;
   base?: string;
   abstract?: boolean;
   class: string;
