@@ -1,34 +1,34 @@
-import { describe, test, expect } from 'bun:test';
-import { profilesIndex, typesIndex } from './fixture';
-import * as sut from '../../src/validator/resource';
+import { describe, expect, test } from 'bun:test';
+import type { FHIRSchema, OperationOutcome } from '../../src/converter/types';
 import * as profile from '../../src/validator/profile';
-import { FHIRSchema, OperationOutcome } from '../../src/converter/types';
-import usCoreBloodPreasureProfilesChain from '../data/uscore-blood-preasure-profiles-chain.json';
-import multiCitizenPatientProfilesChain from '../data/multicitizen-patient-profiles-chain.json';
-import goodPatternObs1 from '../data/slicing-good-pattern-obs1.json';
-import slicingDicrCompositeDeep from '../data/slicing-discr-composite-deep.json';
-import slicingDiscrSimple from '../data/slicing-discr-simple.json';
-import goodPatternPatient1 from '../data/reslicing-good-pat1.json';
-import cardinalityBadMinIdentifiers from '../data/cardinality-bad-min-identifiers.json';
-import cardinalityBadMaxPhotos from '../data/cardinality-bad-max-photos.json';
-import cardinalityGoodPatient from '../data/cardinality-good-patient.json';
+import * as sut from '../../src/validator/resource';
+import cardinalityBadBpNoDiastolic from '../data/cardinality-bad-bp-no-diastolic.json';
 import cardinalityBadEmptyIdentifiers from '../data/cardinality-bad-empty-identifiers.json';
 import cardinalityBadMaxContacts from '../data/cardinality-bad-max-contacts.json';
+import cardinalityBadMaxPhotos from '../data/cardinality-bad-max-photos.json';
 import cardinalityBadMinContacts from '../data/cardinality-bad-min-contacts.json';
-import cardinalityBadBpNoDiastolic from '../data/cardinality-bad-bp-no-diastolic.json';
+import cardinalityBadMinIdentifiers from '../data/cardinality-bad-min-identifiers.json';
+import cardinalityGoodPatient from '../data/cardinality-good-patient.json';
+import multiCitizenPatientProfilesChain from '../data/multicitizen-patient-profiles-chain.json';
+import goodPatternPatient1 from '../data/reslicing-good-pat1.json';
+import slicingDicrCompositeDeep from '../data/slicing-discr-composite-deep.json';
+import slicingDiscrSimple from '../data/slicing-discr-simple.json';
+import goodPatternObs1 from '../data/slicing-good-pattern-obs1.json';
+import usCoreBloodPreasureProfilesChain from '../data/uscore-blood-preasure-profiles-chain.json';
+import { profilesIndex, typesIndex } from './fixture';
 
 describe('Slicing discrimination', () => {
   test('Composite discriminator & deep paths', () => {
     const result = sut.slice(
       slicingDicrCompositeDeep.data,
-      slicingDicrCompositeDeep.spec.slicing as sut.Slicing
+      slicingDicrCompositeDeep.spec.slicing as sut.Slicing,
     );
     expect(result).toEqual(slicingDicrCompositeDeep.result as any);
   });
   test('Simple pattern discriminator on Patient.identifier', () => {
     const result = sut.slice(
       slicingDiscrSimple.data,
-      slicingDiscrSimple.spec.slicing as sut.Slicing
+      slicingDiscrSimple.spec.slicing as sut.Slicing,
     );
     expect(result).toEqual(slicingDiscrSimple.result as any);
   });
@@ -64,7 +64,7 @@ describe('Cardinality validation', () => {
     const result = sut.validate(
       cardinalityBadMinIdentifiers.resource,
       patientWithCardinalityConstraints,
-      typesIndex
+      typesIndex,
     );
     expect(result).toEqual(cardinalityBadMinIdentifiers.result as OperationOutcome);
   });
@@ -76,7 +76,7 @@ describe('Cardinality validation', () => {
     const result = sut.validate(
       cardinalityBadEmptyIdentifiers.resource,
       mergedProfiles,
-      typesIndex
+      typesIndex,
     );
     expect(result).toEqual(cardinalityBadEmptyIdentifiers.result as OperationOutcome);
   });
@@ -117,11 +117,7 @@ describe('Cardinality validation', () => {
     const mergedProfiles = cardinalityBadBpNoDiastolic.profiles
       .map((canon) => profilesIndex[canon])
       .reduce((p1, p2) => profile.merge(p1, p2) as FHIRSchema);
-    const result = sut.validate(
-      cardinalityBadBpNoDiastolic.resource,
-      mergedProfiles,
-      typesIndex
-    );
+    const result = sut.validate(cardinalityBadBpNoDiastolic.resource, mergedProfiles, typesIndex);
     expect(result).toEqual(cardinalityBadBpNoDiastolic.result as OperationOutcome);
   });
 });

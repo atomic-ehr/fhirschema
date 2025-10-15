@@ -1,10 +1,10 @@
-import { describe, test, expect } from 'bun:test';
-import { OperationOutcome } from '../../src/converter/types';
-import { typesIndex } from './fixture';
+import { describe, expect, test } from 'bun:test';
+import type { OperationOutcome } from '../../src/converter/types';
 import * as sut from '../../src/validator/complex';
-import codingGood1 from '../data/coding-good-1.json';
 import codingBadExtraField from '../data/coding-bad-extra-field.json';
+import codingGood1 from '../data/coding-good-1.json';
 import identifierGood1 from '../data/identifier-good-1.json';
+import { typesIndex } from './fixture';
 
 describe('Complex-type validations', () => {
   describe('Single level types', () => {

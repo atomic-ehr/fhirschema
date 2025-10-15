@@ -71,9 +71,7 @@
     "managingOrganization": {
       "type": "Reference",
       "short": "Organization that is the custodian of the patient record",
-      "refers": [
-        "http://hl7.org/fhir/StructureDefinition/Organization"
-      ],
+      "refers": ["http://hl7.org/fhir/StructureDefinition/Organization"],
       "scalar": true,
       "comment": "There is only one managing organization for a specific patient record. Other organizations will have their own Patient record, and may use the Link property to join the records together (or a Person resource which can include confidence ratings for the association).",
       "summary": true,
@@ -96,10 +94,7 @@
     },
     "multipleBirth": {
       "scalar": true,
-      "choices": [
-        "multipleBirthBoolean",
-        "multipleBirthInteger"
-      ]
+      "choices": ["multipleBirthBoolean", "multipleBirthInteger"]
     },
     "name": {
       "type": "HumanName",
@@ -141,10 +136,7 @@
       "summary": true,
       "modifier": true,
       "definition": "Link to another patient resource that concerns the same actual patient.",
-      "required": [
-        "other",
-        "type"
-      ],
+      "required": ["other", "type"],
       "type": "BackboneElement",
       "comment": "There is no assumption that linked patient records have mutual links.",
       "array": true,
@@ -223,9 +215,7 @@
           "requirements": "People that master multiple languages up to certain level may prefer one or more, i.e. feel more confident in communicating in a particular language making other languages sort of a fall back method."
         }
       },
-      "required": [
-        "language"
-      ],
+      "required": ["language"],
       "definition": "A language which may be used to communicate with the patient about his or her health.",
       "requirements": "If a patient does not speak the local language, interpreters may be required, so languages spoken and proficiency are important things to keep track of both for patient and other persons of interest."
     },
@@ -250,10 +240,7 @@
     },
     "deceased": {
       "scalar": true,
-      "choices": [
-        "deceasedBoolean",
-        "deceasedDateTime"
-      ]
+      "choices": ["deceasedBoolean", "deceasedDateTime"]
     },
     "generalPractitioner": {
       "type": "Reference",
@@ -316,9 +303,7 @@
         "organization": {
           "type": "Reference",
           "short": "Organization that is associated with the contact",
-          "refers": [
-            "http://hl7.org/fhir/StructureDefinition/Organization"
-          ],
+          "refers": ["http://hl7.org/fhir/StructureDefinition/Organization"],
           "scalar": true,
           "definition": "Organization on behalf of which the contact is acting or for which the contact is working.",
           "requirements": "For guardians or business related contacts, the organization is relevant."

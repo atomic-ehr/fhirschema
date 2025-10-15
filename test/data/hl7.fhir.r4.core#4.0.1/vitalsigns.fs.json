@@ -30,14 +30,7 @@
     }
   ],
   "kind": "resource",
-  "required": [
-    "status",
-    "category",
-    "code",
-    "subject",
-    "effective",
-    "effective"
-  ],
+  "required": ["status", "category", "code", "subject", "effective", "effective"],
   "type": "Observation",
   "version": "4.0.1",
   "resourceType": "FHIRSchema",

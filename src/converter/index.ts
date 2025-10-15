@@ -11,16 +11,37 @@ import type {
   StructureDefinitionElement,
 } from './types.js';
 
+// Type for the resource header being built
+interface ResourceHeader extends Record<string, unknown> {
+  name: string;
+  type: string;
+  url?: string;
+  version?: string;
+  description?: string;
+  package_name?: string;
+  package_version?: string;
+  package_id?: string;
+  kind: string;
+  derivation?: string;
+  base?: string;
+  abstract?: boolean;
+  class: string;
+  package_meta?: Record<string, unknown>;
+}
+
 function buildResourceHeader(
   structureDefinition: StructureDefinition,
   context?: ConversionContext,
-): any {
+): ResourceHeader {
   // Build header following Clojure's select-keys order
   // From Clojure: (select-keys structure-definition [:name :type :url :version :description :package_name :package_version :package_id :kind :derivation])
-  const header: any = {};
+  const header: ResourceHeader = {
+    name: structureDefinition.name,
+    type: structureDefinition.type,
+    kind: structureDefinition.kind,
+    class: determineClass(structureDefinition), // Will be set below
+  };
 
-  header.name = structureDefinition.name;
-  header.type = structureDefinition.type;
   if (structureDefinition.url) header.url = structureDefinition.url;
   if (structureDefinition.version) header.version = structureDefinition.version;
   if (structureDefinition.description) header.description = structureDefinition.description;
@@ -28,7 +49,6 @@ function buildResourceHeader(
   if (structureDefinition.package_version)
     header.package_version = structureDefinition.package_version;
   if (structureDefinition.package_id) header.package_id = structureDefinition.package_id;
-  header.kind = structureDefinition.kind;
   if (structureDefinition.derivation) header.derivation = structureDefinition.derivation;
 
   // Then add base if present (and not Element itself)
@@ -39,7 +59,7 @@ function buildResourceHeader(
   // Then abstract if true
   if (structureDefinition.abstract) header.abstract = structureDefinition.abstract;
 
-  // Then class (computed field)
+  // Set class (computed field)
   header.class = determineClass(structureDefinition);
 
   // Package metadata
@@ -71,7 +91,15 @@ function getDifferential(structureDefinition: StructureDefinition): StructureDef
   return elements.filter((e) => e.path.includes('.'));
 }
 
-function sortElementsByIndex(elements: Record<string, any>): Record<string, any> {
+// Type for elements that can be sorted by index
+interface IndexableElement extends Record<string, unknown> {
+  index?: number;
+  elements?: Record<string, IndexableElement>;
+}
+
+function sortElementsByIndex(
+  elements: Record<string, IndexableElement>,
+): Record<string, IndexableElement> {
   // Get all entries and sort by index
   const entries = Object.entries(elements);
   const sorted = entries.sort((a, b) => {
@@ -81,7 +109,7 @@ function sortElementsByIndex(elements: Record<string, any>): Record<string, any>
   });
 
   // Rebuild object in sorted order
-  const result: Record<string, any> = {};
+  const result: Record<string, IndexableElement> = {};
   for (const [key, value] of sorted) {
     // Recursively sort nested elements
     if (value.elements) {
@@ -97,7 +125,7 @@ function sortElementsByIndex(elements: Record<string, any>): Record<string, any>
   return result;
 }
 
-function normalizeSchema(schema: any, visited = new WeakSet()): any {
+function normalizeSchema(schema: unknown, visited = new WeakSet<object>()): unknown {
   if (Array.isArray(schema)) {
     // Don't sort arrays - preserve their original order
     return schema.map((item) => normalizeSchema(item, visited));
@@ -110,19 +138,32 @@ function normalizeSchema(schema: any, visited = new WeakSet()): any {
     }
     visited.add(schema);
 
-    const normalized: any = {};
+    const normalized: Record<string, unknown> = {};
     // Preserve original key order instead of sorting
     const keys = Object.keys(schema);
 
     for (const key of keys) {
-      if (key === 'elements' && schema[key]) {
+      const value = (schema as Record<string, unknown>)[key];
+      if (key === 'elements' && value && typeof value === 'object' && !Array.isArray(value)) {
         // Sort elements by index
-        normalized[key] = sortElementsByIndex(normalizeSchema(schema[key], visited));
-      } else if (key === 'required' && Array.isArray(schema[key])) {
+        const normalizedValue = normalizeSchema(value, visited);
+        if (
+          normalizedValue &&
+          typeof normalizedValue === 'object' &&
+          !Array.isArray(normalizedValue)
+        ) {
+          normalized[key] = sortElementsByIndex(
+            normalizedValue as Record<string, IndexableElement>,
+          );
+        } else {
+          normalized[key] = normalizedValue;
+        }
+      } else if (key === 'required' && Array.isArray(value)) {
         // Sort required array (Clojure uses sets which get sorted when converted)
-        normalized[key] = [...schema[key]].sort();
+        const stringArray = value.filter((item): item is string => typeof item === 'string');
+        normalized[key] = [...stringArray].sort();
       } else {
-        normalized[key] = normalizeSchema(schema[key], visited);
+        normalized[key] = normalizeSchema(value, visited);
       }
     }
 
@@ -138,7 +179,9 @@ export function translate(
 ): FHIRSchema {
   // Handle primitive types - they don't have differential elements
   if (structureDefinition.kind === 'primitive-type') {
-    return normalizeSchema(buildResourceHeader(structureDefinition, context));
+    const header = buildResourceHeader(structureDefinition, context);
+    const normalized = normalizeSchema(header);
+    return normalized as FHIRSchema;
   }
 
   const header = buildResourceHeader(structureDefinition, context);
@@ -147,7 +190,7 @@ export function translate(
   // Note: Root element constraints are not included in the output
 
   // Initialize stack with header
-  let stack: any[] = [header];
+  let stack: Record<string, unknown>[] = [header];
   let prevPath: PathComponent[] = [];
   const elementQueue = [...elements];
   let index = 0;
@@ -175,7 +218,7 @@ export function translate(
 
     // Transform element
     const transformedElement = transformElement(element, structureDefinition);
-    const elementWithIndex = { ...transformedElement, index: index++ };
+    const elementWithIndex: Record<string, unknown> = { ...transformedElement, index: index++ };
 
     // Apply actions
     stack = applyActions(stack, actions, elementWithIndex);
@@ -185,14 +228,16 @@ export function translate(
 
   // Final cleanup - process remaining exits back to root
   const finalActions = calculateActions(prevPath, []);
-  stack = applyActions(stack, finalActions, { index });
+  const finalElement: Record<string, unknown> = { index };
+  stack = applyActions(stack, finalActions, finalElement);
 
   // Should have exactly one element on stack - the completed schema
   if (stack.length !== 1) {
     throw new Error(`Invalid stack state: expected 1 element, got ${stack.length}`);
   }
 
-  return normalizeSchema(stack[0]);
+  const normalized = normalizeSchema(stack[0]);
+  return normalized as FHIRSchema;
 }
 
 export { calculateActions } from './action-calculator.js';

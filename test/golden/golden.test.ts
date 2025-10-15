@@ -4,12 +4,12 @@ import { basename, join } from 'node:path';
 import { translate } from '../../src/converter';
 
 // Helper function to sort object keys recursively
-function sortObjectDeep(obj: any): any {
+function sortObjectDeep(obj) {
   if (Array.isArray(obj)) {
     return obj.map(sortObjectDeep);
   }
   if (obj && typeof obj === 'object') {
-    const sorted: any = {};
+    const sorted = {};
     Object.keys(obj)
       .sort()
       .forEach((key) => {
@@ -67,7 +67,7 @@ function loadGoldenTests(): GoldenTestCase[] {
   return testCases;
 }
 
-function loadJson(path: string): any {
+function loadJson(path: string) {
   const content = readFileSync(path, 'utf-8');
   return JSON.parse(content);
 }

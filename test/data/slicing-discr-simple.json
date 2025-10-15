@@ -45,9 +45,7 @@
   ],
   "spec": {
     "slicing": {
-      "discriminator": [
-        { "path": "type", "type": "pattern" }
-      ],
+      "discriminator": [{ "path": "type", "type": "pattern" }],
       "slices": {
         "passport": {
           "elements": {

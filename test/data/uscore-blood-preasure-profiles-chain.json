@@ -695,7 +695,12 @@
                   "type": "Quantity",
                   "short": "Vital Sign Component Value",
                   "elements": {
-                    "code": { "max": 1, "type": "code", "fixedCode": "mm[Hg]", "mustSupport": true },
+                    "code": {
+                      "max": 1,
+                      "type": "code",
+                      "fixedCode": "mm[Hg]",
+                      "mustSupport": true
+                    },
                     "unit": { "max": 1, "type": "string", "mustSupport": true },
                     "value": { "max": 1, "type": "decimal", "mustSupport": true },
                     "system": {
@@ -729,7 +734,12 @@
                   "type": "Quantity",
                   "short": "Vital Sign Component Value",
                   "elements": {
-                    "code": { "max": 1, "type": "code", "fixedCode": "mm[Hg]", "mustSupport": true },
+                    "code": {
+                      "max": 1,
+                      "type": "code",
+                      "fixedCode": "mm[Hg]",
+                      "mustSupport": true
+                    },
                     "unit": { "max": 1, "type": "string", "mustSupport": true },
                     "value": { "max": 1, "type": "decimal", "mustSupport": true },
                     "system": {

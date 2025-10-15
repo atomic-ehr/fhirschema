@@ -1,10 +1,14 @@
-import { FHIRSchemaElement, OperationOutcome, OperationOutcomeIssue } from '../converter/types';
+import type {
+  FHIRSchemaElement,
+  OperationOutcome,
+  OperationOutcomeIssue,
+} from '../converter/types';
 import * as fp from './fieldPath';
 
 const validate = (
   data: any,
   spec: FHIRSchemaElement,
-  location: fp.FieldPathComponent[]
+  location: fp.FieldPathComponent[],
 ): OperationOutcome => {
   if (!Array.isArray(data)) {
     const arrayData = [data].filter((item) => item);
