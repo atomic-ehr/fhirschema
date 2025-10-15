@@ -1,14 +1,14 @@
-import {
+import type {
   FHIRSchema,
   FHIRSchemaElement,
   OperationOutcome,
   OperationOutcomeIssue,
   Resource,
 } from '../converter/types';
+import * as cardinality from './cardinality';
+import * as complex from './complex';
 import * as fp from './fieldPath';
 import * as primitive from './primitive';
-import * as complex from './complex';
-import * as cardinality from './cardinality';
 
 // simple support for simple fhirpath
 // https://hl7.org/fhir/fhirpath.html#simple
@@ -21,15 +21,15 @@ const FHIR_PATH_SIMPLE_REGEX = /^\s*(?<fn>[A-Za-z][A-Za-z0-9]*)\s*\(\s*(?<params
 const matchPattern = (value: any, pattern: any): boolean => {
   const isObject = typeof pattern === 'object';
   const isArray = Array.isArray(pattern);
-  if (!isObject && !isArray) return value == pattern;
-  if (value == undefined) return false;
+  if (!isObject && !isArray) return value === pattern;
+  if (value === undefined) return false;
   if (isArray)
     return pattern.every((patternItem) =>
-      value.some((valueItem: any) => matchPattern(valueItem, patternItem))
+      value.some((valueItem: any) => matchPattern(valueItem, patternItem)),
     );
   return Object.keys(pattern).reduce(
     (acc, curr) => acc && matchPattern(value[curr], pattern[curr]),
-    true
+    true,
   );
 };
 
@@ -54,16 +54,19 @@ const matches = <T>(itemValues: T[], spec: FHIRSchemaElement, type: SlicingDiscr
     // https://hl7.org/fhir/codesystem-discriminator-type.html#discriminator-type-value
     // The slices have different values in the nominated element, as determined by the
     // applicable fixed value, pattern, or required ValueSet binding.
-    case 'value':
+    case 'value': {
       const fixedKey = chooseFieldKey(spec, 'fixed');
       const patternKey = chooseFieldKey(spec, 'pattern');
       if (fixedKey) {
         const elemVal = (spec as any)[fixedKey];
-        return itemValues.some((v: any) => v == elemVal);
-      } else if (patternKey) {
+        return itemValues.some((v: any) => v === elemVal);
+      }
+      if (patternKey) {
         const elemVal = (spec as any)[patternKey];
         return itemValues.some((v: any) => matchPattern(v, elemVal));
-      } else throw new Error('Not supported value');
+      }
+      throw new Error('Not supported value');
+    }
     // TODO: add support for: exists, type, profile, position
   }
 };
@@ -76,11 +79,11 @@ const slice = <T extends object>(data: T[], spec: Slicing): Slices<T> => {
   const elemByPath = (sliceSpec: FHIRSchemaElement, path: string) => {
     return parseFhirpath(path).reduce(
       (acc, curr) => {
-        if (curr.type == 'fn') throw new Error(`Function: ${curr.fn}, not supported yet`);
-        const child = acc?.elem?.['elements']?.[curr.value] as FHIRSchemaElement;
+        if (curr.type === 'fn') throw new Error(`Function: ${curr.fn}, not supported yet`);
+        const child = acc?.elem?.elements?.[curr.value] as FHIRSchemaElement;
         return { elem: child, path: [...acc.path, curr.value] };
       },
-      { elem: sliceSpec, path: [] as string[] }
+      { elem: sliceSpec, path: [] as string[] },
     );
   };
   const defaultSliceFn = { sliceName: '@default', test: (_item: T) => true };
@@ -99,8 +102,8 @@ const slice = <T extends object>(data: T[], spec: Slicing): Slices<T> => {
                   const val = x[curr];
                   return Array.isArray(val) ? val : [val];
                 })
-                .filter((v) => v != undefined),
-            [item] as any[]
+                .filter((v) => v !== undefined),
+            [item] as any[],
           );
           return matches(itemValues, elem, type);
         });
@@ -110,10 +113,13 @@ const slice = <T extends object>(data: T[], spec: Slicing): Slices<T> => {
     })
     .concat([defaultSliceFn]);
   // partition data into defined slices by testing items
-  const result = data.reduce((acc, curr) => {
-    const sliceName = sliceFns.filter(({ test }) => test(curr))[0].sliceName;
-    return { ...acc, [sliceName]: (acc[sliceName] || []).concat([curr]) };
-  }, {} as Slices<T>);
+  const result = data.reduce(
+    (acc, curr) => {
+      const sliceName = sliceFns.filter(({ test }) => test(curr))[0].sliceName;
+      return { ...acc, [sliceName]: (acc[sliceName] || []).concat([curr]) };
+    },
+    {} as Slices<T>,
+  );
 
   return result;
 };
@@ -121,29 +127,29 @@ const slice = <T extends object>(data: T[], spec: Slicing): Slices<T> => {
 const validate = (
   resource: Resource,
   profile: FHIRSchema,
-  typeProfiles: { [key in string]: FHIRSchema }
+  typeProfiles: { [key in string]: FHIRSchema },
 ): OperationOutcome => {
   const validate = (
     data: any,
     spec: ValidationSpec,
     location: fp.FieldPathComponent[] = [],
-    parentSlices?: Slices<any>
+    parentSlices?: Slices<any>,
   ): OperationOutcomeIssue[] => {
     const { elements, slicing, ...moreSpec } = spec;
     // iterate slicing
     const slicesIssues = ((slicing) => {
-      if (slicing == undefined) return [];
+      if (slicing === undefined) return [];
       // TODO: ensure data is array
       const slices = slice(data, slicing as Slicing);
       const result = Object.keys(slicing.slices || {}).flatMap((sliceName) => {
         const dataSlice = slices[sliceName];
         const sliceSpec = slicing.slices?.[sliceName]!;
-        if (sliceSpec == undefined) return [];
+        if (sliceSpec === undefined) return [];
         // Merge parent elements with slice elements (slices refine, not replace)
         const mergedSpec = { ...sliceSpec, elements: { ...elements, ...sliceSpec.elements } };
         const pathItem: fp.FieldPathComponent = {
           name: sliceName,
-          type: parentSlices == undefined ? 'slice' : 'reslice',
+          type: parentSlices === undefined ? 'slice' : 'reslice',
         };
         const sliceLoc = [...location, pathItem];
         const cardinalityIssues = cardinality.validate(dataSlice, sliceSpec, sliceLoc).issue || [];
@@ -165,7 +171,7 @@ const validate = (
     // iterate fields
     const specFields = new Set(Object.keys(spec.elements || {}));
     const dataFields = new Set(
-      spec.elements && Object.keys(data || {}).filter((field) => field != 'resourceType')
+      spec.elements && Object.keys(data || {}).filter((field) => field !== 'resourceType'),
     );
     // iterate fields
     const fields = [...dataFields.intersection(specFields)];
@@ -177,7 +183,7 @@ const validate = (
       const cardinalityIssues = cardinality.validate(fieldVal, elemSpec, fieldLoc).issue || [];
 
       const itemIssues = (() => {
-        if (!elemSpec.type || elemSpec.type == 'BackboneElement') {
+        if (!elemSpec.type || elemSpec.type === 'BackboneElement') {
           return validate(fieldVal, elemSpec, fieldLoc, parentSlices);
         }
         // https://hl7.org/fhir/valueset-structure-definition-kind.html
@@ -244,4 +250,4 @@ type PathToken = {
   params?: string;
 };
 
-export { slice, validate, Slicing, Slices };
+export { slice, validate, type Slicing, type Slices };

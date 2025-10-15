@@ -1,19 +1,19 @@
-import { describe, test, expect } from 'bun:test';
+import { describe, expect, test } from 'bun:test';
 import type { OperationOutcome } from '../../src/converter/types';
-import { typesIndex } from './fixture';
 import * as sut from '../../src/validator/primitive';
+import { typesIndex } from './fixture';
 
 describe('Primitive validations', () => {
   describe('Type checks', () => {
     test('string good', () => {
-      const spec = typesIndex['string'];
+      const spec = typesIndex.string;
       const result = sut.validate('foo', spec, [{ type: 'field', name: 'value' }]);
 
       expect(result).toEqual({ resourceType: 'OperationOutcome', issue: [] } as OperationOutcome);
     });
 
     test('string bad type', () => {
-      const spec = typesIndex['string'];
+      const spec = typesIndex.string;
       const result = sut.validate(123, spec, [{ type: 'field', name: 'value' }]);
 
       expect(result).toEqual({
@@ -30,14 +30,14 @@ describe('Primitive validations', () => {
     });
 
     test('decimal good', () => {
-      const spec = typesIndex['decimal'];
+      const spec = typesIndex.decimal;
       const result = sut.validate(3.14, spec, [{ type: 'field', name: 'value' }]);
 
       expect(result).toEqual({ resourceType: 'OperationOutcome', issue: [] } as OperationOutcome);
     });
 
     test('decimal bad type', () => {
-      const spec = typesIndex['decimal'];
+      const spec = typesIndex.decimal;
       const result = sut.validate('not a number', spec, [{ type: 'field', name: 'value' }]);
 
       expect(result).toEqual({
@@ -64,7 +64,7 @@ describe('Primitive validations', () => {
 
   describe('Regex checks', () => {
     test('string bad regex', () => {
-      const spec = typesIndex['string'];
+      const spec = typesIndex.string;
       const result = sut.validate('', spec, [{ type: 'field', name: 'value' }]);
 
       expect(result).toEqual({
@@ -83,14 +83,14 @@ describe('Primitive validations', () => {
     });
 
     test('code good', () => {
-      const spec = typesIndex['code'];
+      const spec = typesIndex.code;
       const result = sut.validate('active', spec, [{ type: 'field', name: 'value' }]);
 
       expect(result).toEqual({ resourceType: 'OperationOutcome', issue: [] } as OperationOutcome);
     });
 
     test('code bad regex', () => {
-      const spec = typesIndex['code'];
+      const spec = typesIndex.code;
       const result = sut.validate('   ', spec, [{ type: 'field', name: 'value' }]);
 
       expect(result).toEqual({
@@ -109,7 +109,7 @@ describe('Primitive validations', () => {
     });
 
     test('uri good', () => {
-      const spec = typesIndex['uri'];
+      const spec = typesIndex.uri;
       const result = sut.validate('http://example.com/fhir', spec, [
         { type: 'field', name: 'value' },
       ]);
@@ -118,14 +118,14 @@ describe('Primitive validations', () => {
     });
 
     test('date good', () => {
-      const spec = typesIndex['date'];
+      const spec = typesIndex.date;
       const result = sut.validate('2024-03-15', spec, [{ type: 'field', name: 'value' }]);
 
       expect(result).toEqual({ resourceType: 'OperationOutcome', issue: [] } as OperationOutcome);
     });
 
     test('date bad regex', () => {
-      const spec = typesIndex['date'];
+      const spec = typesIndex.date;
       const result = sut.validate('not-a-date', spec, [{ type: 'field', name: 'value' }]);
 
       expect(result).toEqual({
@@ -144,14 +144,14 @@ describe('Primitive validations', () => {
     });
 
     test('dateTime good', () => {
-      const spec = typesIndex['dateTime'];
+      const spec = typesIndex.dateTime;
       const result = sut.validate('2024-03-15T14:30:00Z', spec, [{ type: 'field', name: 'value' }]);
 
       expect(result).toEqual({ resourceType: 'OperationOutcome', issue: [] } as OperationOutcome);
     });
 
     test('dateTime bad regex', () => {
-      const spec = typesIndex['dateTime'];
+      const spec = typesIndex.dateTime;
       const result = sut.validate('not-a-datetime', spec, [{ type: 'field', name: 'value' }]);
 
       expect(result).toEqual({
@@ -170,7 +170,7 @@ describe('Primitive validations', () => {
     });
 
     test('instant good', () => {
-      const spec = typesIndex['instant'];
+      const spec = typesIndex.instant;
       const result = sut.validate('2024-03-15T14:30:00.000Z', spec, [
         { type: 'field', name: 'value' },
       ]);
@@ -179,7 +179,7 @@ describe('Primitive validations', () => {
     });
 
     test('instant bad regex', () => {
-      const spec = typesIndex['instant'];
+      const spec = typesIndex.instant;
       const result = sut.validate('2024-03-15', spec, [{ type: 'field', name: 'value' }]);
 
       expect(result).toEqual({
@@ -198,7 +198,7 @@ describe('Primitive validations', () => {
     });
 
     test('canonical good', () => {
-      const spec = typesIndex['canonical'];
+      const spec = typesIndex.canonical;
       const result = sut.validate('http://hl7.org/fhir/StructureDefinition/Patient', spec, [
         { type: 'field', name: 'value' },
       ]);

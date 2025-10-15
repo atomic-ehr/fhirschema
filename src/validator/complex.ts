@@ -1,13 +1,13 @@
-import { OperationOutcome, OperationOutcomeIssue, FHIRSchema } from '../converter/types';
+import type { FHIRSchema, OperationOutcome, OperationOutcomeIssue } from '../converter/types';
+import * as cardinality from './cardinality';
 import * as fp from './fieldPath';
 import * as primitive from './primitive';
-import * as cardinality from './cardinality';
 
 const validate = (
   data: any,
   spec: FHIRSchema,
   location: fp.FieldPathComponent[],
-  typeProfiles: { [key in string]: FHIRSchema }
+  typeProfiles: { [key in string]: FHIRSchema },
 ): OperationOutcome => {
   if (Array.isArray(data)) {
     const itemIssues = data.flatMap((item, idx) => {
@@ -20,7 +20,7 @@ const validate = (
   const specFields = new Set(Object.keys(spec.elements || {}));
   const requiredFields = new Set(spec.required);
   const dataFields = new Set(
-    spec.elements && Object.keys(data || {}).filter((field) => field != 'resourceType')
+    spec.elements && Object.keys(data || {}).filter((field) => field !== 'resourceType'),
   );
   const extraFields = dataFields.difference(specFields);
   // iterate fields
@@ -35,14 +35,14 @@ const validate = (
     const itemIssues = (() => {
       const elemSchema = typeProfiles[elemSpec.type!];
 
-      if (elemSchema == undefined) {
+      if (elemSchema === undefined) {
         return [
           {
             severity: 'error',
             code: 'not-supported',
             details: {
               text: `Element type not supported: ${elemSpec.type}, for field: ${fp.stringify(
-                fieldLoc
+                fieldLoc,
               )}`,
             },
           } as OperationOutcomeIssue,
@@ -69,7 +69,7 @@ const validate = (
       severity: 'error',
       code: 'required',
       details: { text: `Field: ${fp.stringify(fieldLoc)}, is required` },
-      expression: [fp.stringify(fieldLoc.filter(({ type }) => 'field' == type))],
+      expression: [fp.stringify(fieldLoc.filter(({ type }) => 'field' === type))],
     } as OperationOutcomeIssue;
   });
   // extra fields (not in the schema)
@@ -79,7 +79,7 @@ const validate = (
       severity: 'error',
       code: 'invalid',
       details: { text: `Extra field detected: ${fp.stringify(pathComponents)}` },
-      expression: [fp.stringify(pathComponents.filter(({ type }) => 'field' == type))],
+      expression: [fp.stringify(pathComponents.filter(({ type }) => 'field' === type))],
     } as OperationOutcomeIssue;
   });
 

@@ -324,9 +324,7 @@
     },
     "subject": {
       "type": "Reference",
-      "refers": [
-        "http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient"
-      ],
+      "refers": ["http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient"],
       "mustSupport": true
     },
     "valueCodeableConcept": {

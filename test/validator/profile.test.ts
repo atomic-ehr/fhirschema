@@ -1,11 +1,11 @@
-import { describe, test, expect } from 'bun:test';
-import { profilesIndex } from './fixture';
+import { describe, expect, test } from 'bun:test';
+import type { FHIRSchema } from '../../src/converter/types';
 import * as sut from '../../src/validator/profile';
-import { FHIRSchema, } from '../../src/converter/types';
-import slicingObsComponent from '../data/slicing-obs-component.json';
-import reslicingPatPassport from '../data/reslicing-patient-passport.json';
-import usCoreBloodPreasureProfilesChain from '../data/uscore-blood-preasure-profiles-chain.json';
 import multiCitizenPatientProfilesChain from '../data/multicitizen-patient-profiles-chain.json';
+import reslicingPatPassport from '../data/reslicing-patient-passport.json';
+import slicingObsComponent from '../data/slicing-obs-component.json';
+import usCoreBloodPreasureProfilesChain from '../data/uscore-blood-preasure-profiles-chain.json';
+import { profilesIndex } from './fixture';
 
 describe('Merge profiles', () => {
   describe('Observation.component at us-core vital-signs', () => {

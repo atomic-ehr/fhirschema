@@ -1,4 +1,4 @@
-import { FHIRSchema, OperationOutcome, OperationOutcomeIssue } from '../converter/types';
+import type { FHIRSchema, OperationOutcome, OperationOutcomeIssue } from '../converter/types';
 import * as fp from './fieldPath';
 
 const SPEC_TO_NATIVE_TYPES: { [key in string]: string } = {
@@ -11,7 +11,7 @@ const SPEC_TO_NATIVE_TYPES: { [key in string]: string } = {
 const validate = (
   data: any,
   spec: FHIRSchema,
-  location: fp.FieldPathComponent[]
+  location: fp.FieldPathComponent[],
 ): OperationOutcome => {
   if (Array.isArray(data)) {
     const issues = data.flatMap((item, idx) => {
@@ -25,14 +25,14 @@ const validate = (
 
   const typeIssues = (() => {
     const nativeType = SPEC_TO_NATIVE_TYPES[spec.type];
-    if (nativeType && valueType != nativeType)
+    if (nativeType && valueType !== nativeType)
       return [
         {
           severity: 'error',
           code: 'invalid',
           details: {
             text: `Type mismatch for field: ${fp.stringify(
-              location
+              location,
             )}, expected: ${nativeType}, actual: ${valueType}`,
           },
           expression: [fp.stringify(location, { asFhirPath: true })],
@@ -41,7 +41,7 @@ const validate = (
   })();
 
   const regexIssues = (() => {
-    if (valueType != 'string' || !spec.regex) return;
+    if (valueType !== 'string' || !spec.regex) return;
     if (!data.match(spec.regex))
       return [
         {
@@ -49,7 +49,7 @@ const validate = (
           code: 'invalid',
           details: {
             text: `Field: ${fp.stringify(
-              location
+              location,
             )}, contains invalid value: ${data}, doesn't match regex: '${spec.regex}'`,
           },
           expression: [fp.stringify(location, { asFhirPath: true })],
