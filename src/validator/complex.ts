@@ -28,12 +28,14 @@ const validate = (
   const fieldIssues = fields.flatMap((field) => {
     const fieldLoc = [...location, { type: 'field', name: field } as fp.FieldPathComponent];
     const fieldVal = data?.[field];
-    const elemSpec = spec.elements?.[field]!;
+    const elemSpec = spec.elements?.[field];
+
+    if (!elemSpec) throw new Error('Element specification not found');
 
     const cardinalityIssues = cardinality.validate(fieldVal, elemSpec, location).issue || [];
 
     const itemIssues = (() => {
-      const elemSchema = typeProfiles[elemSpec.type!];
+      const elemSchema = typeProfiles[elemSpec.type ?? ''];
 
       if (elemSchema === undefined) {
         return [

@@ -143,7 +143,7 @@ const validate = (
       const slices = slice(data, slicing as Slicing);
       const result = Object.keys(slicing.slices || {}).flatMap((sliceName) => {
         const dataSlice = slices[sliceName];
-        const sliceSpec = slicing.slices?.[sliceName]!;
+        const sliceSpec = slicing.slices?.[sliceName];
         if (sliceSpec === undefined) return [];
         // Merge parent elements with slice elements (slices refine, not replace)
         const mergedSpec = { ...sliceSpec, elements: { ...elements, ...sliceSpec.elements } };
@@ -178,7 +178,9 @@ const validate = (
     const fieldIssues = fields.flatMap((field) => {
       const fieldLoc = [...location, { type: 'field', name: field } as fp.FieldPathComponent];
       const fieldVal = data?.[field];
-      const elemSpec = spec.elements?.[field]!;
+      const elemSpec = spec.elements?.[field];
+
+      if (!elemSpec) throw new Error('Element specification not found');
 
       const cardinalityIssues = cardinality.validate(fieldVal, elemSpec, fieldLoc).issue || [];
 
@@ -187,7 +189,7 @@ const validate = (
           return validate(fieldVal, elemSpec, fieldLoc, parentSlices);
         }
         // https://hl7.org/fhir/valueset-structure-definition-kind.html
-        const elemSchema = typeProfiles[elemSpec.type!];
+        const elemSchema = typeProfiles[elemSpec.type ?? ''];
         switch (elemSchema.kind) {
           case 'primitive-type':
             return primitive.validate(fieldVal, elemSchema, fieldLoc).issue || [];
