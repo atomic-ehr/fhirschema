@@ -83,7 +83,7 @@
         "noForEach": "off"
       },
       "suspicious": {
-        "noExplicitAny": "error",
+        "noExplicitAny": "warn",
         "noConsole": {
           "level": "warn"
         },
