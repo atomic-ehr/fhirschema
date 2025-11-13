@@ -474,7 +474,7 @@ export type FHIRSchemaElement = {
 };
 
 export interface PackageMeta {
-  package: string;
+  name: string;
   version: string;
 }
 

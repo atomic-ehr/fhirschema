@@ -1,3 +1,8 @@
+export interface PackageMeta {
+  name: string;
+  version: string;
+}
+
 // Core FHIRSchema Types
 
 export interface FHIRSchemaBinding {
@@ -293,7 +298,7 @@ export interface FHIRSchema {
   package_name?: string;
   package_version?: string;
   package_id?: string;
-  package_meta?: Record<string, unknown>; // Changed from any
+  package_meta?: PackageMeta; // Changed from any
 
   // Content
   elements?: Record<string, FHIRSchemaElement>;
