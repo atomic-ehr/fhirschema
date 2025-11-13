@@ -304,6 +304,7 @@ export interface StructureDefinitionElement {
     extension?: Array<{
       url: string;
       valueString?: string;
+      valueBoolean?: boolean;
     }>;
   };
   mapping?: any[];
