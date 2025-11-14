@@ -672,7 +672,7 @@ describe('Converter Algorithm Tests', () => {
     });
   });
 
-  describe('Use contentReference in SD', () => {
+  describe('Use contentReference in SD for Bundle', () => {
     const bundle: StructureDefinition = {
       resourceType: 'StructureDefinition',
       id: 'Bundle',
@@ -774,6 +774,91 @@ describe('Converter Algorithm Tests', () => {
             },
           },
         },
+      });
+    });
+  });
+
+  describe('Use contentReference in SD for ViewDefinition', () => {
+    const vd: StructureDefinition = {
+      resourceType: 'StructureDefinition',
+      id: 'ViewDefinition',
+      url: 'https://sql-on-fhir.org/ig/StructureDefinition/ViewDefinition',
+      version: '2.1.0-pre',
+      name: 'ViewDefinition',
+      status: 'draft',
+      kind: 'logical',
+      abstract: false,
+      type: 'https://sql-on-fhir.org/ig/StructureDefinition/ViewDefinition',
+      derivation: 'specialization',
+      differential: {
+        element: [
+          {
+            id: 'ViewDefinition',
+            path: 'ViewDefinition',
+          },
+          {
+            id: 'ViewDefinition.select',
+            path: 'ViewDefinition.select',
+            min: 1,
+            max: '*',
+            type: [{ code: 'BackboneElement' }],
+          },
+          {
+            id: 'ViewDefinition.select.select',
+            path: 'ViewDefinition.select.select',
+            min: 0,
+            max: '*',
+            contentReference:
+              'https://sql-on-fhir.org/ig/StructureDefinition/ViewDefinition#ViewDefinition.select',
+          },
+          {
+            id: 'ViewDefinition.select.unionAll',
+            path: 'ViewDefinition.select.unionAll',
+            min: 0,
+            max: '*',
+            contentReference:
+              'https://sql-on-fhir.org/ig/StructureDefinition/ViewDefinition#ViewDefinition.select',
+          },
+        ],
+      },
+    };
+    it('Element references with canonical url', () => {
+      const result = translate(vd);
+      expect(result).toMatchObject({
+        name: 'ViewDefinition',
+        type: 'https://sql-on-fhir.org/ig/StructureDefinition/ViewDefinition',
+        kind: 'logical',
+        class: 'logical',
+        url: 'https://sql-on-fhir.org/ig/StructureDefinition/ViewDefinition',
+        version: '2.1.0-pre',
+        derivation: 'specialization',
+        elements: {
+          select: {
+            type: 'BackboneElement',
+            array: true,
+            min: 1,
+            index: 0,
+            elements: {
+              select: {
+                elementReference: [
+                  'https://sql-on-fhir.org/ig/StructureDefinition/ViewDefinition',
+                  'elements',
+                  'select',
+                ],
+                array: true,
+              },
+              unionAll: {
+                elementReference: [
+                  'https://sql-on-fhir.org/ig/StructureDefinition/ViewDefinition',
+                  'elements',
+                  'select',
+                ],
+                array: true,
+              },
+            },
+          },
+        },
+        required: ['select'],
       });
     });
   });

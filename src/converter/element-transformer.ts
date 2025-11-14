@@ -325,14 +325,20 @@ function contentReferenceToElementReference(
   ref: string,
   structureDefinition: StructureDefinition,
 ): string[] {
-  // Remove the # prefix and split
-  const pathParts = ref.substring(1).split('.');
-  const result = [structureDefinition.url];
+  let localRef: string;
+  if (ref.startsWith('#')) {
+    localRef = ref.substring(1);
+  } else {
+    const parts = ref.split('#');
+    if (parts.length !== 2) throw new Error(`Invalid content reference: ${ref}`);
+    localRef = parts[1];
+  }
 
+  const pathParts = localRef.split('.');
+  const result = [structureDefinition.url];
   for (const part of pathParts.slice(1)) {
     result.push('elements', part);
   }
-
   return result;
 }
 
