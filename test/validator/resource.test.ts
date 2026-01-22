@@ -46,12 +46,12 @@ describe('Slicing validation', () => {
   describe('good pattern discrimination', () => {
     test('US core blood preasure component', () => {
       const result = sut.validate(goodPatternObs1.resource, usCoreBloodPreasure, typesIndex);
-      expect(result).toEqual(goodPatternObs1.result as OperationOutcome);
+      expect(result.outcome).toEqual(goodPatternObs1.result as OperationOutcome);
     });
 
     test('Patient with passport identifiers (reslicing)', () => {
       const result = sut.validate(goodPatternPatient1.resource, multiCitizenPatient, typesIndex);
-      expect(result).toEqual(goodPatternPatient1.result as OperationOutcome);
+      expect(result.outcome).toEqual(goodPatternPatient1.result as OperationOutcome);
     });
   });
 });
@@ -66,7 +66,7 @@ describe('Cardinality validation', () => {
       patientWithCardinalityConstraints,
       typesIndex,
     );
-    expect(result).toEqual(cardinalityBadMinIdentifiers.result as OperationOutcome);
+    expect(result.outcome).toEqual(cardinalityBadMinIdentifiers.result as OperationOutcome);
   });
 
   test('min violation - identifier (empty array, 2 required)', () => {
@@ -78,7 +78,7 @@ describe('Cardinality validation', () => {
       mergedProfiles,
       typesIndex,
     );
-    expect(result).toEqual(cardinalityBadEmptyIdentifiers.result as OperationOutcome);
+    expect(result.outcome).toEqual(cardinalityBadEmptyIdentifiers.result as OperationOutcome);
   });
 
   test('max violation - photo (2 provided, 1 allowed)', () => {
@@ -86,7 +86,7 @@ describe('Cardinality validation', () => {
       .map((canon) => profilesIndex[canon])
       .reduce((p1, p2) => profile.merge(p1, p2) as FHIRSchema);
     const result = sut.validate(cardinalityBadMaxPhotos.resource, mergedProfiles, typesIndex);
-    expect(result).toEqual(cardinalityBadMaxPhotos.result as OperationOutcome);
+    expect(result.outcome).toEqual(cardinalityBadMaxPhotos.result as OperationOutcome);
   });
 
   test('min violation - contact (empty array, 1 required)', () => {
@@ -94,7 +94,7 @@ describe('Cardinality validation', () => {
       .map((canon) => profilesIndex[canon])
       .reduce((p1, p2) => profile.merge(p1, p2) as FHIRSchema);
     const result = sut.validate(cardinalityBadMinContacts.resource, mergedProfiles, typesIndex);
-    expect(result).toEqual(cardinalityBadMinContacts.result as OperationOutcome);
+    expect(result.outcome).toEqual(cardinalityBadMinContacts.result as OperationOutcome);
   });
 
   test('max violation - contact (4 provided, 3 allowed)', () => {
@@ -102,7 +102,7 @@ describe('Cardinality validation', () => {
       .map((canon) => profilesIndex[canon])
       .reduce((p1, p2) => profile.merge(p1, p2) as FHIRSchema);
     const result = sut.validate(cardinalityBadMaxContacts.resource, mergedProfiles, typesIndex);
-    expect(result).toEqual(cardinalityBadMaxContacts.result as OperationOutcome);
+    expect(result.outcome).toEqual(cardinalityBadMaxContacts.result as OperationOutcome);
   });
 
   test('valid cardinality - all constraints satisfied', () => {
@@ -110,7 +110,7 @@ describe('Cardinality validation', () => {
       .map((canon) => profilesIndex[canon])
       .reduce((p1, p2) => profile.merge(p1, p2) as FHIRSchema);
     const result = sut.validate(cardinalityGoodPatient.resource, mergedProfiles, typesIndex);
-    expect(result).toEqual(cardinalityGoodPatient.result as OperationOutcome);
+    expect(result.outcome).toEqual(cardinalityGoodPatient.result as OperationOutcome);
   });
 
   test('min violation - blood pressure without diastolic component (slice)', () => {
@@ -118,6 +118,6 @@ describe('Cardinality validation', () => {
       .map((canon) => profilesIndex[canon])
       .reduce((p1, p2) => profile.merge(p1, p2) as FHIRSchema);
     const result = sut.validate(cardinalityBadBpNoDiastolic.resource, mergedProfiles, typesIndex);
-    expect(result).toEqual(cardinalityBadBpNoDiastolic.result as OperationOutcome);
+    expect(result.outcome).toEqual(cardinalityBadBpNoDiastolic.result as OperationOutcome);
   });
 });

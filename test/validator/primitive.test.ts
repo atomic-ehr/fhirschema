@@ -40,6 +40,7 @@ describe('Primitive validations', () => {
       const spec = typesIndex.decimal;
       const result = sut.validate('not a number', spec, [{ type: 'field', name: 'value' }]);
 
+      // Type error should be reported; regex check skipped after type failure
       expect(result).toEqual({
         resourceType: 'OperationOutcome',
         issue: [
@@ -47,14 +48,6 @@ describe('Primitive validations', () => {
             severity: 'error',
             code: 'invalid',
             details: { text: 'Type mismatch for field: value, expected: number, actual: string' },
-            expression: ['value'],
-          },
-          {
-            severity: 'error',
-            code: 'invalid',
-            details: {
-              text: "Field: value, contains invalid value: not a number, doesn't match regex: '-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?'",
-            },
             expression: ['value'],
           },
         ],

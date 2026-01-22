@@ -5,10 +5,16 @@ import type {
   OperationOutcomeIssue,
   Resource,
 } from '../converter/types';
+import type { BindingStrength, Deferred } from './types';
 import * as cardinality from './cardinality';
 import * as complex from './complex';
 import * as fp from './fieldPath';
 import * as primitive from './primitive';
+
+export interface ValidationOutput {
+  outcome: OperationOutcome;
+  deferred: Deferred[];
+}
 
 // simple support for simple fhirpath
 // https://hl7.org/fhir/fhirpath.html#simple
@@ -124,18 +130,25 @@ const slice = <T extends object>(data: T[], spec: Slicing): Slices<T> => {
   return result;
 };
 
+interface InternalResult {
+  issues: OperationOutcomeIssue[];
+  deferred: Deferred[];
+}
+
 const validate = (
   resource: Resource,
   profile: FHIRSchema,
   typeProfiles: { [key in string]: FHIRSchema },
-): OperationOutcome => {
-  const validate = (
+): ValidationOutput => {
+  const validateInternal = (
     data: any,
     spec: ValidationSpec,
     location: fp.FieldPathComponent[] = [],
     parentSlices?: Slices<any>,
-  ): OperationOutcomeIssue[] => {
+  ): InternalResult => {
     const { elements, slicing, ...moreSpec } = spec;
+    const allDeferred: Deferred[] = [];
+
     // iterate slicing
     const slicesIssues = ((slicing) => {
       if (slicing === undefined) return [];
@@ -153,8 +166,9 @@ const validate = (
         };
         const sliceLoc = [...location, pathItem];
         const cardinalityIssues = cardinality.validate(dataSlice, sliceSpec, sliceLoc).issue || [];
-        const sliceIssues = validate(dataSlice, mergedSpec, sliceLoc, slices);
-        return [...cardinalityIssues, ...sliceIssues];
+        const sliceResult = validateInternal(dataSlice, mergedSpec, sliceLoc, slices);
+        allDeferred.push(...sliceResult.deferred);
+        return [...cardinalityIssues, ...sliceResult.issues];
       });
       return result;
     })(slicing);
@@ -164,10 +178,13 @@ const validate = (
       const itemSpec = { elements, ...moreSpec };
       const itemIssues = data.flatMap((item, idx) => {
         const pathIndex: fp.FieldPathComponent = { type: 'index', name: `${idx}` };
-        return validate(item, itemSpec, [...location, pathIndex], parentSlices);
+        const itemResult = validateInternal(item, itemSpec, [...location, pathIndex], parentSlices);
+        allDeferred.push(...itemResult.deferred);
+        return itemResult.issues;
       });
-      return [...slicesIssues, ...itemIssues];
+      return { issues: [...slicesIssues, ...itemIssues], deferred: allDeferred };
     }
+
     // iterate fields
     const specFields = new Set(Object.keys(spec.elements || {}));
     const dataFields = new Set(
@@ -184,9 +201,68 @@ const validate = (
 
       const cardinalityIssues = cardinality.validate(fieldVal, elemSpec, fieldLoc).issue || [];
 
+      // Collect terminology binding deferred validations
+      if (elemSpec.binding?.valueSet && elemSpec.binding.strength !== 'example') {
+        const values = Array.isArray(fieldVal) ? fieldVal : [fieldVal];
+        for (let i = 0; i < values.length; i++) {
+          const val = values[i];
+          const valPath = Array.isArray(fieldVal)
+            ? fp.stringify([...fieldLoc, { type: 'index', name: `${i}` }], { withIndices: true })
+            : fp.stringify(fieldLoc, { withIndices: true });
+
+          if (typeof val === 'string') {
+            // Simple code binding
+            allDeferred.push({
+              type: 'terminology',
+              path: valPath,
+              code: val,
+              valueSet: elemSpec.binding.valueSet,
+              strength: elemSpec.binding.strength as BindingStrength,
+            });
+          } else if (val && typeof val === 'object') {
+            // Coding or CodeableConcept binding
+            const codings = val.coding || (val.code ? [val] : []);
+            for (const coding of codings) {
+              if (coding.code) {
+                allDeferred.push({
+                  type: 'terminology',
+                  path: valPath,
+                  code: coding.code,
+                  system: coding.system,
+                  valueSet: elemSpec.binding.valueSet,
+                  strength: elemSpec.binding.strength as BindingStrength,
+                });
+              }
+            }
+          }
+        }
+      }
+
+      // Collect reference deferred validations
+      if (elemSpec.type === 'Reference' && elemSpec.refers && elemSpec.refers.length > 0) {
+        const values = Array.isArray(fieldVal) ? fieldVal : [fieldVal];
+        for (let i = 0; i < values.length; i++) {
+          const val = values[i];
+          const valPath = Array.isArray(fieldVal)
+            ? fp.stringify([...fieldLoc, { type: 'index', name: `${i}` }], { withIndices: true })
+            : fp.stringify(fieldLoc, { withIndices: true });
+
+          if (val?.reference) {
+            allDeferred.push({
+              type: 'reference',
+              path: valPath,
+              reference: val.reference,
+              targetProfiles: elemSpec.refers,
+            });
+          }
+        }
+      }
+
       const itemIssues = (() => {
         if (!elemSpec.type || elemSpec.type === 'BackboneElement') {
-          return validate(fieldVal, elemSpec, fieldLoc, parentSlices);
+          const result = validateInternal(fieldVal, elemSpec, fieldLoc, parentSlices);
+          allDeferred.push(...result.deferred);
+          return result.issues;
         }
         // https://hl7.org/fhir/valueset-structure-definition-kind.html
         const elemSchema = typeProfiles[elemSpec.type ?? ''];
@@ -195,8 +271,11 @@ const validate = (
             return primitive.validate(fieldVal, elemSchema, fieldLoc).issue || [];
           case 'complex-type':
             return complex.validate(fieldVal, elemSchema, fieldLoc, typeProfiles).issue || [];
-          case 'resource':
-            return validate(fieldVal, elemSchema, fieldLoc, parentSlices);
+          case 'resource': {
+            const result = validateInternal(fieldVal, elemSchema, fieldLoc, parentSlices);
+            allDeferred.push(...result.deferred);
+            return result.issues;
+          }
           default:
             throw new Error(`Not supported kind: ${elemSchema.kind}`);
         }
@@ -204,6 +283,7 @@ const validate = (
 
       return [...cardinalityIssues, ...itemIssues];
     });
+
     // required fields
     const requiredFields = new Set(spec.required);
     const missingFieldIssues = [...requiredFields.difference(dataFields)].map((field) => {
@@ -215,6 +295,7 @@ const validate = (
         expression: [fp.stringify(fieldLoc, { asFhirPath: true })],
       } as OperationOutcomeIssue;
     });
+
     // extra fields (not in the schema)
     const extraFields = dataFields.difference(specFields);
     const extraFieldIssues = [...extraFields].map((field) => {
@@ -227,14 +308,39 @@ const validate = (
       } as OperationOutcomeIssue;
     });
 
-    return [...fieldIssues, ...missingFieldIssues, ...extraFieldIssues, ...slicesIssues];
+    // choice type validation: only one value[x] variant allowed
+    const choiceIssues: OperationOutcomeIssue[] = [];
+    for (const [field, elemSpec] of Object.entries(spec.elements || {})) {
+      if (elemSpec.choices && elemSpec.choices.length > 0) {
+        const presentChoices = elemSpec.choices.filter((choice) => dataFields.has(choice));
+        if (presentChoices.length > 1) {
+          const fieldLoc = [...location, { type: 'field', name: field } as fp.FieldPathComponent];
+          choiceIssues.push({
+            severity: 'error',
+            code: 'invalid',
+            details: {
+              text: `Multiple values for choice type ${field}[x]: ${presentChoices.join(', ')}. Only one is allowed.`,
+            },
+            expression: [fp.stringify(fieldLoc, { asFhirPath: true })],
+          });
+        }
+      }
+    }
+
+    return {
+      issues: [...fieldIssues, ...missingFieldIssues, ...extraFieldIssues, ...choiceIssues, ...slicesIssues],
+      deferred: allDeferred,
+    };
   };
 
-  const issues = validate(resource, profile);
+  const result = validateInternal(resource, profile);
 
   return {
-    resourceType: 'OperationOutcome',
-    issue: issues,
+    outcome: {
+      resourceType: 'OperationOutcome',
+      issue: result.issues,
+    },
+    deferred: result.deferred,
   };
 };
 

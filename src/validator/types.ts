@@ -351,6 +351,27 @@ export const FHIR_COMPLEX_TYPES = [
 
 export type FHIRComplexType = (typeof FHIR_COMPLEX_TYPES)[number];
 
+// Deferred validation types - for external validation (terminology, references)
+export type BindingStrength = 'required' | 'extensible' | 'preferred' | 'example';
+
+export interface TerminologyDeferred {
+  type: 'terminology';
+  path: string;
+  code: string;
+  system?: string;
+  valueSet: string;
+  strength: BindingStrength;
+}
+
+export interface ReferenceDeferred {
+  type: 'reference';
+  path: string;
+  reference: string;
+  targetProfiles?: string[];
+}
+
+export type Deferred = TerminologyDeferred | ReferenceDeferred;
+
 // Type guards for runtime type checking
 export function isFHIRSchema(obj: unknown): obj is FHIRSchema {
   return (

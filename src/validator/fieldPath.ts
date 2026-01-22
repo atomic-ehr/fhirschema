@@ -5,12 +5,26 @@ const separators: { [key in FieldPathComponent['type']]: string } = {
   index: '.',
 };
 
-const stringify = (
-  fieldPath: FieldPathComponent[],
-  opts: { asFhirPath: boolean } = { asFhirPath: false },
-): string => {
+type StringifyOpts = {
+  asFhirPath?: boolean;
+  withIndices?: boolean;
+};
+
+const stringify = (fieldPath: FieldPathComponent[], opts: StringifyOpts = {}): string => {
+  const { asFhirPath = false, withIndices = false } = opts;
+
+  if (withIndices) {
+    // Format with brackets for indices: field.subfield[0].nested[1]
+    return fieldPath.reduce((acc, { type, name }, idx) => {
+      if (type === 'index') {
+        return `${acc}[${name}]`;
+      }
+      return `${acc}${idx === 0 ? '' : separators[type]}${name}`;
+    }, '');
+  }
+
   const result = fieldPath
-    .filter(({ type }) => !opts.asFhirPath || 'field' === type)
+    .filter(({ type }) => !asFhirPath || 'field' === type)
     .reduce((acc, { type, name }, idx) => {
       return `${acc}${idx === 0 ? '' : separators[type]}${name}`;
     }, '');
