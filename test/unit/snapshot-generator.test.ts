@@ -333,4 +333,68 @@ describe('Snapshot generation via FHIRSchema merge', () => {
     expect(paths.has('MetadataResource.url')).toBe(true);
     expect(paths.has('MetadataResource.version')).toBe(true);
   });
+
+  it('expands BackboneElement inherited children for nested backbone nodes (DeviceDefinition-style)', async () => {
+    const element = createSD({
+      url: 'http://hl7.org/fhir/StructureDefinition/Element',
+      name: 'Element',
+      type: 'Element',
+      kind: 'complex-type',
+      derivation: 'specialization',
+      elements: [
+        { path: 'Element.id', type: [{ code: 'string' }] },
+        { path: 'Element.extension', min: 0, max: '*', type: [{ code: 'Extension' }] },
+      ],
+    });
+
+    const backboneElement = createSD({
+      url: 'http://hl7.org/fhir/StructureDefinition/BackboneElement',
+      name: 'BackboneElement',
+      type: 'BackboneElement',
+      kind: 'complex-type',
+      baseDefinition: element.url,
+      derivation: 'specialization',
+      elements: [
+        {
+          path: 'BackboneElement.modifierExtension',
+          min: 0,
+          max: '*',
+          type: [{ code: 'Extension' }],
+        },
+      ],
+    });
+
+    const domain = createSD({
+      url: 'http://hl7.org/fhir/StructureDefinition/DomainResource',
+      name: 'DomainResource',
+      type: 'DomainResource',
+      derivation: 'specialization',
+      elements: [{ path: 'DomainResource.text', type: [{ code: 'Narrative' }] }],
+    });
+
+    const deviceDefinition = createSD({
+      url: 'http://example.org/fhir/StructureDefinition/DeviceDefinition',
+      name: 'DeviceDefinition',
+      type: 'DeviceDefinition',
+      baseDefinition: domain.url,
+      derivation: 'specialization',
+      elements: [
+        { path: 'DeviceDefinition.property', min: 0, max: '*', type: [{ code: 'BackboneElement' }] },
+      ],
+    });
+
+    const snapshot = await generateSnapshot(deviceDefinition, {
+      resolver: {
+        [domain.url]: domain,
+        [element.url]: element,
+        [backboneElement.url]: backboneElement,
+      },
+    });
+
+    const paths = new Set((snapshot.snapshot?.element || []).map((e) => e.path));
+    expect(paths.has('DeviceDefinition.property')).toBe(true);
+    expect(paths.has('DeviceDefinition.property.id')).toBe(true);
+    expect(paths.has('DeviceDefinition.property.extension')).toBe(true);
+    expect(paths.has('DeviceDefinition.property.modifierExtension')).toBe(true);
+  });
 });

@@ -200,6 +200,89 @@ function elementKey(element: { path: string; sliceName?: string }): string {
   return `${element.path}|${element.sliceName || ''}`;
 }
 
+function cloneInheritedElement(
+  template: StructureDefinitionElement,
+  targetPath: string,
+): StructureDefinitionElement {
+  const { path: _templatePath, id: _templateId, ...rest } = template;
+  return {
+    ...rest,
+    path: targetPath,
+  };
+}
+
+async function buildTypeElementTemplates(
+  typeCode: string,
+  resolver: StructureDefinitionResolver,
+  maxDepth: number,
+  cache: Map<string, StructureDefinitionElement[]>,
+): Promise<StructureDefinitionElement[]> {
+  const cached = cache.get(typeCode);
+  if (cached) return cached;
+
+  const typeCanonical = `http://hl7.org/fhir/StructureDefinition/${typeCode}`;
+  const typeDefinition = await resolveByCanonical(resolver, typeCanonical);
+  if (!typeDefinition) {
+    cache.set(typeCode, []);
+    return [];
+  }
+
+  const typeChain = await buildBaseDefinitionChain(typeDefinition, resolver, maxDepth);
+  const templatesBySuffix = new Map<string, StructureDefinitionElement>();
+
+  for (const definition of typeChain) {
+    const rootPath = definition.type;
+    for (const element of definition.differential?.element || []) {
+      if (!element.path.startsWith(`${rootPath}.`)) continue;
+      const suffix = element.path.slice(rootPath.length + 1);
+      if (!suffix) continue;
+      templatesBySuffix.set(suffix, element);
+    }
+  }
+
+  const templates = [...templatesBySuffix.values()];
+  cache.set(typeCode, templates);
+  return templates;
+}
+
+async function expandInheritedTypeElements(
+  generatedElements: StructureDefinitionElement[],
+  resolver: StructureDefinitionResolver,
+  maxDepth: number,
+): Promise<StructureDefinitionElement[]> {
+  const result = [...generatedElements];
+  const seen = new Set(result.map((el) => elementKey(el)));
+  const templatesCache = new Map<string, StructureDefinitionElement[]>();
+
+  // Use the original list as anchor points to avoid repeatedly processing synthetic rows.
+  for (const element of generatedElements) {
+    if (!element.type || !element.path.includes('.')) continue;
+
+    for (const typeRef of element.type) {
+      const typeCode = typeRef.code;
+      if (!typeCode) continue;
+      if (typeCode !== 'BackboneElement') continue;
+
+      const templates = await buildTypeElementTemplates(typeCode, resolver, maxDepth, templatesCache);
+      for (const template of templates) {
+        const templatePath = template.path;
+        const splitIndex = templatePath.indexOf('.');
+        if (splitIndex === -1) continue;
+        const suffix = templatePath.slice(splitIndex + 1);
+        if (!suffix) continue;
+
+        const child = cloneInheritedElement(template, `${element.path}.${suffix}`);
+        const key = elementKey(child);
+        if (seen.has(key)) continue;
+        result.push(child);
+        seen.add(key);
+      }
+    }
+  }
+
+  return result;
+}
+
 function rehydrateChoiceSliceMarkers(
   source: StructureDefinition,
   generatedElements: StructureDefinitionElement[],
@@ -246,7 +329,12 @@ export async function generateSnapshot(
   });
   const generatedElements =
     asStructureDefinition.differential?.element || [{ path: structureDefinition.type }];
-  const snapshotElements = rehydrateChoiceSliceMarkers(structureDefinition, generatedElements);
+  const expandedElements = await expandInheritedTypeElements(
+    generatedElements,
+    options.resolver,
+    maxDepth,
+  );
+  const snapshotElements = rehydrateChoiceSliceMarkers(structureDefinition, expandedElements);
 
   return {
     ...structureDefinition,
