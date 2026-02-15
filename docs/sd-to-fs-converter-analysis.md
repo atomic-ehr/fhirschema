@@ -1,11 +1,11 @@
-# SD -> FHIRSchema Converter Analysis
+# SD -> FS Converter Analysis
 
 This is a technical analysis of the existing `translate` converter in `src/converter/index.ts`.
 
 ## Pipeline summary
 
 1. Header mapping (`buildResourceHeader`)
-Maps SD metadata to FHIRSchema and computes `class` (`profile`, `extension`, or `kind`).
+Maps SD metadata to FS and computes `class` (`profile`, `extension`, or `kind`).
 
 2. Differential selection (`getDifferential`)
 Uses only `differential.element` and skips root path entries.
@@ -50,7 +50,7 @@ Many ElementDefinition authoring fields are dropped (`id`, `alias`, mapping/exam
 Both are normalized into `pattern`, which helps runtime validation but loses original authoring intent.
 
 4. Extension and slicing normalization
-The generated FHIRSchema is semantically focused; exact original SD authoring layout/order is not preserved.
+The generated FS is semantically focused; exact original SD authoring layout/order is not preserved.
 
 ## Complexity profile
 

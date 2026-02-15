@@ -16,6 +16,7 @@ type CompareTotals = {
 };
 
 const CACHE_DIR = '.cache/ig-packages'; // gitignored by existing .gitignore rule
+const GET_IG_BUCKET_URL = 'https://fs.get-ig.org/';
 
 function packageUrl(pkg: PackageRef): string {
   return `https://fs.get-ig.org/rs/${pkg.id}-${pkg.version}.ndjson.gz`;
@@ -61,6 +62,98 @@ function keyOf(el: StructureDefinitionElement): string {
 
 function round(value: number): number {
   return Math.round(value * 10000) / 10000;
+}
+
+function splitVersionTokens(version: string): Array<number | string> {
+  return version
+    .split(/[.-]/g)
+    .map((part) => {
+      const numeric = Number(part);
+      if (!Number.isNaN(numeric) && /^\d+$/.test(part)) return numeric;
+      return part.toLowerCase();
+    });
+}
+
+function compareVersions(a: string, b: string): number {
+  const aStable = !a.includes('-');
+  const bStable = !b.includes('-');
+  if (aStable !== bStable) return aStable ? 1 : -1;
+
+  const at = splitVersionTokens(a);
+  const bt = splitVersionTokens(b);
+  const max = Math.max(at.length, bt.length);
+
+  for (let i = 0; i < max; i += 1) {
+    const av = at[i] ?? 0;
+    const bv = bt[i] ?? 0;
+    if (typeof av === 'number' && typeof bv === 'number') {
+      if (av !== bv) return av - bv;
+      continue;
+    }
+    if (typeof av === 'number') return 1;
+    if (typeof bv === 'number') return -1;
+    const cmp = String(av).localeCompare(String(bv));
+    if (cmp !== 0) return cmp;
+  }
+
+  return 0;
+}
+
+async function listGetIgKeys(prefix: string): Promise<string[]> {
+  const keys: string[] = [];
+  let marker: string | undefined;
+
+  while (true) {
+    const params = new URLSearchParams({ prefix, 'max-keys': '1000' });
+    if (marker) params.set('marker', marker);
+
+    const res = await fetch(`${GET_IG_BUCKET_URL}?${params.toString()}`);
+    if (!res.ok) {
+      throw new Error(`Failed to list get-ig keys: ${res.status} ${res.statusText}`);
+    }
+
+    const xml = await res.text();
+    keys.push(
+      ...Array.from(xml.matchAll(/<Key>([^<]+)<\/Key>/g), (match) => match[1]).filter((key) =>
+        key.startsWith(prefix),
+      ),
+    );
+
+    const truncated = xml.includes('<IsTruncated>true</IsTruncated>');
+    if (!truncated) break;
+
+    const next = xml.match(/<NextMarker>([^<]+)<\/NextMarker>/)?.[1];
+    if (!next) break;
+    marker = next;
+  }
+
+  return keys;
+}
+
+async function discoverLatestCorePackages(): Promise<PackageRef[]> {
+  const keys = await listGetIgKeys('rs/hl7.fhir.r');
+  const refs = keys
+    .map((key) => {
+      const match = key.match(/^rs\/(hl7\.fhir\.r[0-9a-z]+\.core)-(.+)\.ndjson\.gz$/);
+      if (!match) return null;
+      return { id: match[1], version: match[2] } as PackageRef;
+    })
+    .filter((x): x is PackageRef => Boolean(x));
+
+  const r4Plus = refs.filter((ref) => {
+    const major = Number(ref.id.match(/^hl7\.fhir\.r(\d+)/)?.[1] || 0);
+    return Number.isFinite(major) && major >= 4;
+  });
+
+  const byId = new Map<string, PackageRef>();
+  for (const ref of r4Plus) {
+    const prev = byId.get(ref.id);
+    if (!prev || compareVersions(ref.version, prev.version) > 0) {
+      byId.set(ref.id, ref);
+    }
+  }
+
+  return [...byId.values()].sort((a, b) => a.id.localeCompare(b.id));
 }
 
 async function compareSnapshots(target: PackageRef, dependencies: PackageRef[] = []): Promise<CompareTotals> {
@@ -178,5 +271,38 @@ describe('IG snapshot parity against package snapshots (cached from get-ig)', ()
     expect(totals.exactKeySetMatches).toBeGreaterThanOrEqual(4);
     expect(totals.avgPrecision).toBeGreaterThanOrEqual(0.84);
     expect(totals.avgRecall).toBeGreaterThanOrEqual(0.71);
+  });
+
+  it('all discovered FHIR core packages (latest per id) snapshot compatibility', async () => {
+    const expectedByPackage: Record<
+      string,
+      {
+        minGenerated: number;
+        maxFailed: number;
+        minPrecision: number;
+        minRecall: number;
+      }
+    > = {
+      'hl7.fhir.r4.core': { minGenerated: 640, maxFailed: 10, minPrecision: 0.99, minRecall: 0.9 },
+      'hl7.fhir.r4b.core': { minGenerated: 640, maxFailed: 10, minPrecision: 0.99, minRecall: 0.9 },
+      'hl7.fhir.r5.core': { minGenerated: 280, maxFailed: 30, minPrecision: 0.99, minRecall: 0.8 },
+      'hl7.fhir.r6.core': { minGenerated: 220, maxFailed: 30, minPrecision: 0.99, minRecall: 0.8 },
+    };
+
+    const cores = await discoverLatestCorePackages();
+    expect(cores.length).toBeGreaterThanOrEqual(4);
+
+    for (const core of cores) {
+      const family = core.id;
+      const baseline = expectedByPackage[family];
+      expect(baseline).toBeDefined();
+
+      const totals = await compareSnapshots(core);
+      expect(totals.generated + totals.failed).toBe(totals.profiles);
+      expect(totals.generated).toBeGreaterThanOrEqual(baseline.minGenerated);
+      expect(totals.failed).toBeLessThanOrEqual(baseline.maxFailed);
+      expect(totals.avgPrecision).toBeGreaterThanOrEqual(baseline.minPrecision);
+      expect(totals.avgRecall).toBeGreaterThanOrEqual(baseline.minRecall);
+    }
   });
 });

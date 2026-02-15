@@ -1,8 +1,8 @@
-# Snapshot Generation Algorithm
+# SD-FS Snapshot Generation Algorithm
 
 ## Overview
 
-This document specifies snapshot generation in `fhirschema` using FHIRSchema merge.
+This document specifies snapshot generation in `fhirschema` using FS merge.
 
 Primary implementation:
 - `src/converter/snapshot.ts`

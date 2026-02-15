@@ -1,8 +1,8 @@
-# FHIRSchema to StructureDefinition Algorithm
+# FS to SD Converter Algorithm
 
 ## Overview
 
-This document specifies the reverse conversion algorithm from `FHIRSchema` to `StructureDefinition` differential.
+This document specifies the reverse conversion algorithm from `FS` to `StructureDefinition` differential.
 
 Implementation entry points:
 - `src/converter/reverse.ts`
@@ -12,14 +12,14 @@ Implementation entry points:
 
 ## Goals
 
-1. Reconstruct a valid differential-oriented `StructureDefinition` from `FHIRSchema`.
-2. Preserve validation semantics represented in FHIRSchema.
+1. Reconstruct a valid differential-oriented `StructureDefinition` from `FS`.
+2. Preserve validation semantics represented in FS.
 3. Emit deterministic output suitable for roundtrip and snapshot workflows.
 
 ## Inputs and outputs
 
 Input:
-- `FHIRSchema`
+- `FS`
 
 Output:
 - `StructureDefinition` with `differential.element`
@@ -55,7 +55,7 @@ Code:
 
 ### 3. Cardinality reconstruction
 
-`applyCardinality` maps FHIRSchema cardinality to SD:
+`applyCardinality` maps FS cardinality to SD:
 - explicit `max = 0` is preserved as suppression
 - array fields -> `max='*'` or numeric `max`
 - required scalar (`required` set) -> `min=1`, `max='1'`
@@ -124,7 +124,7 @@ Code:
 
 ## Corner cases and lossiness
 
-Not all SD authoring details are recoverable from FHIRSchema.
+Not all SD authoring details are recoverable from FS.
 See:
 - `docs/reverse-converter-corner-cases.md`
 
