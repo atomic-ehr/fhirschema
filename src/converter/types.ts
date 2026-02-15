@@ -345,6 +345,7 @@ export interface StructureDefinition {
   package_name?: string;
   package_version?: string;
   package_id?: string;
+  extension?: StructureDefinitionExtension[];
   snapshot?: {
     element: StructureDefinitionElement[];
   };
