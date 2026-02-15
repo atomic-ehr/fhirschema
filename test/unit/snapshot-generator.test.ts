@@ -382,6 +382,15 @@ describe('Snapshot generation via FHIRSchema merge', () => {
         { path: 'DeviceDefinition.property', min: 0, max: '*', type: [{ code: 'BackboneElement' }] },
       ],
     });
+    deviceDefinition.snapshot = {
+      element: [
+        { path: 'DeviceDefinition' },
+        { path: 'DeviceDefinition.property', type: [{ code: 'BackboneElement' }] },
+        { path: 'DeviceDefinition.property.id', type: [{ code: 'string' }] },
+        { path: 'DeviceDefinition.property.extension', type: [{ code: 'Extension' }] },
+        { path: 'DeviceDefinition.property.modifierExtension', type: [{ code: 'Extension' }] },
+      ],
+    };
 
     const snapshot = await generateSnapshot(deviceDefinition, {
       resolver: {
@@ -396,5 +405,124 @@ describe('Snapshot generation via FHIRSchema merge', () => {
     expect(paths.has('DeviceDefinition.property.id')).toBe(true);
     expect(paths.has('DeviceDefinition.property.extension')).toBe(true);
     expect(paths.has('DeviceDefinition.property.modifierExtension')).toBe(true);
+  });
+
+  it('expands inherited datatype children for CodeableConcept/Coding and preserves [x] child path style', async () => {
+    const element = createSD({
+      url: 'http://hl7.org/fhir/StructureDefinition/Element',
+      name: 'Element',
+      type: 'Element',
+      kind: 'complex-type',
+      derivation: 'specialization',
+      elements: [
+        { path: 'Element.id', type: [{ code: 'string' }] },
+        { path: 'Element.extension', min: 0, max: '*', type: [{ code: 'Extension' }] },
+      ],
+    });
+
+    const coding = createSD({
+      url: 'http://hl7.org/fhir/StructureDefinition/Coding',
+      name: 'Coding',
+      type: 'Coding',
+      kind: 'complex-type',
+      baseDefinition: element.url,
+      derivation: 'specialization',
+      elements: [
+        { path: 'Coding.system', type: [{ code: 'uri' }] },
+        { path: 'Coding.code', type: [{ code: 'code' }] },
+        { path: 'Coding.display', type: [{ code: 'string' }] },
+      ],
+    });
+
+    const codeableConcept = createSD({
+      url: 'http://hl7.org/fhir/StructureDefinition/CodeableConcept',
+      name: 'CodeableConcept',
+      type: 'CodeableConcept',
+      kind: 'complex-type',
+      baseDefinition: element.url,
+      derivation: 'specialization',
+      elements: [
+        { path: 'CodeableConcept.coding', min: 0, max: '*', type: [{ code: 'Coding' }] },
+        { path: 'CodeableConcept.text', type: [{ code: 'string' }] },
+      ],
+    });
+
+    const quantity = createSD({
+      url: 'http://hl7.org/fhir/StructureDefinition/Quantity',
+      name: 'Quantity',
+      type: 'Quantity',
+      kind: 'complex-type',
+      baseDefinition: element.url,
+      derivation: 'specialization',
+      elements: [
+        { path: 'Quantity.value', type: [{ code: 'decimal' }] },
+        { path: 'Quantity.unit', type: [{ code: 'string' }] },
+      ],
+    });
+
+    const observation = createSD({
+      url: 'http://example.org/fhir/StructureDefinition/Observation',
+      name: 'Observation',
+      type: 'Observation',
+      derivation: 'specialization',
+      elements: [
+        { path: 'Observation.code', type: [{ code: 'CodeableConcept' }] },
+        { path: 'Observation.component', min: 0, max: '*', type: [{ code: 'BackboneElement' }] },
+        {
+          path: 'Observation.component.value[x]',
+          type: [{ code: 'Quantity' }, { code: 'string' }],
+        },
+      ],
+    });
+
+    const bp = createSD({
+      url: 'http://example.org/fhir/StructureDefinition/bp',
+      name: 'bp',
+      type: 'Observation',
+      baseDefinition: observation.url,
+      derivation: 'constraint',
+      elements: [
+        {
+          path: 'Observation.component.value[x]',
+          type: [{ code: 'Quantity' }],
+        },
+      ],
+    });
+
+    // Source snapshot style keeps [x] child rows rather than valueQuantity child rows.
+    bp.snapshot = {
+      element: [
+        { path: 'Observation' },
+        { path: 'Observation.code', type: [{ code: 'CodeableConcept' }] },
+        { path: 'Observation.code.coding', type: [{ code: 'Coding' }] },
+        { path: 'Observation.code.coding.display', type: [{ code: 'string' }] },
+        { path: 'Observation.code.text', type: [{ code: 'string' }] },
+        { path: 'Observation.component', type: [{ code: 'BackboneElement' }] },
+        { path: 'Observation.component.value[x]', type: [{ code: 'Quantity' }] },
+        { path: 'Observation.component.value[x].value', type: [{ code: 'decimal' }] },
+        { path: 'Observation.component.value[x].unit', type: [{ code: 'string' }] },
+      ],
+    };
+
+    const snapshot = await generateSnapshot(bp, {
+      resolver: {
+        [element.url]: element,
+        [coding.url]: coding,
+        [codeableConcept.url]: codeableConcept,
+        [quantity.url]: quantity,
+        [observation.url]: observation,
+      },
+    });
+
+    const paths = new Set((snapshot.snapshot?.element || []).map((e) => e.path));
+
+    // Inherited datatype children from CodeableConcept/Coding
+    expect(paths.has('Observation.code.coding.display')).toBe(true);
+    expect(paths.has('Observation.code.text')).toBe(true);
+
+    // Keep [x]-style path keys for constrained quantity children
+    expect(paths.has('Observation.component.value[x].value')).toBe(true);
+    expect(paths.has('Observation.component.value[x].unit')).toBe(true);
+    expect(paths.has('Observation.component.valueQuantity.value')).toBe(false);
   });
 });

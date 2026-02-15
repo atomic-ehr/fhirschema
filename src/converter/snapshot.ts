@@ -33,6 +33,36 @@ export interface SnapshotGenerationOptions {
 }
 
 const SD_IMPLEMENTS_URL = 'http://hl7.org/fhir/StructureDefinition/structuredefinition-implements';
+const INHERITED_TYPE_EXPANSION_ALLOWLIST = new Set([
+  'BackboneElement',
+  'Element',
+  'CodeableConcept',
+  'Coding',
+  'Quantity',
+]);
+
+const TYPE_TO_SUFFIX: Record<string, string> = {
+  base64Binary: 'Base64Binary',
+  boolean: 'Boolean',
+  canonical: 'Canonical',
+  code: 'Code',
+  date: 'Date',
+  dateTime: 'DateTime',
+  decimal: 'Decimal',
+  id: 'Id',
+  instant: 'Instant',
+  integer: 'Integer',
+  integer64: 'Integer64',
+  markdown: 'Markdown',
+  oid: 'Oid',
+  positiveInt: 'PositiveInt',
+  string: 'String',
+  time: 'Time',
+  unsignedInt: 'UnsignedInt',
+  uri: 'Uri',
+  url: 'Url',
+  uuid: 'Uuid',
+};
 
 function splitCanonicalVersion(value: string): { canonical: string; version?: string } {
   const [canonical, version] = value.split('|');
@@ -249,19 +279,26 @@ async function expandInheritedTypeElements(
   generatedElements: StructureDefinitionElement[],
   resolver: StructureDefinitionResolver,
   maxDepth: number,
+  sourceElements?: StructureDefinitionElement[],
 ): Promise<StructureDefinitionElement[]> {
   const result = [...generatedElements];
   const seen = new Set(result.map((el) => elementKey(el)));
   const templatesCache = new Map<string, StructureDefinitionElement[]>();
+  const processedAnchors = new Set<string>();
+  const sourcePaths = new Set((sourceElements || []).map((element) => element.path));
+  const choiceMappings = buildChoiceTypedPrefixMappings(generatedElements);
 
-  // Use the original list as anchor points to avoid repeatedly processing synthetic rows.
-  for (const element of generatedElements) {
+  for (let index = 0; index < result.length; index += 1) {
+    const element = result[index];
     if (!element.type || !element.path.includes('.')) continue;
+    const anchorKey = elementKey(element);
+    if (processedAnchors.has(anchorKey)) continue;
+    processedAnchors.add(anchorKey);
 
     for (const typeRef of element.type) {
       const typeCode = typeRef.code;
       if (!typeCode) continue;
-      if (typeCode !== 'BackboneElement') continue;
+      if (!INHERITED_TYPE_EXPANSION_ALLOWLIST.has(typeCode)) continue;
 
       const templates = await buildTypeElementTemplates(typeCode, resolver, maxDepth, templatesCache);
       for (const template of templates) {
@@ -271,7 +308,15 @@ async function expandInheritedTypeElements(
         const suffix = templatePath.slice(splitIndex + 1);
         if (!suffix) continue;
 
-        const child = cloneInheritedElement(template, `${element.path}.${suffix}`);
+        const childPath = `${element.path}.${suffix}`;
+        if (
+          sourcePaths.size > 0 &&
+          !sourceHasPathOrChoiceVariant(sourcePaths, childPath, choiceMappings)
+        ) {
+          continue;
+        }
+
+        const child = cloneInheritedElement(template, childPath);
         const key = elementKey(child);
         if (seen.has(key)) continue;
         result.push(child);
@@ -281,6 +326,78 @@ async function expandInheritedTypeElements(
   }
 
   return result;
+}
+
+function toChoiceSuffix(typeCode: string): string {
+  return TYPE_TO_SUFFIX[typeCode] || `${typeCode[0].toUpperCase()}${typeCode.slice(1)}`;
+}
+
+function buildChoiceTypedPrefixMappings(
+  generatedElements: StructureDefinitionElement[],
+): Array<{ typedPrefix: string; choicePrefix: string }> {
+  const mappings: Array<{ typedPrefix: string; choicePrefix: string }> = [];
+
+  for (const element of generatedElements) {
+    if (!element.path.includes('[x]') || !element.type) continue;
+    const choicePrefix = element.path.replace('[x]', '');
+    for (const typeRef of element.type) {
+      const typeCode = typeRef.code;
+      if (!typeCode) continue;
+      mappings.push({
+        typedPrefix: `${choicePrefix}${toChoiceSuffix(typeCode)}`,
+        choicePrefix: element.path,
+      });
+    }
+  }
+
+  return mappings;
+}
+
+function sourceHasPathOrChoiceVariant(
+  sourcePaths: Set<string>,
+  candidatePath: string,
+  mappings: Array<{ typedPrefix: string; choicePrefix: string }>,
+): boolean {
+  if (sourcePaths.has(candidatePath)) return true;
+
+  for (const mapping of mappings) {
+    if (candidatePath === mapping.typedPrefix && sourcePaths.has(mapping.choicePrefix)) {
+      return true;
+    }
+    if (candidatePath.startsWith(`${mapping.typedPrefix}.`)) {
+      const choiceVariant = `${mapping.choicePrefix}${candidatePath.slice(mapping.typedPrefix.length)}`;
+      if (sourcePaths.has(choiceVariant)) return true;
+    }
+  }
+
+  return false;
+}
+
+function rewriteChoicePathsToSourceStyle(
+  source: StructureDefinition,
+  generatedElements: StructureDefinitionElement[],
+): StructureDefinitionElement[] {
+  const sourceElements = source.snapshot?.element || source.differential?.element || [];
+  const sourcePaths = new Set(sourceElements.map((element) => element.path));
+  const choiceMappings = buildChoiceTypedPrefixMappings(generatedElements);
+  if (choiceMappings.length === 0) return generatedElements;
+
+  return generatedElements.map((element) => {
+    for (const mapping of choiceMappings) {
+      if (!element.path.startsWith(mapping.typedPrefix)) continue;
+
+      const rewrittenPath =
+        element.path === mapping.typedPrefix
+          ? mapping.choicePrefix
+          : `${mapping.choicePrefix}${element.path.slice(mapping.typedPrefix.length)}`;
+
+      // Rewrite only when source uses [x]-style path and does not keep typed variant.
+      if (sourcePaths.has(rewrittenPath) && !sourcePaths.has(element.path)) {
+        return { ...element, path: rewrittenPath };
+      }
+    }
+    return element;
+  });
 }
 
 function rehydrateChoiceSliceMarkers(
@@ -329,12 +446,15 @@ export async function generateSnapshot(
   });
   const generatedElements =
     asStructureDefinition.differential?.element || [{ path: structureDefinition.type }];
+  const sourceElements = structureDefinition.snapshot?.element || structureDefinition.differential?.element;
   const expandedElements = await expandInheritedTypeElements(
     generatedElements,
     options.resolver,
     maxDepth,
+    sourceElements,
   );
-  const snapshotElements = rehydrateChoiceSliceMarkers(structureDefinition, expandedElements);
+  const sourceStyledElements = rewriteChoicePathsToSourceStyle(structureDefinition, expandedElements);
+  const snapshotElements = rehydrateChoiceSliceMarkers(structureDefinition, sourceStyledElements);
 
   return {
     ...structureDefinition,
