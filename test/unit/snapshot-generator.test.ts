@@ -9,6 +9,7 @@ function createSD(args: {
   kind?: string;
   baseDefinition?: string;
   derivation?: string;
+  extension?: Array<Record<string, unknown>>;
   elements: StructureDefinitionElement[];
 }): StructureDefinition {
   return {
@@ -20,6 +21,7 @@ function createSD(args: {
     type: args.type,
     ...(args.baseDefinition ? { baseDefinition: args.baseDefinition } : {}),
     ...(args.derivation ? { derivation: args.derivation } : {}),
+    ...(args.extension ? { extension: args.extension } : {}),
     differential: {
       element: [{ path: args.type }, ...args.elements],
     },
@@ -277,5 +279,58 @@ describe('Snapshot generation via FHIRSchema merge', () => {
         resolver: {},
       }),
     ).rejects.toThrow('has no differential.element');
+  });
+
+  it('includes implemented interface elements (MetadataResource-style) in generated snapshot', async () => {
+    const domain = createSD({
+      url: 'http://example.org/fhir/StructureDefinition/DomainResource',
+      name: 'DomainResource',
+      type: 'DomainResource',
+      derivation: 'specialization',
+      elements: [{ path: 'DomainResource.text', type: [{ code: 'Narrative' }] }],
+    });
+
+    const canonical = createSD({
+      url: 'http://example.org/fhir/StructureDefinition/CanonicalResource',
+      name: 'CanonicalResource',
+      type: 'CanonicalResource',
+      baseDefinition: domain.url,
+      derivation: 'specialization',
+      elements: [
+        { path: 'CanonicalResource.url', type: [{ code: 'uri' }] },
+        { path: 'CanonicalResource.version', type: [{ code: 'string' }] },
+      ],
+    });
+
+    const metadata = createSD({
+      url: 'http://example.org/fhir/StructureDefinition/MetadataResource',
+      name: 'MetadataResource',
+      type: 'MetadataResource',
+      baseDefinition: domain.url,
+      derivation: 'specialization',
+      extension: [
+        {
+          url: 'http://hl7.org/fhir/StructureDefinition/structuredefinition-interface',
+          valueBoolean: true,
+        },
+        {
+          url: 'http://hl7.org/fhir/StructureDefinition/structuredefinition-implements',
+          valueCanonical: canonical.url,
+        },
+      ],
+      elements: [{ path: 'MetadataResource.approvalDate', type: [{ code: 'date' }] }],
+    });
+
+    const snapshot = await generateSnapshot(metadata, {
+      resolver: {
+        [domain.url]: domain,
+        [canonical.url]: canonical,
+      },
+    });
+
+    const paths = new Set((snapshot.snapshot?.element || []).map((e) => e.path));
+    expect(paths.has('MetadataResource.approvalDate')).toBe(true);
+    expect(paths.has('MetadataResource.url')).toBe(true);
+    expect(paths.has('MetadataResource.version')).toBe(true);
   });
 });

@@ -32,6 +32,8 @@ export interface SnapshotGenerationOptions {
   maxDepth?: number;
 }
 
+const SD_IMPLEMENTS_URL = 'http://hl7.org/fhir/StructureDefinition/structuredefinition-implements';
+
 function splitCanonicalVersion(value: string): { canonical: string; version?: string } {
   const [canonical, version] = value.split('|');
   return { canonical, ...(version ? { version } : {}) };
@@ -96,7 +98,20 @@ function ensureDifferential(sd: StructureDefinition): StructureDefinition {
   throw new Error(`StructureDefinition ${sd.url || sd.name} has no differential.element`);
 }
 
-async function buildBaseChain(
+function getImplementedCanonicals(sd: StructureDefinition): string[] {
+  const canonicalValues = (sd.extension || [])
+    .filter((ext) => ext.url === SD_IMPLEMENTS_URL)
+    .map((ext) => ext.valueCanonical || ext.valueUri)
+    .filter((value): value is string => typeof value === 'string' && value.length > 0);
+
+  return [...new Set(canonicalValues)];
+}
+
+function structureDefinitionKey(sd: StructureDefinition): string {
+  return `${sd.url}|${sd.version || ''}`;
+}
+
+async function buildBaseDefinitionChain(
   leaf: StructureDefinition,
   resolver: StructureDefinitionResolver,
   maxDepth: number,
@@ -137,6 +152,40 @@ async function buildBaseChain(
   }
 
   return chain;
+}
+
+async function buildBaseChain(
+  leaf: StructureDefinition,
+  resolver: StructureDefinitionResolver,
+  maxDepth: number,
+): Promise<StructureDefinition[]> {
+  const baseChain = await buildBaseDefinitionChain(leaf, resolver, maxDepth);
+  const combined: StructureDefinition[] = [];
+  const seen = new Set<string>();
+
+  for (const sd of baseChain) {
+    for (const canonical of getImplementedCanonicals(sd)) {
+      const implemented = await resolveByCanonical(resolver, canonical);
+      if (!implemented) {
+        throw new Error(`Unable to resolve implemented profile: ${canonical}`);
+      }
+
+      const implementedChain = await buildBaseDefinitionChain(implemented, resolver, maxDepth);
+      for (const chainItem of implementedChain) {
+        const key = structureDefinitionKey(chainItem);
+        if (seen.has(key)) continue;
+        combined.push(chainItem);
+        seen.add(key);
+      }
+    }
+
+    const sdKey = structureDefinitionKey(sd);
+    if (seen.has(sdKey)) continue;
+    combined.push(sd);
+    seen.add(sdKey);
+  }
+
+  return combined;
 }
 
 function mergeSchemas(baseToLeafSchemas: FHIRSchema[]): FHIRSchema {
