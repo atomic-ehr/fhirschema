@@ -39,6 +39,31 @@ const structureDefinition = {
 const fhirSchema = translate(structureDefinition);
 ```
 
+Important:
+- `fhirschema` conversion treats `StructureDefinition.differential.element` as the source of truth.
+- Conversion input must provide differential content; snapshot is not the canonical conversion input model.
+- If only snapshot is available, expand/prepare differential first before conversion.
+
+### Converting FHIRSchema back to StructureDefinition
+
+```typescript
+import { toStructureDefinition } from '@atomic-ehr/fhirschema';
+
+const structureDefinition = toStructureDefinition(fhirSchema);
+```
+
+Corner cases and lossy roundtrip details are documented in `docs/reverse-converter-corner-cases.md`.
+
+### Generating Snapshot from Differential via FHIRSchema Merge
+
+```typescript
+import { generateSnapshot } from '@atomic-ehr/fhirschema';
+
+const withSnapshot = await generateSnapshot(profileSD, {
+  resolver: (canonicalUrl) => baseDefinitionsByUrl[canonicalUrl],
+});
+```
+
 ### Validating FHIR Resources
 
 ```typescript

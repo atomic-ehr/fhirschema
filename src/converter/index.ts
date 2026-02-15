@@ -240,6 +240,7 @@ export function translate(
   return normalized as FHIRSchema;
 }
 
+export { toStructureDefinition } from './reverse.js';
 export { calculateActions } from './action-calculator.js';
 export { expandChoiceElement, isChoiceElement } from './choice-handler.js';
 export { transformElement } from './element-transformer.js';

@@ -28,6 +28,16 @@ FHIRSchema is an algorithm-based approach to implement FHIR validation that prov
    - Path processing and action calculation
    - Stack-based transformation process
 
+5. **[FHIRSchema to StructureDefinition Algorithm](./reverse-converter-algorithm.md)**
+   - Reverse mapping from FHIRSchema back to StructureDefinition differential
+   - Choice reconstruction, cardinality, slicing, and lossiness rules
+   - Code references to implementation
+
+6. **[Snapshot Generation Algorithm](./snapshot-generation-algorithm.md)**
+   - Differential-only snapshot generation flow
+   - Base-chain resolution and FS merge strategy
+   - Code references to implementation
+
 ## Key Concepts
 
 ### Schema Types

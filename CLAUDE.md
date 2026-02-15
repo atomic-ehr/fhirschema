@@ -29,13 +29,14 @@ Please be concise and to the point.
 * When you create or update typescript file, run `bun tsc --noEmit` to check for errors and fix them.
 * Create tests for new functionality. Put test file as ./test/<filename>.test.ts by convention.
 * Use `import {describe, it, expect} from 'bun:test'` and `bun run test` to run tests.
+* Conversion rule: for `StructureDefinition -> FHIRSchema`, always use `differential.element` as source of truth.
+* Do not treat `snapshot.element` as primary conversion input. If needed, derive/prepare differential first.
 
 
 ## Tasks
 
 When working on tasks move files to ./tasks/in-progress/<filename>.md
 When task finished move files to ./tasks/done/<filename>.md and write what was done in this file.
-
 
 
 
