@@ -26,7 +26,8 @@
     "lint:unsafe": "biome lint --write --unsafe src test",
     "format": "biome format --write src test package.json",
     "check": "biome check src",
-    "check:fix": "biome check --fix src"
+    "check:fix": "biome check --fix src",
+    "release": "bash scripts/release.sh"
   },
   "repository": {
     "type": "git",
