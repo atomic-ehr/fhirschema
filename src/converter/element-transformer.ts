@@ -90,7 +90,7 @@ function processPatterns(element: ProcessingElement): ProcessingElement {
       result.pattern = { type, value };
     } else if (typeof key === 'string' && key.startsWith('fixed')) {
       const type = patternTypeNormalize(key.replace(/^fixed/, ''));
-      result.pattern = { type, value };
+      result.fixed = { type, value };
     } else {
       result[key] = value;
     }

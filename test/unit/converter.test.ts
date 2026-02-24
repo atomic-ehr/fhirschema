@@ -672,6 +672,40 @@ describe('Converter Algorithm Tests', () => {
     });
   });
 
+  describe('fixed vs pattern processing', () => {
+    it('should store fixedX values as fixed, not pattern', () => {
+      const result = translate(
+        createTestStructureDefinition([
+          { path: 'R.system', type: [{ code: 'uri' }], fixedUri: 'http://unitsofmeasure.org' },
+          { path: 'R.code', type: [{ code: 'code' }], fixedCode: 'mm[Hg]' },
+          {
+            path: 'R.category',
+            type: [{ code: 'CodeableConcept' }],
+            patternCodeableConcept: { coding: [{ system: 'http://loinc.org', code: '1234' }] },
+          },
+        ]),
+      );
+
+      expect(result.elements?.system.fixed).toEqual({
+        type: 'uri',
+        value: 'http://unitsofmeasure.org',
+      });
+      expect(result.elements?.system.pattern).toBeUndefined();
+
+      expect(result.elements?.code.fixed).toEqual({
+        type: 'code',
+        value: 'mm[Hg]',
+      });
+      expect(result.elements?.code.pattern).toBeUndefined();
+
+      expect(result.elements?.category.pattern).toEqual({
+        type: 'CodeableConcept',
+        value: { coding: [{ system: 'http://loinc.org', code: '1234' }] },
+      });
+      expect(result.elements?.category.fixed).toBeUndefined();
+    });
+  });
+
   describe('Use contentReference in SD for Bundle', () => {
     const bundle: StructureDefinition = {
       resourceType: 'StructureDefinition',
