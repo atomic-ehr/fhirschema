@@ -23,14 +23,14 @@ describe('Slicing discrimination', () => {
       slicingDicrCompositeDeep.data,
       slicingDicrCompositeDeep.spec.slicing as sut.Slicing,
     );
-    expect(result).toEqual(slicingDicrCompositeDeep.result as any);
+    expect(result).toEqual(slicingDicrCompositeDeep.result as sut.Slices<unknown>);
   });
   test('Simple pattern discriminator on Patient.identifier', () => {
     const result = sut.slice(
       slicingDiscrSimple.data,
       slicingDiscrSimple.spec.slicing as sut.Slicing,
     );
-    expect(result).toEqual(slicingDiscrSimple.result as any);
+    expect(result).toEqual(slicingDiscrSimple.result as sut.Slices<unknown>);
   });
 });
 

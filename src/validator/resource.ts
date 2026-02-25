@@ -19,17 +19,19 @@ const FHIR_PATH_SIMPLE_REGEX = /^\s*(?<fn>[A-Za-z][A-Za-z0-9]*)\s*\(\s*(?<params
 // When pattern[x] is used to constrain a complex object, it means
 // that each property in the pattern must be present in the complex
 // object, and its value must recursively match
-const matchPattern = (value: any, pattern: any): boolean => {
+const matchPattern = (value: unknown, pattern: unknown): boolean => {
   const isObject = typeof pattern === 'object';
   const isArray = Array.isArray(pattern);
   if (!isObject && !isArray) return value === pattern;
   if (value === undefined) return false;
   if (isArray)
-    return pattern.every((patternItem) =>
-      value.some((valueItem: any) => matchPattern(valueItem, patternItem)),
+    return pattern.every((patternItem: unknown) =>
+      (value as unknown[]).some((valueItem: unknown) => matchPattern(valueItem, patternItem)),
     );
-  return Object.keys(pattern).reduce(
-    (acc, curr) => acc && matchPattern(value[curr], pattern[curr]),
+  const patternObj = pattern as Record<string, unknown>;
+  const valueObj = value as Record<string, unknown>;
+  return Object.keys(patternObj).reduce(
+    (acc, curr) => acc && matchPattern(valueObj[curr], patternObj[curr]),
     true,
   );
 };
@@ -59,12 +61,12 @@ const matches = <T>(itemValues: T[], spec: FHIRSchemaElement, type: SlicingDiscr
       const fixedKey = chooseFieldKey(spec, 'fixed');
       const patternKey = chooseFieldKey(spec, 'pattern');
       if (fixedKey) {
-        const elemVal = (spec as any)[fixedKey];
-        return itemValues.some((v: any) => v === elemVal);
+        const elemVal = (spec as Record<string, unknown>)[fixedKey];
+        return itemValues.some((v) => v === elemVal);
       }
       if (patternKey) {
-        const elemVal = (spec as any)[patternKey];
-        return itemValues.some((v: any) => matchPattern(v, elemVal));
+        const elemVal = (spec as Record<string, unknown>)[patternKey];
+        return itemValues.some((v) => matchPattern(v, elemVal));
       }
       throw new Error('Not supported value');
     }
@@ -97,14 +99,14 @@ const slice = <T extends object>(data: T[], spec: Slicing): Slices<T> => {
       const test = (item: T) => {
         return discrElems.every(({ type, elem, path }) => {
           const itemValues = path.reduce(
-            (acc, curr) =>
+            (acc: unknown[], curr) =>
               acc
                 .flatMap((x) => {
-                  const val = x[curr];
+                  const val = (x as Record<string, unknown>)[curr];
                   return Array.isArray(val) ? val : [val];
                 })
                 .filter((v) => v !== undefined),
-            [item] as any[],
+            [item] as unknown[],
           );
           return matches(itemValues, elem, type);
         });
@@ -114,13 +116,12 @@ const slice = <T extends object>(data: T[], spec: Slicing): Slices<T> => {
     })
     .concat([defaultSliceFn]);
   // partition data into defined slices by testing items
-  const result = data.reduce(
-    (acc, curr) => {
-      const sliceName = sliceFns.filter(({ test }) => test(curr))[0].sliceName;
-      return { ...acc, [sliceName]: (acc[sliceName] || []).concat([curr]) };
-    },
-    {} as Slices<T>,
-  );
+  const result: Slices<T> = {};
+  for (const curr of data) {
+    const sliceName = sliceFns.filter(({ test }) => test(curr))[0].sliceName;
+    if (!result[sliceName]) result[sliceName] = [];
+    result[sliceName].push(curr);
+  }
 
   return result;
 };
@@ -136,10 +137,10 @@ const validate = (
   typeProfiles: { [key in string]: FHIRSchema },
 ): ValidationOutput => {
   const validateInternal = (
-    data: any,
+    data: unknown,
     spec: ValidationSpec,
     location: fp.FieldPathComponent[] = [],
-    parentSlices?: Slices<any>,
+    parentSlices?: Slices<Record<string, unknown>>,
   ): InternalResult => {
     const { elements, slicing, ...moreSpec } = spec;
     const allDeferred: Deferred[] = [];
@@ -148,7 +149,7 @@ const validate = (
     const slicesIssues = ((slicing) => {
       if (slicing === undefined) return [];
       // TODO: ensure data is array
-      const slices = slice(data, slicing as Slicing);
+      const slices = slice(data as Record<string, unknown>[], slicing as Slicing);
       const result = Object.keys(slicing.slices || {}).flatMap((sliceName) => {
         const dataSlice = slices[sliceName];
         const sliceSpec = slicing.slices?.[sliceName];
@@ -183,13 +184,16 @@ const validate = (
     // iterate fields
     const specFields = new Set(Object.keys(spec.elements || {}));
     const dataFields = new Set(
-      spec.elements && Object.keys(data || {}).filter((field) => field !== 'resourceType'),
+      spec.elements &&
+        Object.keys((data as Record<string, unknown>) || {}).filter(
+          (field) => field !== 'resourceType',
+        ),
     );
     // iterate fields
     const fields = [...dataFields.intersection(specFields)];
     const fieldIssues = fields.flatMap((field) => {
       const fieldLoc = [...location, { type: 'field', name: field } as fp.FieldPathComponent];
-      const fieldVal = data?.[field];
+      const fieldVal = (data as Record<string, unknown>)?.[field];
       const elemSpec = spec.elements?.[field];
 
       if (!elemSpec) throw new Error('Element specification not found');
@@ -265,7 +269,14 @@ const validate = (
           case 'primitive-type':
             return primitive.validate(fieldVal, elemSchema, fieldLoc).issue || [];
           case 'complex-type':
-            return complex.validate(fieldVal, elemSchema, fieldLoc, typeProfiles).issue || [];
+            return (
+              complex.validate(
+                fieldVal as Record<string, unknown>,
+                elemSchema,
+                fieldLoc,
+                typeProfiles,
+              ).issue || []
+            );
           case 'resource': {
             const result = validateInternal(fieldVal, elemSchema, fieldLoc, parentSlices);
             allDeferred.push(...result.deferred);

@@ -5,18 +5,17 @@ const merge = (base?: FhirSchemaNode, overlay?: FhirSchemaNode): FhirSchemaNode 
   if (base === undefined) return overlay;
   if (overlay === undefined) return base;
 
-  const deepMerge = (obj1: any, obj2: any) => {
+  const deepMerge = (
+    obj1: Record<string, unknown> | undefined,
+    obj2: Record<string, unknown> | undefined,
+  ) => {
     const keys = [...new Set(Object.keys(obj1 || {}).concat(Object.keys(obj2 || {})))];
-
-    return keys.length === 0
-      ? undefined
-      : keys.reduce(
-          (acc, k) => ({
-            ...acc,
-            [k]: merge(obj1?.[k], obj2?.[k]),
-          }),
-          {},
-        );
+    if (keys.length === 0) return undefined;
+    const result: Record<string, unknown> = {};
+    for (const k of keys) {
+      result[k] = merge(obj1?.[k] as FhirSchemaNode, obj2?.[k] as FhirSchemaNode);
+    }
+    return result;
   };
 
   const elements = deepMerge(base.elements, overlay.elements);

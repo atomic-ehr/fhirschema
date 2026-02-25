@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'bun:test';
 import { translate } from '../../src/converter';
-import type { FHIRSchema, OperationOutcome, StructureDefinition } from '../../src/converter/types';
+import type {
+  FHIRSchema,
+  OperationOutcome,
+  Resource,
+  StructureDefinition,
+} from '../../src/converter/types';
 import { validate } from '../../src/validator/resource';
 
 // Minimal type schemas for testing
@@ -137,7 +142,11 @@ function expectError(result: OperationOutcome, code: string, pathContains?: stri
 }
 
 // Wrapper to extract outcome from ValidationOutput
-function runValidate(resource: any, schema: any, types: any): OperationOutcome {
+function runValidate(
+  resource: Resource,
+  schema: FHIRSchema,
+  types: Record<string, FHIRSchema>,
+): OperationOutcome {
   return validate(resource, schema, types).outcome;
 }
 
@@ -476,7 +485,7 @@ describe('E2E Validation: StructureDefinition → FHIRSchema → Validation', ()
       ]);
       const schema = translate(sd);
       const result = runValidate(
-        { resourceType: 'TestChoiceDecimal', amountDecimal: 3.14159 },
+        { resourceType: 'TestChoiceDecimal', amountDecimal: 3.14 },
         schema,
         typesIndex,
       );

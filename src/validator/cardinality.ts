@@ -3,7 +3,7 @@ import type { FHIRSchemaElement } from '../types';
 import * as fp from './fieldPath';
 
 const validate = (
-  data: any,
+  data: unknown,
   spec: FHIRSchemaElement,
   location: fp.FieldPathComponent[],
 ): OperationOutcome => {

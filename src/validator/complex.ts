@@ -5,7 +5,7 @@ import * as fp from './fieldPath';
 import * as primitive from './primitive';
 
 const validate = (
-  data: any,
+  data: Record<string, unknown>,
   spec: FHIRSchema,
   location: fp.FieldPathComponent[],
   typeProfiles: { [key in string]: FHIRSchema },
@@ -57,7 +57,10 @@ const validate = (
         case 'primitive-type':
           return primitive.validate(fieldVal, elemSchema, fieldLoc).issue || [];
         case 'complex-type':
-          return validate(fieldVal, elemSchema, fieldLoc, typeProfiles).issue || [];
+          return (
+            validate(fieldVal as Record<string, unknown>, elemSchema, fieldLoc, typeProfiles)
+              .issue || []
+          );
         default:
           throw new Error(`Not supported kind: ${elemSchema.kind}`);
       }

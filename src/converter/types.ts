@@ -128,8 +128,8 @@ export interface StructureDefinitionElement {
       valueBoolean?: boolean;
     }>;
   };
-  mapping?: any[];
-  example?: any[];
+  mapping?: StructureDefinitionMapping[];
+  example?: StructureDefinitionExample[];
   extension?: Array<{
     url: string;
     valueString?: string;
@@ -144,8 +144,8 @@ export interface StructureDefinitionElement {
   patternDate?: string;
   patternDateTime?: string;
   patternInstant?: string;
-  patternCodeableConcept?: any;
-  [key: string]: any; // For pattern[x] and fixed[x]
+  patternCodeableConcept?: unknown;
+  [key: string]: unknown;
 }
 
 export interface StructureDefinition {
@@ -176,19 +176,24 @@ export interface StructureDefinition {
 
 export interface PathComponent {
   el: string;
-  slicing?: any;
+  slicing?: Record<string, unknown>;
   sliceName?: string;
-  slice?: any;
+  slice?: Record<string, unknown>;
 }
 
 export type Action =
   | { type: 'enter'; el: string }
   | { type: 'exit'; el: string }
   | { type: 'enter-slice'; sliceName: string }
-  | { type: 'exit-slice'; sliceName: string; slicing?: any; slice?: any };
+  | {
+      type: 'exit-slice';
+      sliceName: string;
+      slicing?: Record<string, unknown>;
+      slice?: Record<string, unknown>;
+    };
 
 export interface ConversionContext {
-  package_meta?: any;
+  package_meta?: Record<string, unknown>;
 }
 
 // FHIR resource types
