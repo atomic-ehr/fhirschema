@@ -1,4 +1,5 @@
-import type { FHIRSchema, OperationOutcome, OperationOutcomeIssue } from '../converter/types';
+import type { OperationOutcome, OperationOutcomeIssue } from '../converter/types';
+import type { FHIRSchema } from '../types';
 import * as fp from './fieldPath';
 
 // FHIR primitive types that map to JavaScript 'string'

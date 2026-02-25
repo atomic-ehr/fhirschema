@@ -1,35 +1,24 @@
+// Export all shared types
+
 // Export converter functionality
 export { translate } from './converter/index.js';
-// Re-export specific converter types that might be useful
 export type {
   Action,
   ConversionContext,
-  PathComponent,
-  StructureDefinition,
-  StructureDefinitionElement,
-  FHIRSchema,
   OperationOutcome,
   OperationOutcomeIssue,
+  PathComponent,
   Resource,
+  StructureDefinition,
+  StructureDefinitionElement,
 } from './converter/types.js';
-
-// Export all types
 export * from './types.js';
-
+export type { Slices, Slicing, ValidationOutput } from './validator/resource.js';
 // Export validator functionality
-export { validate, slice } from './validator/resource.js';
-export type { Slicing, Slices, ValidationOutput } from './validator/resource.js';
-
-// Re-export validator types (for FHIRSchema element types)
+export { slice, validate } from './validator/resource.js';
 export type {
-  FHIRSchemaElement,
-  FHIRSchemaPattern,
-  FHIRValue,
-  ValidationContext,
-  ValidationError,
-  ValidationResult,
-  Deferred,
-  TerminologyDeferred,
-  ReferenceDeferred,
   BindingStrength,
+  Deferred,
+  ReferenceDeferred,
+  TerminologyDeferred,
 } from './validator/types.js';

@@ -1,4 +1,4 @@
-import type { FHIRSchema, FHIRSchemaElement } from '../converter/types';
+import type { FHIRSchema, FHIRSchemaElement } from '../types';
 
 const merge = (base?: FhirSchemaNode, overlay?: FhirSchemaNode): FhirSchemaNode | undefined => {
   if ((base === overlay) === undefined) return;

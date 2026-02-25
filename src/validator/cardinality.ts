@@ -1,8 +1,5 @@
-import type {
-  FHIRSchemaElement,
-  OperationOutcome,
-  OperationOutcomeIssue,
-} from '../converter/types';
+import type { OperationOutcome, OperationOutcomeIssue } from '../converter/types';
+import type { FHIRSchemaElement } from '../types';
 import * as fp from './fieldPath';
 
 const validate = (

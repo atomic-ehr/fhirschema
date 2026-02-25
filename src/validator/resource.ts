@@ -1,15 +1,10 @@
-import type {
-  FHIRSchema,
-  FHIRSchemaElement,
-  OperationOutcome,
-  OperationOutcomeIssue,
-  Resource,
-} from '../converter/types';
-import type { BindingStrength, Deferred } from './types';
+import type { OperationOutcome, OperationOutcomeIssue, Resource } from '../converter/types';
+import type { FHIRSchema, FHIRSchemaElement } from '../types';
 import * as cardinality from './cardinality';
 import * as complex from './complex';
 import * as fp from './fieldPath';
 import * as primitive from './primitive';
+import type { BindingStrength, Deferred } from './types';
 
 export interface ValidationOutput {
   outcome: OperationOutcome;
@@ -328,7 +323,13 @@ const validate = (
     }
 
     return {
-      issues: [...fieldIssues, ...missingFieldIssues, ...extraFieldIssues, ...choiceIssues, ...slicesIssues],
+      issues: [
+        ...fieldIssues,
+        ...missingFieldIssues,
+        ...extraFieldIssues,
+        ...choiceIssues,
+        ...slicesIssues,
+      ],
       deferred: allDeferred,
     };
   };

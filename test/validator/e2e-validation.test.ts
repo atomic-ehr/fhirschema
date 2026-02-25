@@ -5,17 +5,71 @@ import { validate } from '../../src/validator/resource';
 
 // Minimal type schemas for testing
 const typesIndex: Record<string, FHIRSchema> = {
-  string: { url: 'string', name: 'string', type: 'string', kind: 'primitive-type', class: 'primitive-type' },
-  integer: { url: 'integer', name: 'integer', type: 'integer', kind: 'primitive-type', class: 'primitive-type' },
-  boolean: { url: 'boolean', name: 'boolean', type: 'boolean', kind: 'primitive-type', class: 'primitive-type' },
-  decimal: { url: 'decimal', name: 'decimal', type: 'decimal', kind: 'primitive-type', class: 'primitive-type' },
-  code: { url: 'code', name: 'code', type: 'code', kind: 'primitive-type', class: 'primitive-type' },
+  string: {
+    url: 'string',
+    name: 'string',
+    type: 'string',
+    kind: 'primitive-type',
+    class: 'primitive-type',
+  },
+  integer: {
+    url: 'integer',
+    name: 'integer',
+    type: 'integer',
+    kind: 'primitive-type',
+    class: 'primitive-type',
+  },
+  boolean: {
+    url: 'boolean',
+    name: 'boolean',
+    type: 'boolean',
+    kind: 'primitive-type',
+    class: 'primitive-type',
+  },
+  decimal: {
+    url: 'decimal',
+    name: 'decimal',
+    type: 'decimal',
+    kind: 'primitive-type',
+    class: 'primitive-type',
+  },
+  code: {
+    url: 'code',
+    name: 'code',
+    type: 'code',
+    kind: 'primitive-type',
+    class: 'primitive-type',
+  },
   uri: { url: 'uri', name: 'uri', type: 'uri', kind: 'primitive-type', class: 'primitive-type' },
   url: { url: 'url', name: 'url', type: 'url', kind: 'primitive-type', class: 'primitive-type' },
-  date: { url: 'date', name: 'date', type: 'date', kind: 'primitive-type', class: 'primitive-type' },
-  dateTime: { url: 'dateTime', name: 'dateTime', type: 'dateTime', kind: 'primitive-type', class: 'primitive-type' },
-  unsignedInt: { url: 'unsignedInt', name: 'unsignedInt', type: 'unsignedInt', kind: 'primitive-type', class: 'primitive-type' },
-  positiveInt: { url: 'positiveInt', name: 'positiveInt', type: 'positiveInt', kind: 'primitive-type', class: 'primitive-type' },
+  date: {
+    url: 'date',
+    name: 'date',
+    type: 'date',
+    kind: 'primitive-type',
+    class: 'primitive-type',
+  },
+  dateTime: {
+    url: 'dateTime',
+    name: 'dateTime',
+    type: 'dateTime',
+    kind: 'primitive-type',
+    class: 'primitive-type',
+  },
+  unsignedInt: {
+    url: 'unsignedInt',
+    name: 'unsignedInt',
+    type: 'unsignedInt',
+    kind: 'primitive-type',
+    class: 'primitive-type',
+  },
+  positiveInt: {
+    url: 'positiveInt',
+    name: 'positiveInt',
+    type: 'positiveInt',
+    kind: 'primitive-type',
+    class: 'primitive-type',
+  },
   Coding: {
     url: 'Coding',
     name: 'Coding',
@@ -92,7 +146,11 @@ describe('E2E Validation: StructureDefinition → FHIRSchema → Validation', ()
     it('validates string type - valid', () => {
       const sd = createSD('TestString', [{ path: 'value', type: [{ code: 'string' }] }]);
       const schema = translate(sd);
-      const result = runValidate({ resourceType: 'TestString', value: 'hello' }, schema, typesIndex);
+      const result = runValidate(
+        { resourceType: 'TestString', value: 'hello' },
+        schema,
+        typesIndex,
+      );
       expectNoErrors(result);
     });
 
@@ -127,14 +185,22 @@ describe('E2E Validation: StructureDefinition → FHIRSchema → Validation', ()
     it('validates boolean type - valid false', () => {
       const sd = createSD('TestBoolean', [{ path: 'active', type: [{ code: 'boolean' }] }]);
       const schema = translate(sd);
-      const result = runValidate({ resourceType: 'TestBoolean', active: false }, schema, typesIndex);
+      const result = runValidate(
+        { resourceType: 'TestBoolean', active: false },
+        schema,
+        typesIndex,
+      );
       expectNoErrors(result);
     });
 
     it('validates boolean type - invalid (string)', () => {
       const sd = createSD('TestBoolean', [{ path: 'active', type: [{ code: 'boolean' }] }]);
       const schema = translate(sd);
-      const result = runValidate({ resourceType: 'TestBoolean', active: 'true' }, schema, typesIndex);
+      const result = runValidate(
+        { resourceType: 'TestBoolean', active: 'true' },
+        schema,
+        typesIndex,
+      );
       expectError(result, 'invalid', 'active');
     });
 
@@ -148,7 +214,11 @@ describe('E2E Validation: StructureDefinition → FHIRSchema → Validation', ()
     it('validates decimal type - invalid (string)', () => {
       const sd = createSD('TestDecimal', [{ path: 'amount', type: [{ code: 'decimal' }] }]);
       const schema = translate(sd);
-      const result = runValidate({ resourceType: 'TestDecimal', amount: '3.14' }, schema, typesIndex);
+      const result = runValidate(
+        { resourceType: 'TestDecimal', amount: '3.14' },
+        schema,
+        typesIndex,
+      );
       expectError(result, 'invalid', 'amount');
     });
 
@@ -162,7 +232,11 @@ describe('E2E Validation: StructureDefinition → FHIRSchema → Validation', ()
     it('validates code type - valid', () => {
       const sd = createSD('TestCode', [{ path: 'status', type: [{ code: 'code' }] }]);
       const schema = translate(sd);
-      const result = runValidate({ resourceType: 'TestCode', status: 'active' }, schema, typesIndex);
+      const result = runValidate(
+        { resourceType: 'TestCode', status: 'active' },
+        schema,
+        typesIndex,
+      );
       expectNoErrors(result);
     });
 
@@ -176,7 +250,11 @@ describe('E2E Validation: StructureDefinition → FHIRSchema → Validation', ()
     it('validates uri type - valid', () => {
       const sd = createSD('TestUri', [{ path: 'system', type: [{ code: 'uri' }] }]);
       const schema = translate(sd);
-      const result = runValidate({ resourceType: 'TestUri', system: 'http://example.org' }, schema, typesIndex);
+      const result = runValidate(
+        { resourceType: 'TestUri', system: 'http://example.org' },
+        schema,
+        typesIndex,
+      );
       expectNoErrors(result);
     });
 
@@ -190,14 +268,22 @@ describe('E2E Validation: StructureDefinition → FHIRSchema → Validation', ()
     it('validates date type - valid', () => {
       const sd = createSD('TestDate', [{ path: 'birthDate', type: [{ code: 'date' }] }]);
       const schema = translate(sd);
-      const result = runValidate({ resourceType: 'TestDate', birthDate: '1990-01-15' }, schema, typesIndex);
+      const result = runValidate(
+        { resourceType: 'TestDate', birthDate: '1990-01-15' },
+        schema,
+        typesIndex,
+      );
       expectNoErrors(result);
     });
 
     it('validates date type - invalid (number)', () => {
       const sd = createSD('TestDate', [{ path: 'birthDate', type: [{ code: 'date' }] }]);
       const schema = translate(sd);
-      const result = runValidate({ resourceType: 'TestDate', birthDate: 19900115 }, schema, typesIndex);
+      const result = runValidate(
+        { resourceType: 'TestDate', birthDate: 19900115 },
+        schema,
+        typesIndex,
+      );
       expectError(result, 'invalid', 'birthDate');
     });
 
@@ -241,7 +327,11 @@ describe('E2E Validation: StructureDefinition → FHIRSchema → Validation', ()
     it('present required field - success', () => {
       const sd = createSD('TestRequired', [{ path: 'name', type: [{ code: 'string' }], min: 1 }]);
       const schema = translate(sd);
-      const result = runValidate({ resourceType: 'TestRequired', name: 'John' }, schema, typesIndex);
+      const result = runValidate(
+        { resourceType: 'TestRequired', name: 'John' },
+        schema,
+        typesIndex,
+      );
       expectNoErrors(result);
     });
   });
@@ -252,7 +342,11 @@ describe('E2E Validation: StructureDefinition → FHIRSchema → Validation', ()
         { path: 'items', type: [{ code: 'string' }], min: 2, max: '*' },
       ]);
       const schema = translate(sd);
-      const result = runValidate({ resourceType: 'TestCardinality', items: [] }, schema, typesIndex);
+      const result = runValidate(
+        { resourceType: 'TestCardinality', items: [] },
+        schema,
+        typesIndex,
+      );
       expectError(result, 'invariant');
     });
 
@@ -329,7 +423,11 @@ describe('E2E Validation: StructureDefinition → FHIRSchema → Validation', ()
         { path: 'value[x]', type: [{ code: 'string' }, { code: 'integer' }] },
       ]);
       const schema = translate(sd);
-      const result = runValidate({ resourceType: 'TestChoice', valueInteger: 42 }, schema, typesIndex);
+      const result = runValidate(
+        { resourceType: 'TestChoice', valueInteger: 42 },
+        schema,
+        typesIndex,
+      );
       expectNoErrors(result);
     });
 
@@ -338,7 +436,11 @@ describe('E2E Validation: StructureDefinition → FHIRSchema → Validation', ()
         { path: 'value[x]', type: [{ code: 'string' }, { code: 'integer' }] },
       ]);
       const schema = translate(sd);
-      const result = runValidate({ resourceType: 'TestChoice', valueString: 123 }, schema, typesIndex);
+      const result = runValidate(
+        { resourceType: 'TestChoice', valueString: 123 },
+        schema,
+        typesIndex,
+      );
       expectError(result, 'invalid');
     });
 
@@ -519,11 +621,7 @@ describe('E2E Validation: StructureDefinition → FHIRSchema → Validation', ()
       const result = runValidate(
         {
           resourceType: 'TestArrayChoice',
-          items: [
-            { valueString: 'first' },
-            { valueInteger: 42 },
-            { valueString: 'third' },
-          ],
+          items: [{ valueString: 'first' }, { valueInteger: 42 }, { valueString: 'third' }],
         },
         schema,
         typesIndex,

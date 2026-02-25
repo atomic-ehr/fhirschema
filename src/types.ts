@@ -205,11 +205,9 @@ export interface FHIRSchemaDiscriminator {
   path: string;
 }
 
-export interface FHIRSchemaSliceMatch {
+export interface FHIRSchemaSliceMatch extends FHIRSchemaElement {
   match?: FHIRValue;
   schema?: FHIRSchemaElement;
-  min?: number;
-  max?: number;
 }
 
 export interface FHIRSchemaSlicing {
@@ -240,6 +238,7 @@ export interface FHIRSchemaElement {
 
   // Pattern/Fixed values
   pattern?: FHIRSchemaPattern;
+  fixed?: FHIRSchemaPattern;
 
   // Constraints
   constraint?: Record<string, FHIRSchemaConstraint>;
@@ -309,7 +308,7 @@ export interface FHIRSchema {
 
   // For primitive types
   primitiveType?: string;
-  choices?: Record<string, string[]>;
+  regex?: string;
 }
 
 // Validation Types
