@@ -706,6 +706,67 @@ describe('Converter Algorithm Tests', () => {
     });
   });
 
+  describe('fixed values in slice discriminator matching', () => {
+    it('should use fixedX for slice match with $this discriminator', () => {
+      const result = translate(
+        createTestStructureDefinition([
+          {
+            path: 'R.category',
+            slicing: { discriminator: [{ type: 'value', path: '$this' }], rules: 'open' },
+          },
+          {
+            path: 'R.category',
+            sliceName: 'lab',
+            fixedString: 'laboratory',
+          },
+        ]),
+      );
+
+      expect(result.elements?.category.slicing?.slices?.lab.match).toEqual({
+        value: 'laboratory',
+      });
+    });
+
+    it('should use fixedX for slice match with path discriminator', () => {
+      const result = translate(
+        createTestStructureDefinition([
+          {
+            path: 'R.x',
+            slicing: { discriminator: [{ type: 'value', path: 'code' }], rules: 'open' },
+          },
+          { path: 'R.x', sliceName: 's1' },
+          { path: 'R.x.code', fixedCode: 'abc' },
+          { path: 'R.x', sliceName: 's2' },
+          { path: 'R.x.code', fixedCode: 'xyz' },
+        ]),
+      );
+
+      expect(result.elements?.x.slicing?.slices?.s1.match).toEqual({ code: 'abc' });
+      expect(result.elements?.x.slicing?.slices?.s2.match).toEqual({ code: 'xyz' });
+    });
+
+    it('should prefer pattern over fixed when both present', () => {
+      const result = translate(
+        createTestStructureDefinition([
+          {
+            path: 'R.category',
+            slicing: { discriminator: [{ type: 'pattern', path: '$this' }], rules: 'open' },
+          },
+          {
+            path: 'R.category',
+            sliceName: 'lab',
+            patternCodeableConcept: { coding: [{ code: 'LAB' }] },
+            fixedCodeableConcept: { coding: [{ code: 'FIXED' }] },
+          },
+        ]),
+      );
+
+      expect(result.elements?.category.slicing?.slices?.lab.match).toEqual({
+        coding: [{ code: 'LAB' }],
+      });
+    });
+  });
+
   describe('Use contentReference in SD for Bundle', () => {
     const bundle: StructureDefinition = {
       resourceType: 'StructureDefinition',

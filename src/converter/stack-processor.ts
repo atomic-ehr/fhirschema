@@ -52,70 +52,78 @@ function buildMatchForSlice(slicing: SlicingConfig, sliceSchema: ProcessingObjec
     const path = discriminator.path.trim();
 
     if (path === '$this') {
-      // Merge pattern value from slice schema
-      const pattern = sliceSchema.pattern as PatternInfo | undefined;
-      if (pattern?.value) {
+      // Merge pattern or fixed value from slice schema
+      const patternOrFixed =
+        (sliceSchema.pattern as PatternInfo | undefined) ??
+        (sliceSchema.fixed as PatternInfo | undefined);
+      if (patternOrFixed?.value) {
         if (
-          typeof pattern.value === 'object' &&
-          pattern.value !== null &&
-          !Array.isArray(pattern.value)
+          typeof patternOrFixed.value === 'object' &&
+          patternOrFixed.value !== null &&
+          !Array.isArray(patternOrFixed.value)
         ) {
-          Object.assign(match, pattern.value);
+          Object.assign(match, patternOrFixed.value);
         } else {
           // For primitive values, we'd need to handle differently based on context
           // This is a simplified approach
-          Object.assign(match, { value: pattern.value });
+          Object.assign(match, { value: patternOrFixed.value });
         }
       }
     } else {
       // Build path to pattern in nested elements
       const pathParts = path.split('.').filter((p: string) => p.trim() !== '');
 
-      // Look for pattern fields in slice schema
-      const patternKeys = Object.keys(sliceSchema).filter((k) => k.startsWith('pattern'));
-      for (const patternKey of patternKeys) {
-        const fieldName = patternKey.replace('pattern', '').toLowerCase();
+      // Look for pattern or fixed fields in slice schema
+      const patternOrFixedKeys = Object.keys(sliceSchema).filter(
+        (k) => k.startsWith('pattern') || k.startsWith('fixed'),
+      );
+      for (const key of patternOrFixedKeys) {
+        const fieldName = key.replace(/^(?:pattern|fixed)/, '').toLowerCase();
         if (pathParts.length === 1 && pathParts[0] === fieldName) {
-          match[fieldName] = sliceSchema[patternKey];
+          match[fieldName] = sliceSchema[key];
         }
       }
 
-      // Also check nested elements
-      const currentPath: string[] = ['elements'];
+      // Also check nested elements for pattern or fixed values
+      const basePath: string[] = ['elements'];
 
       for (const part of pathParts) {
-        currentPath.push(part);
+        basePath.push(part);
         if (pathParts.indexOf(part) < pathParts.length - 1) {
-          currentPath.push('elements');
+          basePath.push('elements');
         }
       }
 
-      currentPath.push('pattern');
+      // Try both 'pattern' and 'fixed' suffixes
+      for (const suffix of ['pattern', 'fixed']) {
+        const currentPath = [...basePath, suffix];
 
-      // Get value from slice schema
-      let value: unknown = sliceSchema;
-      for (const segment of currentPath) {
-        if (value && typeof value === 'object' && !Array.isArray(value)) {
-          value = (value as Record<string, unknown>)[segment];
-        } else {
-          value = undefined;
-          break;
-        }
-      }
-
-      if (value && typeof value === 'object' && 'value' in value) {
-        const patternValue = (value as { value?: unknown }).value;
-        if (patternValue !== undefined) {
-          // Set value in match object
-          let matchTarget: Record<string, unknown> = match;
-          for (let i = 0; i < pathParts.length - 1; i++) {
-            const part = pathParts[i];
-            if (!matchTarget[part] || typeof matchTarget[part] !== 'object') {
-              matchTarget[part] = {};
-            }
-            matchTarget = matchTarget[part] as Record<string, unknown>;
+        // Get value from slice schema
+        let value: unknown = sliceSchema;
+        for (const segment of currentPath) {
+          if (value && typeof value === 'object' && !Array.isArray(value)) {
+            value = (value as Record<string, unknown>)[segment];
+          } else {
+            value = undefined;
+            break;
           }
-          matchTarget[pathParts[pathParts.length - 1]] = patternValue;
+        }
+
+        if (value && typeof value === 'object' && 'value' in value) {
+          const matchValue = (value as { value?: unknown }).value;
+          if (matchValue !== undefined) {
+            // Set value in match object
+            let matchTarget: Record<string, unknown> = match;
+            for (let i = 0; i < pathParts.length - 1; i++) {
+              const part = pathParts[i];
+              if (!matchTarget[part] || typeof matchTarget[part] !== 'object') {
+                matchTarget[part] = {};
+              }
+              matchTarget = matchTarget[part] as Record<string, unknown>;
+            }
+            matchTarget[pathParts[pathParts.length - 1]] = matchValue;
+            break; // Found a match, no need to check the other suffix
+          }
         }
       }
     }
