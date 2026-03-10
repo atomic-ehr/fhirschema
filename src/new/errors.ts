@@ -3,6 +3,7 @@ import type { OperationOutcomeIssue } from '../converter/types.js';
 export const errorCodes = {
   typeMismatch: 'type_mismatch',
   invalidString: 'invalid_string',
+  integerOutOfRange: 'integer_out_of_range',
 } as const;
 
 export type NewErrorCode = (typeof errorCodes)[keyof typeof errorCodes];
@@ -15,6 +16,13 @@ type TypeMismatchParams = {
 
 type InvalidStringParams = {
   path?: string;
+};
+
+type IntegerOutOfRangeParams = {
+  max: number;
+  min: number;
+  path?: string;
+  value: number;
 };
 
 export const errorRegistry = {
@@ -33,5 +41,13 @@ export const errorRegistry = {
       path === undefined
         ? `[${errorCodes.invalidString}] Invalid string value: must not be empty or whitespace-only`
         : `[${errorCodes.invalidString}] Invalid string value for field: ${path}: must not be empty or whitespace-only`,
+  },
+  [errorCodes.integerOutOfRange]: {
+    issueCode: 'invalid' as OperationOutcomeIssue['code'],
+    severity: 'error' as OperationOutcomeIssue['severity'],
+    message: ({ max, min, path, value }: IntegerOutOfRangeParams) =>
+      path === undefined
+        ? `[${errorCodes.integerOutOfRange}] Integer value out of range: expected ${min}..${max}, actual: ${value}`
+        : `[${errorCodes.integerOutOfRange}] Integer value out of range for field: ${path}: expected ${min}..${max}, actual: ${value}`,
   },
 } as const;
