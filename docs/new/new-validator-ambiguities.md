@@ -70,3 +70,25 @@ Reason:
 - It is explicit at runtime.
 - It preserves the external `OperationOutcome` contract.
 - The semantic tests can stay red instead of being hidden behind `todo`.
+
+## Null handling for primitives
+
+Context:
+The draft validator has root-level primitive tests such as `validate(undefined, [{ type: "string" }], data)`.
+
+Ambiguity:
+Should `null` be accepted for primitive values?
+
+Options:
+- Accept `null` as an empty primitive value.
+- Reject `null` for root and ordinary primitive fields.
+- Treat `null` differently for root values and arrays.
+
+Current choice:
+- Reject `null` for root and ordinary primitive values with a type mismatch.
+- Handle `null` placeholders inside repeating primitive arrays separately later.
+
+Reason:
+- In FHIR JSON, primitive values are represented by their JSON scalar types, not `null`.
+- Missing primitive values are represented by omission, or by the parallel `_element` form when extensions/id exist.
+- Repeating primitive arrays with `null` placeholders are a separate JSON-representation concern, not a primitive-type rule by itself.
