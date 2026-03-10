@@ -20,6 +20,20 @@ export * from './types.js';
 export { validate, slice } from './validator/resource.js';
 export type { Slicing, Slices, ValidationOutput } from './validator/resource.js';
 
+// Export draft new pipeline alongside the current implementation
+export { translate as translateNew } from './new/translator.js';
+export { validate as validateNew } from './new/validator.js';
+export type {
+  NewContext,
+  NewData,
+  NewSchemaList,
+  NewSourceSchema,
+  NewTranslateOptions,
+  NewTranslationResult,
+  NewValidateOptions,
+  NewValidationResult,
+} from './new/types.js';
+
 // Re-export validator types (for FHIRSchema element types)
 export type {
   FHIRSchemaElement,
