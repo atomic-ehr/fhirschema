@@ -4,6 +4,7 @@ export const errorCodes = {
   typeMismatch: 'type_mismatch',
   invalidString: 'invalid_string',
   integerOutOfRange: 'integer_out_of_range',
+  invalidPrimitiveExtension: 'invalid_primitive_extension',
 } as const;
 
 export type NewErrorCode = (typeof errorCodes)[keyof typeof errorCodes];
@@ -23,6 +24,11 @@ type IntegerOutOfRangeParams = {
   min: number;
   path?: string;
   value: number;
+};
+
+type InvalidPrimitiveExtensionParams = {
+  path?: string;
+  reason: string;
 };
 
 export const errorRegistry = {
@@ -49,5 +55,13 @@ export const errorRegistry = {
       path === undefined
         ? `[${errorCodes.integerOutOfRange}] Integer value out of range: expected ${min}..${max}, actual: ${value}`
         : `[${errorCodes.integerOutOfRange}] Integer value out of range for field: ${path}: expected ${min}..${max}, actual: ${value}`,
+  },
+  [errorCodes.invalidPrimitiveExtension]: {
+    issueCode: 'invalid' as OperationOutcomeIssue['code'],
+    severity: 'error' as OperationOutcomeIssue['severity'],
+    message: ({ path, reason }: InvalidPrimitiveExtensionParams) =>
+      path === undefined
+        ? `[${errorCodes.invalidPrimitiveExtension}] Invalid primitive extension: ${reason}`
+        : `[${errorCodes.invalidPrimitiveExtension}] Invalid primitive extension for field: ${path}: ${reason}`,
   },
 } as const;
