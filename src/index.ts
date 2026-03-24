@@ -17,7 +17,6 @@ export type { Slices, Slicing, ValidationOutput } from './validator/resource.js'
 // Export validator functionality
 export { slice, validate } from './validator/resource.js';
 export type {
-  BindingStrength,
   Deferred,
   ReferenceDeferred,
   TerminologyDeferred,
