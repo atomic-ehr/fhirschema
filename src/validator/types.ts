@@ -1,6 +1,9 @@
 // Re-export shared types from canonical source
 
+import type { BindingStrength } from '../types.js';
+
 export type {
+  BindingStrength,
   FHIRComplexType,
   FHIRPrimitiveType,
   FHIRSchema,
@@ -17,10 +20,6 @@ export {
   isFHIRSchema,
   isFHIRSchemaElement,
 } from '../types.js';
-
-// Validator-specific types
-
-export type BindingStrength = 'required' | 'extensible' | 'preferred' | 'example';
 
 export interface TerminologyDeferred {
   type: 'terminology';

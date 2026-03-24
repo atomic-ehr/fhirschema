@@ -3,10 +3,19 @@ export interface PackageMeta {
   version: string;
 }
 
+export type BindingStrength = 'required' | 'extensible' | 'preferred' | 'example';
+export type ConstraintSeverity = 'error' | 'warning';
+export type SlicingRules = 'open' | 'closed' | 'openAtEnd';
+export type DiscriminatorType = 'value' | 'exists' | 'pattern' | 'type' | 'profile' | 'position';
+export type SchemaKind = 'resource' | 'primitive-type' | 'complex-type' | 'logical';
+export type SchemaDerivation = 'specialization' | 'constraint';
+export type SchemaClass = 'resource' | 'profile' | 'extension' | 'type' | 'logical';
+export type PublicationStatus = 'active' | 'draft' | 'retired' | 'unknown';
+
 // Core FHIRSchema Types
 
 export interface FHIRSchemaBinding {
-  strength: string;
+  strength: BindingStrength;
   valueSet?: string;
   bindingName?: string;
 }
@@ -197,11 +206,11 @@ export interface FHIRSchemaPattern {
 export interface FHIRSchemaConstraint {
   expression: string;
   human: string;
-  severity: string;
+  severity: ConstraintSeverity;
 }
 
 export interface FHIRSchemaDiscriminator {
-  type: string;
+  type: DiscriminatorType;
   path: string;
 }
 
@@ -212,7 +221,7 @@ export interface FHIRSchemaSliceMatch extends FHIRSchemaElement {
 
 export interface FHIRSchemaSlicing {
   discriminator?: FHIRSchemaDiscriminator[];
-  rules?: string;
+  rules?: SlicingRules;
   ordered?: boolean;
   slices?: Record<string, FHIRSchemaSliceMatch>;
 }
@@ -282,13 +291,13 @@ export interface FHIRSchema {
 
   // Structure type
   type: string;
-  kind: string;
+  kind: SchemaKind;
 
   // Derivation
-  derivation?: string;
+  derivation?: SchemaDerivation;
   base?: string;
   abstract?: boolean;
-  class: string;
+  class: SchemaClass;
 
   // Documentation
   description?: string;
@@ -318,7 +327,7 @@ export interface ValidationContext {
 }
 
 export interface ValidationError {
-  type: string;
+  type: ValidationErrorType;
   path: (string | number)[];
   message?: string;
   value?: unknown; // Changed from any
@@ -347,14 +356,14 @@ export interface StructureDefinitionType {
 export interface StructureDefinitionConstraint {
   key: string;
   requirements?: string;
-  severity: string;
+  severity: ConstraintSeverity;
   human: string;
   expression: string;
   xpath?: string;
 }
 
 export interface StructureDefinitionBinding {
-  strength: string;
+  strength: BindingStrength;
   description?: string;
   valueSet?: string;
   extension?: Array<{
@@ -365,10 +374,10 @@ export interface StructureDefinitionBinding {
 
 export interface StructureDefinitionSlicing {
   discriminator?: Array<{
-    type: string;
+    type: DiscriminatorType;
     path: string;
   }>;
-  rules?: string;
+  rules?: SlicingRules;
   ordered?: boolean;
 }
 
@@ -500,20 +509,20 @@ export interface StructureDefinitionElement {
 }
 
 export interface StructureDefinition {
-  resourceType: string;
+  resourceType: 'StructureDefinition';
   id?: string;
   url: string;
   version?: string;
   name: string;
   title?: string;
-  status: string;
+  status: PublicationStatus;
   date?: string;
   description?: string;
-  kind: string;
+  kind: SchemaKind;
   abstract?: boolean;
   type: string;
   baseDefinition?: string;
-  derivation?: string;
+  derivation?: SchemaDerivation;
   package_name?: string;
   package_version?: string;
   package_id?: string;

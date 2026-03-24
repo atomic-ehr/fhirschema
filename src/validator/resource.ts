@@ -1,10 +1,10 @@
 import type { OperationOutcome, OperationOutcomeIssue, Resource } from '../converter/types';
-import type { FHIRSchema, FHIRSchemaElement } from '../types';
+import type { DiscriminatorType, FHIRSchema, FHIRSchemaElement } from '../types';
 import * as cardinality from './cardinality';
 import * as complex from './complex';
 import * as fp from './fieldPath';
 import * as primitive from './primitive';
-import type { BindingStrength, Deferred } from './types';
+import type { Deferred } from './types';
 
 export interface ValidationOutput {
   outcome: OperationOutcome;
@@ -46,7 +46,7 @@ const parseFhirpath = (path: string): PathToken[] => {
   });
 };
 
-const matches = <T>(itemValues: T[], spec: FHIRSchemaElement, type: SlicingDiscriminatorType) => {
+const matches = <T>(itemValues: T[], spec: FHIRSchemaElement, type: DiscriminatorType) => {
   const chooseFieldKey = <T extends object>(obj: T, prefix: string): string =>
     Object.keys(obj).filter((k) => k.startsWith(prefix))[0];
   // https://hl7.org/fhir/codesystem-discriminator-type.html
@@ -216,7 +216,7 @@ const validate = (
               path: valPath,
               code: val,
               valueSet: elemSpec.binding.valueSet,
-              strength: elemSpec.binding.strength as BindingStrength,
+              strength: elemSpec.binding.strength,
             });
           } else if (val && typeof val === 'object') {
             // Coding or CodeableConcept binding
@@ -229,7 +229,7 @@ const validate = (
                   code: coding.code,
                   system: coding.system,
                   valueSet: elemSpec.binding.valueSet,
-                  strength: elemSpec.binding.strength as BindingStrength,
+                  strength: elemSpec.binding.strength,
                 });
               }
             }
@@ -357,9 +357,8 @@ const validate = (
 };
 
 type ValidationSpec = Partial<FHIRSchema> & Partial<FHIRSchemaElement>;
-type SlicingDiscriminatorType = 'value' | 'exists' | 'pattern' | 'type' | 'profile' | 'position';
 type Slicing = {
-  discriminator: { path: string; type: SlicingDiscriminatorType }[];
+  discriminator: { path: string; type: DiscriminatorType }[];
   slices: { [key in string]: FHIRSchemaElement };
 };
 type Slices<T> = { [key in string]: T[] };
