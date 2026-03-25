@@ -4,6 +4,8 @@ import { errorCodes, errorRegistry } from '../../../../src/new/errors';
 import { validate } from '../../../../src/new/validator';
 import { OK_OUTCOME } from '../../validator/fixture';
 
+const FHIR_STRING_MAX_LENGTH = 1024 * 1024;
+
 describe('New validator draft', () => {
   describe('Primitive validation', () => {
     describe('string', () => {
@@ -37,6 +39,16 @@ describe('New validator draft', () => {
             },
           ],
         } satisfies OperationOutcome);
+      
+        
+          [
+            {
+              code: errorCodes.typeMismatch,
+              path: "",
+              schemaPath: "http://USCorePatient#birthDate", //content reference?
+              message: "expected date got string" //validate by regexp
+            },
+          ];
       });
 
       test('rejects null', () => {
@@ -104,6 +116,27 @@ describe('New validator draft', () => {
               code: errorRegistry[errorCodes.invalidString].issueCode,
               details: {
                 text: errorRegistry[errorCodes.invalidString].message({}),
+              },
+            },
+          ],
+        } satisfies OperationOutcome);
+      });
+
+      test('rejects strings longer than 1MB', () => {
+        const tooLong = 'a'.repeat(FHIR_STRING_MAX_LENGTH + 1);
+        const result = validate(undefined, [{ type: 'string' }], tooLong);
+
+        expect(result).toEqual({
+          resourceType: 'OperationOutcome',
+          issue: [
+            {
+              severity: errorRegistry[errorCodes.stringTooLong].severity,
+              code: errorRegistry[errorCodes.stringTooLong].issueCode,
+              details: {
+                text: errorRegistry[errorCodes.stringTooLong].message({
+                  actualLength: FHIR_STRING_MAX_LENGTH + 1,
+                  maxLength: FHIR_STRING_MAX_LENGTH,
+                }),
               },
             },
           ],

@@ -32,7 +32,7 @@ describe('New validator draft', () => {
     test('accepts a primitive underscore sibling without a primitive value', () => {
       const result = validate(
         undefined,
-        [{ elements: { birthDate: { type: 'date' } } }],
+        [{ elements: { birthDate: { type: 'date', required: true} } }],
         {
           _birthDate: {
             extension: [
@@ -44,6 +44,8 @@ describe('New validator draft', () => {
           },
         },
       );
+
+      //todo binding test
 
       expect(result).toEqual(OK_OUTCOME);
     });
@@ -63,7 +65,7 @@ describe('New validator draft', () => {
                 },
               ],
             },
-            null,
+            null, // необзяательно
           ],
         },
       );

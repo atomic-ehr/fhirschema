@@ -17,7 +17,7 @@ describe('New validator draft', () => {
       });
 
       test('rejects non-number values', () => {
-        const result = validate(undefined, [{ type: 'integer' }], '2');
+        const result = validate(undefined, [{ type: 'integer'}], '2');
 
         expect(result).toEqual({
           resourceType: 'OperationOutcome',
