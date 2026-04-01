@@ -129,7 +129,37 @@ function buildMatchForSlice(slicing: SlicingConfig, sliceSchema: ProcessingObjec
     }
   }
 
+  wrapArrayElements(match, sliceSchema);
   return match as FHIRValue;
+}
+
+/**
+ * Walk the match object and wrap values in arrays where the corresponding
+ * element in sliceSchema has `array: true`.
+ *
+ * Example: discriminator paths `coding.code` and `coding.system` produce
+ * `{ coding: { code: "x", system: "y" } }` but `coding` is an array element,
+ * so we need `{ coding: [{ code: "x", system: "y" }] }`.
+ */
+function wrapArrayElements(
+  match: Record<string, unknown>,
+  schema: ProcessingObject,
+): void {
+  const elements = schema.elements as Record<string, ProcessingObject> | undefined;
+  if (!elements) return;
+
+  for (const key of Object.keys(match)) {
+    const value = match[key];
+    const elementDef = elements[key];
+    if (!elementDef || !value || typeof value !== 'object' || Array.isArray(value)) continue;
+
+    // Recurse first so nested array elements are wrapped bottom-up
+    wrapArrayElements(value as Record<string, unknown>, elementDef);
+
+    if (elementDef.array) {
+      match[key] = [value];
+    }
+  }
 }
 
 function buildSliceNode(
