@@ -745,6 +745,47 @@ describe('Converter Algorithm Tests', () => {
       expect(result.elements?.x.slicing?.slices?.s2.match).toEqual({ code: 'xyz' });
     });
 
+    it('should wrap match values in arrays for array elements (e.g. coding)', () => {
+      const result = translate(
+        createTestStructureDefinition([
+          {
+            path: 'R.category',
+            slicing: {
+              discriminator: [
+                { type: 'value', path: 'coding.code' },
+                { type: 'value', path: 'coding.system' },
+              ],
+              rules: 'open',
+            },
+            max: '*',
+          },
+          {
+            path: 'R.category',
+            sliceName: 'VSCat',
+            min: 1,
+            max: '1',
+          },
+          {
+            path: 'R.category.coding',
+            max: '*',
+          },
+          {
+            path: 'R.category.coding.code',
+            fixedCode: 'vital-signs',
+          },
+          {
+            path: 'R.category.coding.system',
+            fixedUri: 'http://terminology.hl7.org/CodeSystem/observation-category',
+          },
+        ]),
+      );
+
+      // coding is an array element (max: *), so match should wrap it in an array
+      expect(result.elements?.category.slicing?.slices?.VSCat.match).toEqual({
+        coding: [{ code: 'vital-signs', system: 'http://terminology.hl7.org/CodeSystem/observation-category' }],
+      });
+    });
+
     it('should prefer pattern over fixed when both present', () => {
       const result = translate(
         createTestStructureDefinition([
