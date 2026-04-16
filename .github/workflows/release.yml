@@ -58,13 +58,13 @@ jobs:
             require('fs').writeFileSync('package.json', JSON.stringify(pkg, null, 2));
           "
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v4
         with:
-          node-version: '22'
-
-      - uses: actions/setup-node@v6
-        with:
+          node-version: '20'
           registry-url: 'https://registry.npmjs.org'
+
+      - name: Update npm
+        run: npm install -g npm@latest
 
       - name: Publish canary release
         run: npm publish --tag canary --access public
@@ -96,13 +96,13 @@ jobs:
       - name: Build
         run: bun run build
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v4
         with:
-          node-version: '22'
-
-      - uses: actions/setup-node@v6
-        with:
+          node-version: '20'
           registry-url: 'https://registry.npmjs.org'
+
+      - name: Update npm
+        run: npm install -g npm@latest
 
       - name: Publish release
         run: npm publish --tag latest --access public
