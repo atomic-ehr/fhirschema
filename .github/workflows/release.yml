@@ -61,6 +61,12 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: '22'
+
+      - name: Update npm
+        run: npm install -g npm@latest
+
+      - uses: actions/setup-node@v6
+        with:
           registry-url: 'https://registry.npmjs.org'
 
       - name: Publish canary release
@@ -96,6 +102,12 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: '22'
+
+      - name: Update npm
+        run: npm install -g npm@latest
+
+      - uses: actions/setup-node@v6
+        with:
           registry-url: 'https://registry.npmjs.org'
 
       - name: Publish release
