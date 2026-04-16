@@ -1,8 +1,8 @@
 import type { OperationOutcome, OperationOutcomeIssue } from '../converter/types';
 import type { FHIRSchema } from '../types';
-import * as cardinality from './cardinality';
-import * as fp from './fieldPath';
-import * as primitive from './primitive';
+import * as cardinality from './cardinality.js';
+import * as fp from './fieldPath.js';
+import * as primitive from './primitive.js';
 
 const validate = (
   data: Record<string, unknown>,

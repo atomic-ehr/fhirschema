@@ -1,10 +1,10 @@
 import type { OperationOutcome, OperationOutcomeIssue, Resource } from '../converter/types';
 import type { DiscriminatorType, FHIRSchema, FHIRSchemaElement } from '../types';
-import * as cardinality from './cardinality';
-import * as complex from './complex';
-import * as fp from './fieldPath';
-import * as primitive from './primitive';
-import type { Deferred } from './types';
+import * as cardinality from './cardinality.js';
+import * as complex from './complex.js';
+import * as fp from './fieldPath.js';
+import * as primitive from './primitive.js';
+import type { Deferred } from './types.js';
 
 export interface ValidationOutput {
   outcome: OperationOutcome;
