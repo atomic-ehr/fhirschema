@@ -1,7 +1,7 @@
 # FHIRSchema
 
-[![CI](https://github.com/fhir-schema/fhirschema-ts/actions/workflows/ci.yml/badge.svg)](https://github.com/fhir-schema/fhirschema-ts/actions/workflows/ci.yml)
-[![Type Check](https://github.com/fhir-schema/fhirschema-ts/actions/workflows/typecheck.yml/badge.svg)](https://github.com/fhir-schema/fhirschema-ts/actions/workflows/typecheck.yml)
+[![CI](https://github.com/atomic-ehr/fhirschema/actions/workflows/ci.yml/badge.svg)](https://github.com/atomic-ehr/fhirschema/actions/workflows/ci.yml)
+[![Type Check](https://github.com/atomic-ehr/fhirschema/actions/workflows/typecheck.yml/badge.svg)](https://github.com/atomic-ehr/fhirschema/actions/workflows/typecheck.yml)
 
 TypeScript implementation of FHIRSchema converter and validator.
 

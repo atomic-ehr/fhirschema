@@ -1,6 +1,6 @@
 import type { OperationOutcome, OperationOutcomeIssue } from '../converter/types';
 import type { FHIRSchema } from '../types';
-import * as fp from './fieldPath';
+import * as fp from './fieldPath.js';
 
 // FHIR primitive types that map to JavaScript 'string'
 const STRING_TYPES = new Set([
