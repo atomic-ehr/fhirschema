@@ -10,6 +10,9 @@ export const errorCodes = {
   requiredField: 'required_field',
   unknownField: 'unknown_field',
   cardinalityViolation: 'cardinality_violation',
+  slicingAmbiguous: 'slicing_ambiguous',
+  slicingUnmatched: 'slicing_unmatched',
+  sliceCardinality: 'slice_cardinality',
 } as const;
 
 export type NewErrorCode = (typeof errorCodes)[keyof typeof errorCodes];
@@ -62,6 +65,26 @@ type CardinalityViolationParams = {
   bound: 'min' | 'max';
   expected: number;
   path?: string;
+};
+
+type SlicingAmbiguousParams = {
+  slices: string[];
+  path?: string;
+  source?: string;
+};
+
+type SlicingUnmatchedParams = {
+  path?: string;
+  source?: string;
+};
+
+type SliceCardinalityParams = {
+  actual: number;
+  bound: 'min' | 'max';
+  expected: number;
+  slice: string;
+  path?: string;
+  source?: string;
 };
 
 export const errorRegistry = {
@@ -136,5 +159,36 @@ export const errorRegistry = {
       path === undefined
         ? `[${errorCodes.cardinalityViolation}] Array length violates ${bound}=${expected}, actual: ${actual}`
         : `[${errorCodes.cardinalityViolation}] Array length violates ${bound}=${expected} for field: ${path}, actual: ${actual}`,
+  },
+  [errorCodes.slicingAmbiguous]: {
+    issueCode: 'invalid' as OperationOutcomeIssue['code'],
+    severity: 'error' as OperationOutcomeIssue['severity'],
+    message: ({ slices, path, source }: SlicingAmbiguousParams) => {
+      const sourceHint = source ? ` (profile: ${source})` : '';
+      const list = slices.join(', ');
+      return path === undefined
+        ? `[${errorCodes.slicingAmbiguous}] Item matches multiple slices${sourceHint}: ${list}`
+        : `[${errorCodes.slicingAmbiguous}] Item at ${path} matches multiple slices${sourceHint}: ${list}`;
+    },
+  },
+  [errorCodes.slicingUnmatched]: {
+    issueCode: 'invalid' as OperationOutcomeIssue['code'],
+    severity: 'error' as OperationOutcomeIssue['severity'],
+    message: ({ path, source }: SlicingUnmatchedParams) => {
+      const sourceHint = source ? ` (profile: ${source})` : '';
+      return path === undefined
+        ? `[${errorCodes.slicingUnmatched}] Item does not match any slice in closed slicing${sourceHint}`
+        : `[${errorCodes.slicingUnmatched}] Item at ${path} does not match any slice in closed slicing${sourceHint}`;
+    },
+  },
+  [errorCodes.sliceCardinality]: {
+    issueCode: 'invariant' as OperationOutcomeIssue['code'],
+    severity: 'error' as OperationOutcomeIssue['severity'],
+    message: ({ actual, bound, expected, slice, path, source }: SliceCardinalityParams) => {
+      const sourceHint = source ? ` (profile: ${source})` : '';
+      return path === undefined
+        ? `[${errorCodes.sliceCardinality}] Slice "${slice}"${sourceHint} violates ${bound}=${expected}, actual: ${actual}`
+        : `[${errorCodes.sliceCardinality}] Slice "${slice}" at ${path}${sourceHint} violates ${bound}=${expected}, actual: ${actual}`;
+    },
   },
 } as const;

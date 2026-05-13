@@ -1,6 +1,7 @@
 import type { OperationOutcome, OperationOutcomeIssue } from '../converter/types.js';
 import { errorCodes, errorRegistry } from './errors.js';
 import type {
+  Discriminator,
   ElementDef,
   NewContext,
   NewData,
@@ -8,6 +9,8 @@ import type {
   NewValidateOptions,
   NewValidationResult,
   SchemaFragment,
+  SliceDef,
+  Slicing,
 } from './types.js';
 
 const FHIR_STRING_MAX_LENGTH = 1024 * 1024;
@@ -66,6 +69,10 @@ function pathParam(path: string): string | undefined {
 
 function joinPath(parent: string, segment: string | number): string {
   return parent === '' ? String(segment) : `${parent}.${segment}`;
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 function okOutcome(): OperationOutcome {
@@ -298,12 +305,8 @@ function collectPrimitiveType(schemas: SchemaFragment[]): string | undefined {
   return undefined;
 }
 
-function collectElementMaps(schemas: SchemaFragment[]): Record<string, ElementDef>[] {
-  const maps: Record<string, ElementDef>[] = [];
-  for (const s of schemas) {
-    if (s.elements) maps.push(s.elements);
-  }
-  return maps;
+function hasAnyElements(schemas: SchemaFragment[]): boolean {
+  return schemas.some((s) => s.elements);
 }
 
 function isStrictMode(schemas: SchemaFragment[]): boolean {
@@ -326,6 +329,98 @@ function collectMax(schemas: SchemaFragment[]): number | undefined {
   return result;
 }
 
+type ProfileSlicing = { source: string | undefined; slicing: Slicing };
+
+function collectSlicings(schemas: SchemaFragment[]): ProfileSlicing[] {
+  const result: ProfileSlicing[] = [];
+  for (const s of schemas) {
+    if (s.slicing) result.push({ source: s.source, slicing: s.slicing });
+  }
+  return result;
+}
+
+// ── Slicing helpers ─────────────────────────────────────────────────
+
+function extractAtPath(value: unknown, path: string): unknown[] {
+  if (path === '' || path === '$this') return [value];
+  const parts = path.split('.');
+  let current: unknown[] = [value];
+  for (const part of parts) {
+    const next: unknown[] = [];
+    for (const c of current) {
+      if (!isPlainObject(c)) continue;
+      const v = c[part];
+      if (Array.isArray(v)) next.push(...v);
+      else if (v !== undefined) next.push(v);
+    }
+    current = next;
+  }
+  return current;
+}
+
+function deepPartialMatch(value: unknown, pattern: unknown): boolean {
+  if (pattern === undefined) return true;
+  if (Array.isArray(pattern)) {
+    if (!Array.isArray(value)) return false;
+    return pattern.every((p) => value.some((v) => deepPartialMatch(v, p)));
+  }
+  if (isPlainObject(pattern)) {
+    if (!isPlainObject(value)) return false;
+    for (const [k, v] of Object.entries(pattern)) {
+      if (!deepPartialMatch(value[k], v)) return false;
+    }
+    return true;
+  }
+  return value === pattern;
+}
+
+function matchOneDiscriminator(
+  itemValues: unknown[],
+  expectedValues: unknown[],
+  discType: Discriminator['type'],
+): boolean {
+  if (discType === 'exists') {
+    const requirePresent =
+      expectedValues.length === 0 || expectedValues.some((v) => v !== false);
+    return requirePresent ? itemValues.length > 0 : itemValues.length === 0;
+  }
+  if (expectedValues.length === 0) return true;
+  if (discType === 'value') {
+    return itemValues.some((iv) => expectedValues.some((ev) => iv === ev));
+  }
+  // pattern
+  return itemValues.some((iv) => expectedValues.some((ev) => deepPartialMatch(iv, ev)));
+}
+
+function sliceMatches(slicing: Slicing, slice: SliceDef, item: unknown): boolean {
+  const discriminators = slicing.discriminator ?? [];
+  if (discriminators.length === 0) {
+    return slice.match === undefined || deepPartialMatch(item, slice.match);
+  }
+  for (const disc of discriminators) {
+    const itemVals = extractAtPath(item, disc.path);
+    const expected =
+      slice.match !== undefined ? extractAtPath(slice.match, disc.path) : [];
+    if (!matchOneDiscriminator(itemVals, expected, disc.type)) return false;
+  }
+  return true;
+}
+
+type ClassifyResult =
+  | { kind: 'matched'; sliceName: string }
+  | { kind: 'unmatched' }
+  | { kind: 'ambiguous'; slices: string[] };
+
+function classifySlice(slicing: Slicing, item: unknown): ClassifyResult {
+  const matches: string[] = [];
+  for (const [name, slice] of Object.entries(slicing.slices)) {
+    if (sliceMatches(slicing, slice, item)) matches.push(name);
+  }
+  if (matches.length === 0) return { kind: 'unmatched' };
+  if (matches.length > 1) return { kind: 'ambiguous', slices: matches };
+  return { kind: 'matched', sliceName: matches[0] as string };
+}
+
 // ── Main loop ───────────────────────────────────────────────────────
 
 function validateValue(
@@ -342,7 +437,6 @@ function validateValue(
 
   if (isArray) {
     if (!Array.isArray(value)) {
-      // Root placeholder: tests expect OK when scalar arrives where array primitive is declared
       if (path === '' && primitiveType !== undefined) return;
       issues.push(
         makeIssue(errorCodes.typeMismatch, {
@@ -389,18 +483,111 @@ function validateValue(
       }
     }
 
-    const itemSchemas: SchemaFragment[] = schemas.map((s) => ({ ...s, array: false }));
+    const slicings = collectSlicings(schemas);
+    const sliceCounts = new Map<number, Map<string, number>>();
+
+    // array-level concerns (length cardinality, slicing) belong to the array node,
+    // not its items — strip them so they don't leak into per-item validation
+    const itemSchemasBase: SchemaFragment[] = schemas.map((s) => ({
+      ...s,
+      array: false,
+      slicing: undefined,
+      min: undefined,
+      max: undefined,
+    }));
+
     for (let i = 0; i < value.length; i++) {
       const itemExt = Array.isArray(primitiveExt) ? primitiveExt[i] : undefined;
+      const itemPath = joinPath(path, i);
+
+      // Per-item branch: start from parent overlay, then layer matched slices
+      const branchSchemas: SchemaFragment[] = [...itemSchemasBase];
+
+      for (let psIdx = 0; psIdx < slicings.length; psIdx++) {
+        const ps = slicings[psIdx];
+        if (!ps) continue;
+        const cls = classifySlice(ps.slicing, value[i]);
+
+        if (cls.kind === 'ambiguous') {
+          issues.push(
+            makeIssue(errorCodes.slicingAmbiguous, {
+              path: pathParam(itemPath),
+              slices: cls.slices,
+              source: ps.source,
+            }),
+          );
+          continue;
+        }
+        if (cls.kind === 'unmatched') {
+          if (ps.slicing.rules === 'closed') {
+            issues.push(
+              makeIssue(errorCodes.slicingUnmatched, {
+                path: pathParam(itemPath),
+                source: ps.source,
+              }),
+            );
+          }
+          continue;
+        }
+
+        const slice = ps.slicing.slices[cls.sliceName];
+        if (!slice) continue;
+
+        let counts = sliceCounts.get(psIdx);
+        if (!counts) {
+          counts = new Map<string, number>();
+          sliceCounts.set(psIdx, counts);
+        }
+        counts.set(cls.sliceName, (counts.get(cls.sliceName) ?? 0) + 1);
+
+        if (slice.schema) {
+          branchSchemas.push({ ...slice.schema, source: ps.source });
+        }
+      }
+
       validateValue(
         ctx,
-        itemSchemas,
+        branchSchemas,
         value[i],
-        joinPath(path, i),
+        itemPath,
         itemExt,
         expectedPrimitiveName,
         issues,
       );
+    }
+
+    // Slice cardinality per (profile, slice)
+    for (let psIdx = 0; psIdx < slicings.length; psIdx++) {
+      const ps = slicings[psIdx];
+      if (!ps) continue;
+      const counts = sliceCounts.get(psIdx) ?? new Map<string, number>();
+      for (const [sliceName, slice] of Object.entries(ps.slicing.slices)) {
+        const c = counts.get(sliceName) ?? 0;
+        if (slice.min !== undefined && c < slice.min) {
+          issues.push(
+            makeIssue(errorCodes.sliceCardinality, {
+              path: pathParam(path),
+              slice: sliceName,
+              source: ps.source,
+              bound: 'min',
+              expected: slice.min,
+              actual: c,
+            }),
+          );
+        }
+        if (slice.max !== undefined && c > slice.max) {
+          issues.push(
+            makeIssue(errorCodes.sliceCardinality, {
+              path: pathParam(path),
+              slice: sliceName,
+              source: ps.source,
+              bound: 'max',
+              expected: slice.max,
+              actual: c,
+            }),
+          );
+        }
+      }
     }
     return;
   }
@@ -414,9 +601,8 @@ function validateValue(
     return;
   }
 
-  const elementMaps = collectElementMaps(schemas);
-  if (elementMaps.length > 0) {
-    if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+  if (hasAnyElements(schemas)) {
+    if (!isPlainObject(value)) {
       issues.push(
         makeIssue(errorCodes.typeMismatch, {
           path: pathParam(path),
@@ -426,20 +612,13 @@ function validateValue(
       );
       return;
     }
-    validateElements(
-      ctx,
-      elementMaps,
-      value as Record<string, unknown>,
-      path,
-      isStrictMode(schemas),
-      issues,
-    );
+    validateElements(ctx, schemas, value, path, isStrictMode(schemas), issues);
   }
 }
 
 function validateElements(
   ctx: NewContext,
-  elementMaps: Record<string, ElementDef>[],
+  schemas: SchemaFragment[],
   data: Record<string, unknown>,
   path: string,
   strict: boolean,
@@ -456,7 +635,7 @@ function validateElements(
 
     if (key.startsWith('_')) {
       const normKey = key.slice(1);
-      if (normKey in data) continue; // обработается с обычным ключом
+      if (normKey in data) continue;
       actualKey = normKey;
       actualValue = null;
       primitiveExt = value;
@@ -468,12 +647,14 @@ function validateElements(
 
     seen.add(actualKey);
 
-    const defs: ElementDef[] = [];
-    for (const map of elementMaps) {
-      if (map[actualKey]) defs.push(map[actualKey]);
+    // Collect {def, source} pairs from every fragment carrying this field
+    const layers: { def: ElementDef; source: string | undefined }[] = [];
+    for (const sf of schemas) {
+      const def = sf.elements?.[actualKey];
+      if (def) layers.push({ def, source: sf.source });
     }
 
-    if (defs.length === 0) {
+    if (layers.length === 0) {
       if (strict && !key.startsWith('_')) {
         issues.push(
           makeIssue(errorCodes.unknownField, {
@@ -485,7 +666,7 @@ function validateElements(
       continue;
     }
 
-    const isPrimitiveField = defs.some((d) => isPrimitive(d.type));
+    const isPrimitiveField = layers.some((l) => isPrimitive(l.def.type));
     if (primitiveExt !== undefined && !isPrimitiveField) {
       issues.push(
         makeIssue(errorCodes.invalidPrimitiveExtension, {
@@ -496,17 +677,18 @@ function validateElements(
       continue;
     }
 
-    // Build child overlay: each def becomes a SchemaFragment;
-    // for complex types pull in ctx[type] elements as additional layer.
     const childSchemas: SchemaFragment[] = [];
+    // If multiple layers declare different primitive types, last one wins.
+    // In practice FHIR profiles refine constraints rather than change types,
+    // so layers should agree — divergence here is a profile-incompatibility signal.
     let childExpectedName: string | undefined;
-    for (const def of defs) {
-      childSchemas.push(def as SchemaFragment);
+    for (const { def, source } of layers) {
+      childSchemas.push({ ...def, source });
       if (def.type) {
         if (isPrimitive(def.type)) {
-          childExpectedName = def.type; // field-level uses FHIR type name
+          childExpectedName = def.type;
         } else if (ctx?.[def.type]?.elements) {
-          childSchemas.push({ elements: ctx[def.type].elements } as SchemaFragment);
+          childSchemas.push({ elements: ctx[def.type].elements, source });
         }
       }
     }
@@ -524,8 +706,9 @@ function validateElements(
 
   if (strict) {
     const required = new Set<string>();
-    for (const map of elementMaps) {
-      for (const [name, def] of Object.entries(map)) {
+    for (const sf of schemas) {
+      if (!sf.elements) continue;
+      for (const [name, def] of Object.entries(sf.elements)) {
         if (def.required) required.add(name);
       }
     }
