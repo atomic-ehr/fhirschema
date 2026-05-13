@@ -5,6 +5,8 @@ export type ElementDef = {
   elements?: Record<string, ElementDef>;
   array?: boolean;
   required?: boolean;
+  min?: number;
+  max?: number;
 };
 
 export type SchemaFragment = ElementDef & {

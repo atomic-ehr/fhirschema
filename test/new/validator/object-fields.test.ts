@@ -31,7 +31,7 @@ describe('New validator draft', () => {
           { elements: { name: { type: 'string', array: true } } },
           { elements: { birthDate: { type: 'date' } } },
         ],
-        { name: ['123'], birthDate: '01-01-1999' },
+        { name: ['123'], birthDate: '1999-01-01' },
       );
 
       expect(result).toEqual(OK_OUTCOME);

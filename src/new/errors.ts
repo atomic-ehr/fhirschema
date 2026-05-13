@@ -9,6 +9,7 @@ export const errorCodes = {
   invalidPrimitiveExtension: 'invalid_primitive_extension',
   requiredField: 'required_field',
   unknownField: 'unknown_field',
+  cardinalityViolation: 'cardinality_violation',
 } as const;
 
 export type NewErrorCode = (typeof errorCodes)[keyof typeof errorCodes];
@@ -53,6 +54,13 @@ type RequiredFieldParams = {
 
 type UnknownFieldParams = {
   field: string;
+  path?: string;
+};
+
+type CardinalityViolationParams = {
+  actual: number;
+  bound: 'min' | 'max';
+  expected: number;
   path?: string;
 };
 
@@ -120,5 +128,13 @@ export const errorRegistry = {
       path === undefined
         ? `[${errorCodes.unknownField}] Unknown field: ${field}`
         : `[${errorCodes.unknownField}] Unknown field: ${path}.${field}`,
+  },
+  [errorCodes.cardinalityViolation]: {
+    issueCode: 'invariant' as OperationOutcomeIssue['code'],
+    severity: 'error' as OperationOutcomeIssue['severity'],
+    message: ({ actual, bound, expected, path }: CardinalityViolationParams) =>
+      path === undefined
+        ? `[${errorCodes.cardinalityViolation}] Array length violates ${bound}=${expected}, actual: ${actual}`
+        : `[${errorCodes.cardinalityViolation}] Array length violates ${bound}=${expected} for field: ${path}, actual: ${actual}`,
   },
 } as const;
