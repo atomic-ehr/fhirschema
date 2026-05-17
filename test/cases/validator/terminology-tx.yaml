@@ -149,3 +149,80 @@ tests:
             code: yyy-bad
     issues:
       - { code: fs501, path: [gender] }
+
+  # ─── bare-code (inferSystem) ─────────────────────────────────────────
+  - desc: 'plain-string code on single-system VS — server infers → in'
+    schemas:
+      - url: http://example.com/test/tx/CodeResource
+        type: CodeResource
+        elements:
+          gender:
+            type: code
+            binding:
+              strength: required
+              valueSet: http://hl7.org/fhir/ValueSet/administrative-gender
+    data:
+      gender: male
+    valid: true
+
+  - desc: 'plain-string code not in VS — inferSystem → fs501'
+    schemas:
+      - url: http://example.com/test/tx/CodeResource
+        type: CodeResource
+        elements:
+          gender:
+            type: code
+            binding:
+              strength: required
+              valueSet: http://hl7.org/fhir/ValueSet/administrative-gender
+    data:
+      gender: xxx
+    issues:
+      - { code: fs501, path: [gender] }
+
+  # ─── severity-by-strength ────────────────────────────────────────────
+  - desc: 'extensible strength + invalid code → fs503 warning (not error)'
+    schemas:
+      - url: http://example.com/test/tx/ExtensibleResource
+        type: ExtensibleResource
+        elements:
+          gender:
+            type: code
+            binding:
+              strength: extensible
+              valueSet: http://hl7.org/fhir/ValueSet/administrative-gender
+    data:
+      gender: xxx
+    issues:
+      - { code: fs503, severity: warning, path: [gender] }
+    valid: true   # warning != error, so result.valid stays true
+
+  - desc: 'preferred strength + invalid code → fs502 information (not error)'
+    schemas:
+      - url: http://example.com/test/tx/PreferredResource
+        type: PreferredResource
+        elements:
+          gender:
+            type: code
+            binding:
+              strength: preferred
+              valueSet: http://hl7.org/fhir/ValueSet/administrative-gender
+    data:
+      gender: xxx
+    issues:
+      - { code: fs502, severity: information, path: [gender] }
+    valid: true
+
+  - desc: 'example strength — never validated (skipped silently)'
+    schemas:
+      - url: http://example.com/test/tx/ExampleResource
+        type: ExampleResource
+        elements:
+          gender:
+            type: code
+            binding:
+              strength: example
+              valueSet: http://hl7.org/fhir/ValueSet/administrative-gender
+    data:
+      gender: xxx-not-in-vs
+    valid: true

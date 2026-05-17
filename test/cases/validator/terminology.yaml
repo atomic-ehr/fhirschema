@@ -3,7 +3,7 @@ suite: 'Terminology bindings (fs5xx) — pluggable validator'
 # a ValueSet via `options.terminology` plugin. Strengths:
 #   required    → fs501 on miss
 #   extensible  → fs503 warning on miss
-#   preferred   → fs502 warning on miss
+#   preferred   → fs502 information on miss
 #   example     → no validation
 # Without `options.terminology` configured: all bindings silently skipped.
 
@@ -42,7 +42,7 @@ tests:
     issues:
       - { code: fs503, path: [color], severity: warning }
 
-  - desc: preferred binding — code not in → fs502 warning
+  - desc: preferred binding — code not in → fs502 information
     schemas:
       - elements:
           color:
@@ -50,7 +50,7 @@ tests:
             binding: { strength: preferred, valueSet: 'urn:vs:colors' }
     data: { color: purple }
     issues:
-      - { code: fs502, path: [color], severity: warning }
+      - { code: fs502, path: [color], severity: information }
 
   - desc: example binding — no validation regardless of value
     schemas:

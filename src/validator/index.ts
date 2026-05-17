@@ -1145,7 +1145,7 @@ function checkBindings(
     } else if (b.strength === 'preferred') {
       issues.push({
         code: FS.CODE_NOT_IN_PREFERRED,
-        severity: 'warning',
+        severity: 'information',
         path,
         schema: o.source,
         expected: b.valueSet,

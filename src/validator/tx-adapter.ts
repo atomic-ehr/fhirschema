@@ -5,11 +5,12 @@
 // curl (Java reference validator does the equivalent — synchronous HTTP in
 // the validation hot loop). In-process cache keeps repeat queries cheap.
 //
-// What we check: only values that carry both `system` and `code` — Coding
-// and CodeableConcept. Plain `code` strings on primitive `code`-typed
-// fields are NOT sent: the server can't validate a bare code without a
-// system, and we don't have the binding's CodeSystem in hand. Those return
-// 'unknown' (silent — same as no engine wired).
+// What we check: Coding and CodeableConcept (system + code), and plain
+// `code` strings WITHOUT a system. For bare codes the server tries to
+// infer the CodeSystem from the ValueSet itself — this works for VSes
+// composed of a single CodeSystem (the common case for required-bound
+// `code` fields like Patient.gender, HumanName.use). When the server
+// can't decide it returns no `result` parameter and we report 'unknown'.
 
 import type { TerminologyEvaluator, TerminologyVerdict } from './index.js';
 
@@ -61,14 +62,14 @@ export class TxFhirOrgAdapter implements TerminologyEvaluator {
   ): TerminologyVerdict {
     if (ctx.strength === 'example') return 'unknown';
 
-    const codings = extractCodings(value).filter((c) => c.system !== undefined);
+    const codings = extractCodings(value);
     if (codings.length === 0) return 'unknown';
 
     // CodeableConcept semantics: any matching coding wins.
     let sawNotIn = false;
     let sawUnknown = false;
     for (const c of codings) {
-      const verdict = this.lookup(valueSet, c as { system: string; code: string });
+      const verdict = this.lookup(valueSet, c);
       if (verdict === 'in') return 'in';
       if (verdict === 'not-in') sawNotIn = true;
       if (verdict === 'unknown') sawUnknown = true;
@@ -79,9 +80,9 @@ export class TxFhirOrgAdapter implements TerminologyEvaluator {
 
   private lookup(
     valueSet: string,
-    coding: { system: string; code: string },
+    coding: { system?: string; code: string },
   ): TerminologyVerdict {
-    const key = `${valueSet}|${coding.system}|${coding.code}`;
+    const key = `${valueSet}|${coding.system ?? ''}|${coding.code}`;
     const cached = this.cache?.get(key);
     if (cached !== undefined) return cached;
     const verdict = this.callValidateCode(valueSet, coding);
@@ -91,15 +92,29 @@ export class TxFhirOrgAdapter implements TerminologyEvaluator {
 
   private callValidateCode(
     valueSet: string,
-    coding: { system: string; code: string },
+    coding: { system?: string; code: string },
   ): TerminologyVerdict {
+    const params: Array<{
+      name: string;
+      valueUri?: string;
+      valueCode?: string;
+      valueBoolean?: boolean;
+    }> = [
+      { name: 'url', valueUri: valueSet },
+      { name: 'code', valueCode: coding.code },
+    ];
+    if (coding.system) {
+      params.splice(1, 0, { name: 'system', valueUri: coding.system });
+    } else {
+      // Tell the server to infer the system from the ValueSet itself.
+      // Works for single-CodeSystem VSes (the common case for required
+      // `code`-typed fields). For multi-system VSes the server returns
+      // no usable verdict → 'unknown'.
+      params.push({ name: 'inferSystem', valueBoolean: true });
+    }
     const body = JSON.stringify({
       resourceType: 'Parameters',
-      parameter: [
-        { name: 'url', valueUri: valueSet },
-        { name: 'system', valueUri: coding.system },
-        { name: 'code', valueCode: coding.code },
-      ],
+      parameter: params,
     });
     const url = `${this.endpoint}/ValueSet/$validate-code`;
     const result = Bun.spawnSync({
