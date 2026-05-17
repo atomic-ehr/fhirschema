@@ -1,0 +1,606 @@
+suite: Graham fhir-test-cases — R4 good cases
+defaults:
+  useR4: true
+tests:
+- desc: graham/patient-example-ra4
+  schemas: []
+  data:
+    resourceType: Patient
+    id: SMART-1288992
+    meta:
+      versionId: '1'
+      lastUpdated: '2019-03-07T08:48:54.000+00:00'
+    text:
+      status: generated
+      div: "<div xmlns=\"http://www.w3.org/1999/xhtml\">\n        <p>Daniel Adams</p>\n      </div>"
+    identifier:
+    - use: usual
+      type:
+        coding:
+        - system: http://hl7.org/fhir/v2/0203
+          code: MR
+          display: Medical record number
+          userSelected: false
+        text: Medical record number
+      system: http://hospital.smarthealthit.org
+      value: '1288992'
+    active: true
+    name:
+    - use: official
+      family: Adams
+      given:
+      - Daniel
+      - X.
+    telecom:
+    - system: email
+      value: daniel.adams@example.com
+    gender: male
+    birthDate: '1925-12-23'
+    address:
+    - use: home
+      line:
+      - 1 Hill AveApt 14
+      city: Tulsa
+      state: OK
+      postalCode: '74117'
+      country: USA
+  valid: true
+- desc: graham/dr-example-org-2
+  schemas: []
+  data:
+    resourceType: DocumentReference
+    status: current
+    content:
+    - attachment:
+        contentType: text/plain
+        language: en-US
+        url: http://repository.example.org/fhir/DocumentReference/example
+        title: Physical
+        creation: '2005-12-24'
+  valid: true
+- desc: graham/care-plan
+  schemas: []
+  data:
+    resourceType: CarePlan
+    id: example
+    text:
+      status: additional
+      div: <div xmlns="http://www.w3.org/1999/xhtml">test careplan</div>
+    status: active
+    intent: plan
+    subject:
+      reference: Patient/123
+    activity:
+    - reference:
+        display: Prenatal vitamin MedicationRequest
+    - detail:
+        kind: Appointment
+        code:
+          coding:
+          - system: http://example.org/mySystem
+            code: 1an
+          text: First Antenatal encounter
+        status: scheduled
+        doNotPerform: false
+        scheduledTiming:
+          repeat:
+            boundsPeriod:
+              start: '2013-02-14'
+              end: '2013-02-28'
+            offset: 1
+            when:
+            - ACM
+            - AC
+        description: The first antenatal encounter. This is where a detailed physical examination is performed.             and the pregnanacy
+          discussed with the mother-to-be.
+  valid: true
+- desc: graham/line-pattern-card-test
+  schemas: []
+  data:
+    resourceType: Patient
+    id: patient
+    meta:
+      profile:
+      - http://example.org/StructureDefinition/PatternTest
+    address:
+    - type: both
+      line:
+      - Musterweg 2
+      - 3. Etage
+      _line:
+      - extension:
+        - url: http://hl7.org/fhir/StructureDefinition/iso21090-ADXP-streetName
+          valueString: Musterweg
+        - url: http://hl7.org/fhir/StructureDefinition/iso21090-ADXP-houseNumber
+          valueString: '2'
+      - extension:
+        - url: http://hl7.org/fhir/StructureDefinition/iso21090-ADXP-additionalLocator
+          valueString: 3. Etage
+      city: Musterhausen
+      postalCode: '98764'
+      country: DE
+    - type: postal
+      line:
+      - Postfach 8 15
+      _line:
+      - extension:
+        - url: http://hl7.org/fhir/StructureDefinition/iso21090-ADXP-postBox
+          valueString: Postfach 8 15
+      city: Musterhausen
+      postalCode: '98764'
+      country: DE
+  valid: true
+- desc: graham/resource-invalid-id-0
+  schemas: []
+  data:
+    resourceType: Location
+    id: foo-bar
+    name: A Location
+  valid: true
+- desc: graham/resource-invalid-eid-0
+  schemas: []
+  data:
+    resourceType: Location
+    id: foo-bar
+    name: A Location
+    position:
+      id: foo-bar
+      longitude: 3.24
+      latitude: 3.24
+  valid: true
+- desc: graham/resource-invalid-eid-1
+  schemas: []
+  data:
+    resourceType: Location
+    id: foo-bar
+    name: A Location
+    position:
+      id: /foobar==
+      longitude: 3.24
+      latitude: 3.24
+  valid: true
+- desc: graham/document-manifest
+  schemas: []
+  data:
+    resourceType: DocumentManifest
+    id: DocumentManifest-ref1-stu3-example
+    text:
+      status: generated
+      div: <div xmlns="http://www.w3.org/1999/xhtml">This is a SubmissionSet from DocumentManifest</div>
+    contained:
+    - resourceType: Practitioner
+      id: '3'
+      name:
+      - family: Pfirter
+        given:
+        - Urs
+    - resourceType: Practitioner
+      id: '4'
+      name:
+      - family: Gesundmacher
+        given:
+        - Franz
+    - resourceType: Patient
+      id: '5'
+      identifier:
+      - system: urn:oid:2.16.756.5.30.1.221.3.1.2.3.1.1
+        value: urn:uuid:88153369-e217-44d2-939d-f5ad9af7f763
+    - resourceType: Practitioner
+      id: '1'
+      name:
+      - family: Pfirter
+        given:
+        - Urs
+    - resourceType: DocumentReference
+      id: '2'
+      masterIdentifier:
+        system: urn:ietf:rfc:3986
+        value: urn:oid:2.16.756.5.30.1.221.3.1.1.3.1.1.151000087000030010.1622
+      identifier:
+      - use: official
+        system: urn:ietf:rfc:3986
+        value: urn:uuid:0b7f8d2e-8b7c-618a-68e6-3fb2fe7961d6
+      - system: urn:hin:adc:logicalId
+        value: urn:uuid:0b7f8d2e-8b7c-618a-68e6-3fb2fe7961d6
+      status: current
+      type:
+        coding:
+        - system: http://snomed.info/sct
+          code: '419891008'
+          display: Record artifact (record artifact)
+      category:
+      - coding:
+        - system: http://snomed.info/sct
+          code: '371525003'
+          display: Clinical procedure report (record artifact)
+      subject:
+        reference: Patient/88153369-e217-44d2-939d-f5ad9af7f763
+      date: '2021-05-31T08:39:48.319+02:00'
+      author:
+      - reference: '#3'
+      authenticator:
+        reference: '#4'
+      description: This is a DocumentReference
+      securityLabel:
+      - coding:
+        - system: http://snomed.info/sct
+          code: '17621005'
+          display: Normal (qualifier value)
+      content:
+      - attachment:
+          id: 2.16.756.5.30.1.221.3.1.1.3.1.1.151000087000030010.1622
+          contentType: application/pdf
+          language: de-CH
+          size: 25982
+          hash: YWRmM2MxMzFkOTgzOGQ4MDc4ZTQyZmJkODAyZjcyNDZjNjk3MWIxOA==
+          title: ExamplePDF.pdf
+          creation: '2021-05-31T08:39:00+02:00'
+        format:
+          system: http://ihe.net/fhir/ihe.formatcode.fhir/CodeSystem/formatcode
+          code: urn:ihe:iti:xds:2017:mimeTypeSufficient
+          display: MimeType sufficient
+      context:
+        event:
+        - coding:
+          - system: urn:oid:1.2.840.10008.2.16.4
+            code: US
+            display: Ultrasound
+        period:
+          start: '2017-04-10T08:39:00+02:00'
+          end: '2018-04-10T08:39:00+02:00'
+        facilityType:
+          coding:
+          - system: http://snomed.info/sct
+            code: '722172003'
+            display: Military health institution (environment)
+        practiceSetting:
+          coding:
+          - system: http://snomed.info/sct
+            code: '394609007'
+            display: General surgery (qualifier value)
+        sourcePatientInfo:
+          reference: '#5'
+    masterIdentifier:
+      system: urn:ietf:rfc:3986
+      value: urn:oid:2.16.756.5.30.1.221.3.1.1.3.1.1.127001046021041093.1622
+    identifier:
+    - use: official
+      system: urn:ietf:rfc:3986
+      value: urn:uuid:987c14e2-490a-4cba-bf43-2bf4ccc134a8
+    status: current
+    type:
+      coding:
+      - system: http://snomed.info/sct
+        code: '71388002'
+        display: Procedure (procedure)
+    subject:
+      reference: Patient/88153369-e217-44d2-939d-f5ad9af7f763
+    created: '2021-05-31T08:39:00+02:00'
+    author:
+    - reference: '#1'
+    source: urn:oid:2.16.756.5.30.1.221.3.1.1.3.1.1
+    description: MyDocumentSet
+    content:
+    - reference: '#2'
+  valid: true
+- desc: graham/params-empty-r4
+  schemas: []
+  data:
+    resourceType: Parameters
+  valid: true
+- desc: graham/structureDefinition-11179-objectClass-R4
+  schemas: []
+  data:
+    resourceType: StructureDefinition
+    id: 11179-objectClass
+    extension:
+    - url: http://hl7.org/fhir/StructureDefinition/structuredefinition-wg
+      valueCode: fhir
+    - url: http://hl7.org/fhir/StructureDefinition/structuredefinition-fmm
+      valueInteger: 1
+    url: http://hl7.org/fhir/StructureDefinition/11179-objectClass
+    version: 4.0.1
+    name: objectClass
+    title: Object Class
+    status: draft
+    date: '2014-04-21'
+    publisher: Health Level Seven International (Orders and Observations)
+    contact:
+    - telecom:
+      - system: url
+        value: http://hl7.org
+    description: A concept that represents a set of ideas, abstractions, or things in the real world that can be identified with explicit boundaries
+      and meaning and whose properties and behavior follow the same rules. It may be either a single concept or a group of associated concepts,
+      abstractions, or things.
+    fhirVersion: 4.0.1
+    mapping:
+    - identity: v2
+      uri: http://hl7.org/v2
+      name: HL7 v2 Mapping
+    - identity: rim
+      uri: http://hl7.org/v3
+      name: RIM Mapping
+    - identity: iso11179
+      uri: http://metadata-standards.org/11179/
+      name: ISO 11179
+    kind: complex-type
+    abstract: false
+    context:
+    - type: element
+      expression: ElementDefinition.mapping
+    type: Extension
+    baseDefinition: http://hl7.org/fhir/StructureDefinition/Extension
+    derivation: constraint
+    snapshot:
+      element:
+      - id: Extension
+        path: Extension
+        short: Object Class
+        definition: A concept that represents a set of ideas, abstractions, or things in the real world that can be identified with explicit boundaries
+          and meaning and whose properties and behavior follow the same rules. It may be either a single concept or a group of associated concepts,
+          abstractions, or things.
+        comment: ObjectClass and Property are treated as a data model that can be mapped to, like any other.  This extension merely captures the
+          ObjectClass element as a discrete code.  The information conveyed here should also be conveyed in human-readable form in the mapping.map
+          element.
+        min: 0
+        max: '1'
+        base:
+          path: Extension
+          min: 0
+          max: '*'
+        condition:
+        - ele-1
+        constraint:
+        - key: ele-1
+          severity: error
+          human: All FHIR elements must have a @value or children
+          expression: hasValue() or (children().count() > id.count())
+          xpath: '@value|f:*|h:div'
+          source: http://hl7.org/fhir/StructureDefinition/Element
+        - key: ext-1
+          severity: error
+          human: Must have either extensions or value[x], not both
+          expression: extension.exists() != value.exists()
+          xpath: exists(f:extension)!=exists(f:*[starts-with(local-name(.), 'value')])
+          source: http://hl7.org/fhir/StructureDefinition/Extension
+        isModifier: false
+        mapping:
+        - identity: v2
+          map: N/A
+        - identity: rim
+          map: N/A
+        - identity: iso11179
+          map: Data_Element.meaning.object_class
+      - id: Extension.id
+        path: Extension.id
+        representation:
+        - xmlAttr
+        short: Unique id for inter-element referencing
+        definition: Unique id for the element within a resource (for internal references). This may be any string value that does not contain
+          spaces.
+        min: 0
+        max: '1'
+        base:
+          path: Element.id
+          min: 0
+          max: '1'
+        type:
+        - extension:
+          - url: http://hl7.org/fhir/StructureDefinition/structuredefinition-fhir-type
+            valueUrl: string
+          code: http://hl7.org/fhirpath/System.String
+        isModifier: false
+        isSummary: false
+        mapping:
+        - identity: rim
+          map: n/a
+      - id: Extension.extension
+        path: Extension.extension
+        slicing:
+          discriminator:
+          - type: value
+            path: url
+          description: Extensions are always sliced by (at least) url
+          rules: open
+        short: Extension
+        definition: An Extension
+        min: 0
+        max: '0'
+        base:
+          path: Element.extension
+          min: 0
+          max: '*'
+        type:
+        - code: Extension
+        constraint:
+        - key: ele-1
+          severity: error
+          human: All FHIR elements must have a @value or children
+          expression: hasValue() or (children().count() > id.count())
+          xpath: '@value|f:*|h:div'
+          source: http://hl7.org/fhir/StructureDefinition/Element
+        - key: ext-1
+          severity: error
+          human: Must have either extensions or value[x], not both
+          expression: extension.exists() != value.exists()
+          xpath: exists(f:extension)!=exists(f:*[starts-with(local-name(.), "value")])
+          source: http://hl7.org/fhir/StructureDefinition/Extension
+        isModifier: false
+        isSummary: false
+      - id: Extension.url
+        path: Extension.url
+        representation:
+        - xmlAttr
+        short: identifies the meaning of the extension
+        definition: Source of the definition for the extension code - a logical name or a URL.
+        comment: The definition may point directly to a computable or human-readable definition of the extensibility codes, or it may be a logical
+          URI as declared in some other specification. The definition SHALL be a URI for the Structure Definition defining the extension.
+        min: 1
+        max: '1'
+        base:
+          path: Extension.url
+          min: 1
+          max: '1'
+        type:
+        - extension:
+          - url: http://hl7.org/fhir/StructureDefinition/structuredefinition-fhir-type
+            valueUrl: uri
+          code: http://hl7.org/fhirpath/System.String
+        fixedUri: http://hl7.org/fhir/StructureDefinition/11179-objectClass
+        isModifier: false
+        isSummary: false
+        mapping:
+        - identity: rim
+          map: N/A
+      - id: Extension.value[x]
+        path: Extension.value[x]
+        short: Value of extension
+        definition: Value of extension - must be one of a constrained set of the data types (see [Extensibility](http://hl7.org/fhir/extensibility.html)
+          for a list).
+        min: 1
+        max: '1'
+        base:
+          path: Extension.value[x]
+          min: 0
+          max: '1'
+        type:
+        - code: Coding
+        constraint:
+        - key: ele-1
+          severity: error
+          human: All FHIR elements must have a @value or children
+          expression: hasValue() or (children().count() > id.count())
+          xpath: '@value|f:*|h:div'
+          source: http://hl7.org/fhir/StructureDefinition/Element
+        isModifier: false
+        isSummary: false
+        binding:
+          extension:
+          - url: http://hl7.org/fhir/StructureDefinition/elementdefinition-bindingName
+            valueString: 11179ObjectClass
+          strength: example
+          description: A concept that represents a set of ideas, abstractions, or things in the real world that can be identified with explicit
+            boundaries and meaning and whose properties and behavior follow the same rules; e.g. Person, Prescription, Encounter, etc.
+          valueSet: http://hl7.org/fhir/ValueSet/dataelement-sdcobjectclass
+        mapping:
+        - identity: rim
+          map: N/A
+    differential:
+      element:
+      - id: Extension
+        path: Extension
+        short: Object Class
+        definition: A concept that represents a set of ideas, abstractions, or things in the real world that can be identified with explicit boundaries
+          and meaning and whose properties and behavior follow the same rules. It may be either a single concept or a group of associated concepts,
+          abstractions, or things.
+        comment: ObjectClass and Property are treated as a data model that can be mapped to, like any other.  This extension merely captures the
+          ObjectClass element as a discrete code.  The information conveyed here should also be conveyed in human-readable form in the mapping.map
+          element.
+        min: 0
+        max: '1'
+        mapping:
+        - identity: v2
+          map: N/A
+        - identity: rim
+          map: N/A
+        - identity: iso11179
+          map: Data_Element.meaning.object_class
+      - id: Extension.extension
+        path: Extension.extension
+        max: '0'
+      - id: Extension.url
+        path: Extension.url
+        fixedUri: http://hl7.org/fhir/StructureDefinition/11179-objectClass
+      - id: Extension.value[x]
+        path: Extension.value[x]
+        min: 1
+        type:
+        - code: Coding
+        binding:
+          extension:
+          - url: http://hl7.org/fhir/StructureDefinition/elementdefinition-bindingName
+            valueString: 11179ObjectClass
+          strength: example
+          description: A concept that represents a set of ideas, abstractions, or things in the real world that can be identified with explicit
+            boundaries and meaning and whose properties and behavior follow the same rules; e.g. Person, Prescription, Encounter, etc.
+          valueSet: http://hl7.org/fhir/ValueSet/dataelement-sdcobjectclass
+  valid: true
+- desc: graham/json-good
+  schemas: []
+  data:
+    resourceType: Patient
+    id: au-5
+    name:
+    - family: Simmons
+      given:
+      - Sarah
+    gender: female
+    birthDate: '1977-09-07'
+    address:
+    - line:
+      - 55 Sarah Street
+      city: Strahan
+      state: TAS
+      postalCode: '7468'
+      country: AU
+  valid: true
+- desc: graham/ai1
+  schemas: []
+  data:
+    resourceType: Patient
+    id: example
+    identifier:
+    - system: http://example.org/patient-identifier
+      value: '123456'
+    name:
+    - family: Smith
+      given:
+      - John
+      - A.
+    gender: male
+    birthDate: '1980-01-01'
+  valid: true
+- desc: graham/ai2
+  schemas: []
+  data:
+    resourceType: Patient
+    id: example
+    name:
+    - family: Smith
+  valid: true
+- desc: graham/sd-device
+  schemas: []
+  data:
+    resourceType: StructureDefinition
+    id: IMEIDevice
+    url: https://org.example.fhir/StructureDefinition/IMEIDevice
+    version: PACKAGE_VERSION
+    name: IMEIDevice
+    status: draft
+    fhirVersion: 4.0.1
+    kind: resource
+    abstract: false
+    type: Device
+    baseDefinition: http://hl7.org/fhir/StructureDefinition/Device
+    derivation: constraint
+    differential:
+      element:
+      - id: Device.identifier
+        path: Device.identifier
+        slicing:
+          discriminator:
+          - type: value
+            path: system
+          rules: open
+        min: 1
+        mustSupport: true
+      - id: Device.identifier:imei
+        path: Device.identifier
+        sliceName: imei
+        min: 1
+        max: '1'
+      - id: Device.identifier:imei.system
+        path: Device.identifier.system
+        min: 1
+        fixedUri: http://hl7.org/fhir/sid/imei
+  valid: true

@@ -204,3 +204,4 @@ tests:
     issues:
       - { code: fs103, path: [characteristic, 0, valueBoolean] }
 
+

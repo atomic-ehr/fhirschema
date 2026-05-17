@@ -1,0 +1,76 @@
+suite: 'Graham fhir-test-cases — R4 bad cases'
+# Cases from fhir-test-cases manifest with clear fsNNN mapping that match
+# FHIR JSON spec violations. Sourced from outcomes/java/*.json.
+
+defaults:
+  useR4: true
+
+tests:
+  - desc: 'graham/attachment-with-invalid-binary: Media.content.data not base64 → fs104'
+    # Java: "The value '%%%2@()()' is not a valid Base64 value"
+    schemas: []
+    data:
+      resourceType: Media
+      status: not-done
+      content:
+        contentType: application/octet-stream
+        data: '%%%2@()()'
+        title: 'bbbb syst'
+    issues:
+      - { code: fs104, path: [content, data] }
+
+  - desc: 'graham/empty-array: DocumentReference.category[0].coding=[] → fs303'
+    # Java: "Array cannot be empty - the property should not be present if it has no values"
+    schemas: []
+    data:
+      resourceType: DocumentReference
+      status: current
+      category:
+        - coding: []
+      content:
+        - attachment: { contentType: text/plain, data: Zm9v }
+    issues:
+      - { code: fs303, path: [category, 0, coding] }
+
+  # graham/resource-invalid-id-3 NOT IMPORTED: R4's Resource.id is typed
+  # `string` in the snapshot (typeCode extension carries the actual `id`
+  # constraint, which our translator doesn't lift). R5 normalized this so
+  # patient-id-bad-1/2/3 work there. Translator follow-up.
+
+  - desc: 'graham/ai3: Patient with extra property `unknownElement` → fs201'
+    schemas: []
+    data:
+      resourceType: Patient
+      id: example
+      identifier:
+        - { system: 'http://example.org/patient-identifier', value: '123456' }
+      name:
+        - { family: Smith, given: [John, 'A.'] }
+      gender: male
+      birthDate: '1980-01-01'
+      unknownElement: foo
+    issues:
+      - { code: fs201, path: [unknownElement] }
+
+  - desc: 'graham/ai4: Patient.birthDate = "not a date" → fs107'
+    schemas: []
+    data:
+      resourceType: Patient
+      id: example
+      gender: male
+      birthDate: 'not a date'
+    issues:
+      - { code: fs107, path: [birthDate] }
+
+  - desc: 'graham/attachment-tx: data field not valid base64 → fs104'
+    # Java: "The base64 content in the data element is not valid base64"
+    schemas: []
+    data:
+      resourceType: Parameters
+      parameter:
+        - name: input
+          valueAttachment:
+            contentType: 'image/jpeg'
+            data: 'not.base64!'
+    issues:
+      - { code: fs104, path: [parameter, 0, valueAttachment, data] }

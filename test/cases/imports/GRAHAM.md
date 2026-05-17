@@ -17,6 +17,8 @@ is hand-built — the table is in [graham.yaml](../validator/graham.yaml).
 
 ## Imported
 
+### Hand-curated (graham.yaml)
+
 | name | module | version | status | notes |
 |---|---|---|---|---|
 | patient-good | (default) | R5 | ✅ | valid Patient with narrative |
@@ -24,15 +26,50 @@ is hand-built — the table is in [graham.yaml](../validator/graham.yaml).
 | group-minimal | (default) | R5 | ✅ | minimal Group |
 | list-empty2 | (default) | R5 | ✅ | empty array → fs303 |
 | group-choice-bad1 | (default) | R5 | ✅ | bare `value` (no [x]) → fs301+fs202 |
-| list-minimal | (default) | R5 | ⛔ skip | uses non-standard `fhir_comments` JSON5 |
+| list-minimal | (default) | R5 | ✅ | `fhir_comments` now tolerated (matches Java) |
 | bundle-good | (default) | R5 | ✅ | unblocked by inner-resource walk |
-| list-contained | references | R5 | ⛔ skip | scalar `subject` where R5 mandates array; Java permissive by default. See "Java permissive defaults" below. |
 | patient-lang1 | (default) | R5 | ✅ | xhtml-lang warning is out of scope; data is valid for us |
 | group-minimal-tiny | general | R5 | ✅ | minimal Group |
 | list-unknown-prop | general | R5 | ✅ | unknown `other` → fs201 |
 | list-empty1 | (default) | R5 | ✅ | `entry: [{}]` → fs202 + fs301 |
-| patient-id-bad-1 | general | R5 | ✅ | underscore in id → fs110 |
+| patient-id-bad-1/2/3 | general | R5 | ✅ | invalid Patient id → fs110 |
 | group-choice-bad3 | (default) | R5 | ✅ | wrong type for valueBoolean → fs103 |
+
+### Bulk-imported good cases (graham-r4-good.yaml, graham-r5-good.yaml)
+
+26 zero-error cases from the manifest where the data is plain JSON
+(parseable by `js-yaml`) and our validator returns `valid: true`. Both
+versions covered:
+
+- **R4** (14): patient-example-ra4, dr-example-org-2, care-plan,
+  line-pattern-card-test, resource-invalid-id-0, resource-invalid-eid-0/1,
+  document-manifest, params-empty-r4, structureDefinition-11179-objectClass-R4,
+  json-good, ai1, ai2, sd-device.
+- **R5** (12): custom-resource, list-wrong-order, list-xhtml-correct1/2,
+  primitive-good-ws, patient-lang2/3, params-ws, unicode-control-chars-json,
+  obs-vital-signs-mdc5, sd-slices-ms, obs-sampled-data.
+
+### Bulk-imported bad cases (graham-r4-bad.yaml)
+
+5 R4 bad-case cases that map cleanly to fsNNN codes:
+
+- attachment-with-invalid-binary, attachment-tx → fs104 (invalid base64)
+- empty-array → fs303 (empty array)
+- ai3 → fs201 (unknown property)
+- ai4 → fs107 (invalid date)
+
+### Not imported — translator gap
+
+- `resource-invalid-id-3`: R4 SD has `Resource.id.type = string` (with
+  a typeCode extension carrying the actual `id` constraint that our
+  translator doesn't lift). R5 normalized this and the equivalent
+  R5 case works. Translator follow-up.
+
+### Skipped — by design
+
+- `list-contained` (references): scalar `subject` where R5 cardinality is
+  0..*. Java permissive default; we are spec-strict (see "Java permissive
+  defaults" below).
 
 ## Java permissive defaults — when our spec-strict behavior diverges
 
@@ -46,7 +83,7 @@ default differs from FHIR JSON spec are skipped with reasons, not imported.
 | Scalar in 0..* field (e.g. `subject: {ref}` for `0..*`) | array required | accepts scalar | `fmt` module → "must be JSON Array" | spec-strict (fs203) |
 | Empty arrays (`field: []`) | not allowed | not allowed | always strict | spec-strict (fs303) |
 | Unknown profile in `meta.profile` | not specified | silent | `-strict` flag | permissive (matches Java); `options.strict: true` to opt in |
-| `fhir_comments` JSON5 extension | not valid FHIR JSON | accepts (filters out) | always permissive (Java treats as extension) | spec-strict (fs201 unknown-element) |
+| `fhir_comments` JSON5 extension | not valid FHIR JSON | accepts (filters out) | always permissive (Java treats as extension) | tolerated (matches Java; see DESIGN §15) |
 
 When Java permissive default would force us to either weaken our spec
 compliance or rewrite a test's data, we skip with an explicit comment
@@ -129,9 +166,13 @@ without code changes.
 
 ## Roll-up
 
-- Imported: 5 (+ 1 skip)
-- Importable today, not yet imported: ~250 (rough; mostly `*-good` and simple syntactic checks across modules without packages)
-- Need feature work: ~700
+- Imported: 45 (14 hand-curated + 26 bulk good + 5 bulk bad)
+- Skipped by design (Java permissive divergence): 1
+- Importable today, not yet imported: ~50–100 (mostly cases needing
+  profile resolution or bundle inner-resource walks that we have but
+  haven't wired to specific cases)
+- Need feature work: ~800 (terminology display checks, FHIRPath
+  invariants in profiles, reference resolution, xhtml validation, etc.)
 
 ## Format-mapping table
 

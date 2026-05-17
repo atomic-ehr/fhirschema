@@ -133,6 +133,12 @@ export function checkPrimitive(type: string, value: unknown): PrimitiveCheck {
     case 'base64Binary':
       if (typeof value !== 'string') return fail(FS.EXPECTED_STRING, 'base64Binary');
       if (value.length === 0) return fail(FS.INVALID_BASE64, 'non-empty');
+      // Accept only base64 alphabet (RFC 4648) plus optional internal
+      // whitespace (FHIR allows it for line-folded payloads). Padding
+      // length isn't validated — Java reference validator accepts
+      // unpadded fragments and we follow.
+      if (!/^[A-Za-z0-9+/=\s]+$/.test(value))
+        return fail(FS.INVALID_BASE64, 'base64 alphabet');
       return ok();
 
     case 'xhtml':
