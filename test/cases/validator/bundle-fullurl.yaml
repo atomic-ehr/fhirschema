@@ -1,0 +1,72 @@
+suite: 'Bundle.entry.fullUrl absolute-URL rule (fs1003)'
+# Per FHIR Bundle.entry.fullUrl spec, the value must be an absolute URL.
+# `urn:uuid:` and `urn:oid:` are also acceptable for generated resources.
+# Source: chat.fhir.org / FHIR Validator / "FullUrl Must be Absolute URL"
+# (Grahame Grieve, 2023-11-27): "it was a previously unenforced rule. If
+# it's a generated resource, you give it a generated urn:uuid:{uuid} url".
+
+defaults:
+  useR4: true
+
+tests:
+  - desc: 'fullUrl as absolute http URL → valid'
+    schemas: []
+    data:
+      resourceType: Bundle
+      type: collection
+      entry:
+        - fullUrl: 'http://example.com/fhir/Patient/p1'
+          resource: { resourceType: Patient, id: p1 }
+    valid: true
+
+  - desc: 'fullUrl as urn:uuid: (generated resource) → valid'
+    schemas: []
+    data:
+      resourceType: Bundle
+      type: collection
+      entry:
+        - fullUrl: 'urn:uuid:30551ce1-5a28-4356-b684-1e639094ad4d'
+          resource: { resourceType: Patient, id: p1 }
+    valid: true
+
+  - desc: 'fullUrl as urn:oid: → valid'
+    schemas: []
+    data:
+      resourceType: Bundle
+      type: collection
+      entry:
+        - fullUrl: 'urn:oid:1.2.3.4.5'
+          resource: { resourceType: Patient, id: p1 }
+    valid: true
+
+  - desc: 'fullUrl as relative reference (`Patient/abc`) → fs1003'
+    schemas: []
+    data:
+      resourceType: Bundle
+      type: collection
+      entry:
+        - fullUrl: 'Patient/abc-123'
+          resource: { resourceType: Patient, id: p1 }
+    issues:
+      - { code: fs1003, path: [entry, 0, fullUrl] }
+
+  - desc: 'fullUrl as bare id → fs1003'
+    schemas: []
+    data:
+      resourceType: Bundle
+      type: collection
+      entry:
+        - fullUrl: 'bare-id'
+          resource: { resourceType: Patient, id: p1 }
+    issues:
+      - { code: fs1003, path: [entry, 0, fullUrl] }
+
+  - desc: 'fullUrl as https URL → valid'
+    schemas: []
+    data:
+      resourceType: Bundle
+      type: collection
+      entry:
+        - fullUrl: 'https://hapi.fhir.org/baseR4/Patient/123'
+          resource: { resourceType: Patient, id: '123' }
+    valid: true

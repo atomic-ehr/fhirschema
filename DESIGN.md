@@ -1059,10 +1059,11 @@ Literal validation (JSON type correct, value invalid):
 
 ### fs10xx — References (deferred)
 
-| Code   | Name                   | Severity | Description |
-|--------|------------------------|----------|-------------|
-| fs1001 | invalid-reference-type | error    | Reference targets a disallowed resource type |
-| fs1002 | unresolved-reference   | warning  | Reference target could not be resolved |
+| Code   | Name                   | Severity | Description                                                       |
+|--------|------------------------|----------|-------------------------------------------------------------------|
+| fs1001 | invalid-reference-type | error    | Reference targets a disallowed resource type                      |
+| fs1002 | unresolved-reference   | warning  | Reference target could not be resolved                            |
+| fs1003 | fullurl-not-absolute   | error    | `Bundle.entry.fullUrl` is not an absolute URL or `urn:` reference |
 
 ### fs11xx — Extensions
 

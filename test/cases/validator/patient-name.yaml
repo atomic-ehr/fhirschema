@@ -1,0 +1,65 @@
+suite: 'Patient.name + Patient.extension sample cases'
+# Small end-to-end suite exercising:
+# - HumanName scalar/array shape and element validation
+# - patient-animal sub-extension slicing (species required)
+
+defaults:
+  useR4: true
+
+tests:
+  - desc: 'Patient.name: valid HumanName with family + given'
+    schemas: []
+    data:
+      resourceType: Patient
+      name:
+        - { family: Smith, given: [John, 'A.'] }
+    valid: true
+
+  - desc: 'Patient.name: object instead of array → fs203'
+    schemas: []
+    data:
+      resourceType: Patient
+      name: { family: Smith }
+    issues:
+      - { code: fs203, path: [name] }
+
+  - desc: 'Patient.name: unknown sub-field in HumanName → fs201'
+    schemas: []
+    data:
+      resourceType: Patient
+      name:
+        - { family: Smith, nickname: Johnny }
+    issues:
+      - { code: fs201, path: [name, 0, nickname] }
+
+  - desc: 'Patient.name: family not a string → fs101'
+    schemas: []
+    data:
+      resourceType: Patient
+      name:
+        - { family: 123 }
+    issues:
+      - { code: fs101, path: [name, 0, family] }
+
+  - desc: 'Patient.name: given is scalar (must be array) → fs203'
+    schemas: []
+    data:
+      resourceType: Patient
+      name:
+        - { given: John }
+    issues:
+      - { code: fs203, path: [name, 0, given] }
+
+  - desc: 'patient-animal: sub-extension without species → fs902 (species min=1)'
+    # patient-animal slices its extension into species/breed/genderStatus
+    # with species min=1. A sub-ext that doesn't match any slice (here
+    # {url: "test"}) leaves species count = 0 → slice cardinality violation.
+    schemas: []
+    data:
+      resourceType: Patient
+      extension:
+        - url: 'http://hl7.org/fhir/StructureDefinition/patient-animal'
+          extension:
+            - { url: test, valueString: qwerty }
+    issues:
+      - { code: fs902, path: [extension, 0, extension] }

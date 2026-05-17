@@ -371,15 +371,37 @@ function walkObject(
     }
   }
 
+  // Bundle.entry.fullUrl must be an absolute URL (or `urn:uuid:`/`urn:oid:`).
+  // FHIR Validator enforces this since ~2023 — previously unenforced.
+  // `fullUrl` is unique to Bundle.entry in the FHIR base spec, so its
+  // presence as a string at any non-root scope is a sufficient marker.
+  if (!atRoot && typeof obj.fullUrl === 'string') {
+    const url = obj.fullUrl;
+    if (!url.startsWith('urn:') && !/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(url)) {
+      issues.push({
+        code: FS.FULLURL_NOT_ABSOLUTE,
+        path: [...path, 'fullUrl'],
+        got: url,
+      });
+    }
+  }
+
   // Expand overlays through `type` references: e.g. element typed `HumanName`
   // pulls in HumanName's elements as additional overlays at this scope.
   let expanded = expandTypeOverlays(ctx, overlays, path, issues);
 
   // Extension URL dereferencing: when the current scope is an Extension
-  // (any overlay says type=Extension) AND data carries a string `url`, pull
-  // the extension definition by URL and apply as additional overlay. This
-  // makes us-core-race etc. validate sub-extensions internally.
-  if (typeof obj.url === 'string' && expanded.some((o) => (o.el as { type?: string }).type === 'Extension')) {
+  // (any overlay says type=Extension) AND data carries an absolute-URL
+  // `url`, pull the extension definition by URL and apply as additional
+  // overlay. This makes us-core-race etc. validate sub-extensions
+  // internally. Short bare URLs (sub-extension names like "species") are
+  // NOT resolved — they collide with the resolver's `name` index and
+  // would deref to unrelated canonicals (e.g. "test" → openEHR-test).
+  if (
+    typeof obj.url === 'string' &&
+    obj.url.includes('://') &&
+    expanded.some((o) => (o.el as { type?: string }).type === 'Extension')
+  ) {
     const extSchema = ctx.resolve(obj.url);
     if (extSchema) {
       const chain: Overlay[] = [];

@@ -72,6 +72,7 @@ export const FS = {
   // fs10xx — references
   INVALID_REFERENCE_TYPE: 'fs1001',
   UNRESOLVED_REFERENCE: 'fs1002',
+  FULLURL_NOT_ABSOLUTE: 'fs1003',
 
   // fs11xx — extensions
   UNKNOWN_EXTENSION: 'fs1101',

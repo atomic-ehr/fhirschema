@@ -40,3 +40,4 @@ tmp
 # Generated FHIR package fixtures (regenerate with: bun run prepare-fixtures)
 test/fixtures/
 .tmp-fhir-packages/
+zuliprc
