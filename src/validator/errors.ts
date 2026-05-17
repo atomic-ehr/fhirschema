@@ -69,10 +69,19 @@ export const FS = {
   SLICE_OUT_OF_ORDER: 'fs903',
   UNMATCHED_NOT_AT_END: 'fs904',
 
+  // fs5xx — terminology (continued)
+  INVALID_DISPLAY: 'fs504',
+
   // fs10xx — references
   INVALID_REFERENCE_TYPE: 'fs1001',
   UNRESOLVED_REFERENCE: 'fs1002',
   FULLURL_NOT_ABSOLUTE: 'fs1003',
+  BUNDLE_REFERENCE_AMBIGUOUS: 'fs1004',
+  BUNDLE_REFERENCE_FULLURL_MISMATCH: 'fs1005',
+
+  // fs12xx — Bundle integrity
+  BUNDLE_DUPLICATE_ID: 'fs1201',
+  BUNDLE_TYPE_STRUCTURE: 'fs1202',
 
   // fs11xx — extensions
   UNKNOWN_EXTENSION: 'fs1101',

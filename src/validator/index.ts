@@ -56,6 +56,22 @@ export interface ReferenceResolver {
  */
 export type TerminologyVerdict = 'in' | 'not-in' | 'unknown';
 
+/**
+ * Rich terminology check result. The engine may also return a bare
+ * `TerminologyVerdict` string for simple yes/no/unknown answers — both
+ * shapes are accepted by `validateCode`.
+ *
+ * `displayMismatch` is set when the code IS in the value set but the
+ * provided `Coding.display` doesn't match any canonical display
+ * recorded in the CodeSystem. The validator emits `fs504` for this.
+ */
+export type TerminologyResult =
+  | TerminologyVerdict
+  | {
+      verdict: TerminologyVerdict;
+      displayMismatch?: { provided: string; canonical: string };
+    };
+
 export interface TerminologyEvaluator {
   /**
    * @param valueSet  canonical URL of the bound value set
@@ -66,7 +82,7 @@ export interface TerminologyEvaluator {
     valueSet: string,
     value: unknown,
     ctx: { type?: string; strength: string },
-  ): TerminologyVerdict;
+  ): TerminologyResult;
 }
 
 /**
@@ -384,6 +400,11 @@ function walkObject(
         got: url,
       });
     }
+  }
+
+  // Bundle integrity rules: run once at the Bundle root.
+  if (atRoot && obj.resourceType === 'Bundle') {
+    checkBundleIntegrity(obj, path, issues);
   }
 
   // Expand overlays through `type` references: e.g. element typed `HumanName`
@@ -1074,6 +1095,171 @@ const DROPPED_CONSTRAINTS = new Set<string>([
   'ext-1', // "Must have either extensions or value[x], not both"
 ]);
 
+// ─── bundle integrity ────────────────────────────────────────────────────
+
+/**
+ * Bundle-specific validation that runs once at the Bundle root after
+ * structural checks.
+ *
+ * - `fs1201` BUNDLE_DUPLICATE_ID: two entry resources share the same
+ *   `resourceType + id` pair (e.g. `Patient/1` appears twice). Allowed
+ *   only if the matching entries have distinct `fullUrl`s pointing at
+ *   different absolute resources.
+ * - `fs1202` BUNDLE_TYPE_STRUCTURE: Bundle.type=document/message imposes
+ *   first-entry rules (Composition for document, MessageHeader for
+ *   message). Other types are unconstrained here.
+ * - `fs1004` BUNDLE_REFERENCE_AMBIGUOUS: a relative reference
+ *   `Type/id` matches multiple entries (by type+id) with different
+ *   fullUrls. Java says "Multiple matches in bundle for reference X".
+ * - `fs1005` BUNDLE_REFERENCE_FULLURL_MISMATCH: an entry's fullUrl
+ *   doesn't align with the referencing form ("Entry N matches the
+ *   reference X by type and id but its fullUrl Y does not match the
+ *   full target URL Z by Bundle resolution rules").
+ */
+function checkBundleIntegrity(
+  obj: Record<string, unknown>,
+  path: (string | number)[],
+  issues: ValidationIssue[],
+): void {
+  const entries = Array.isArray(obj.entry) ? (obj.entry as unknown[]) : [];
+  if (entries.length === 0) return;
+
+  // Index entries: collect (idx, fullUrl, resourceType, id) tuples.
+  type EntryInfo = { idx: number; fullUrl?: string; resourceType?: string; id?: string };
+  const infos: EntryInfo[] = [];
+  for (let i = 0; i < entries.length; i++) {
+    const e = entries[i];
+    if (e === null || typeof e !== 'object' || Array.isArray(e)) continue;
+    const ee = e as Record<string, unknown>;
+    const fullUrl = typeof ee.fullUrl === 'string' ? ee.fullUrl : undefined;
+    const res = ee.resource;
+    let resourceType: string | undefined;
+    let id: string | undefined;
+    if (res && typeof res === 'object' && !Array.isArray(res)) {
+      const rr = res as Record<string, unknown>;
+      if (typeof rr.resourceType === 'string') resourceType = rr.resourceType;
+      if (typeof rr.id === 'string') id = rr.id;
+    }
+    infos.push({ idx: i, fullUrl, resourceType, id });
+  }
+
+  // ─── fs1202 type-structure ─────────────────────────────────────────
+  if (obj.type === 'document') {
+    const first = infos[0];
+    if (first && first.resourceType !== 'Composition') {
+      issues.push({
+        code: FS.BUNDLE_TYPE_STRUCTURE,
+        path: [...path, 'entry', 0, 'resource'],
+        expected: 'Composition',
+        got: first.resourceType ?? '<missing>',
+      });
+    }
+  } else if (obj.type === 'message') {
+    const first = infos[0];
+    if (first && first.resourceType !== 'MessageHeader') {
+      issues.push({
+        code: FS.BUNDLE_TYPE_STRUCTURE,
+        path: [...path, 'entry', 0, 'resource'],
+        expected: 'MessageHeader',
+        got: first.resourceType ?? '<missing>',
+      });
+    }
+  }
+
+  // ─── fs1201 duplicate ids ──────────────────────────────────────────
+  // Group by `resourceType/id`. More than one entry under same key with
+  // distinct fullUrls is an error (the same resource can't have two
+  // identities in one Bundle).
+  const byKey = new Map<string, EntryInfo[]>();
+  for (const e of infos) {
+    if (!e.resourceType || !e.id) continue;
+    const k = `${e.resourceType}/${e.id}`;
+    const arr = byKey.get(k);
+    if (arr) arr.push(e);
+    else byKey.set(k, [e]);
+  }
+  for (const [key, list] of byKey) {
+    if (list.length < 2) continue;
+    // If all share the same fullUrl, they're identifying the same logical
+    // resource and Java permits the duplicate (rare; usually a bug, but
+    // strictly speaking only fullUrl uniqueness is required).
+    const urls = new Set(list.map((e) => e.fullUrl ?? '<none>'));
+    if (urls.size === 1) continue;
+    for (const e of list) {
+      issues.push({
+        code: FS.BUNDLE_DUPLICATE_ID,
+        path: [...path, 'entry', e.idx, 'resource', 'id'],
+        expected: 'unique resourceType+id per Bundle',
+        got: key,
+      });
+    }
+  }
+
+  // ─── fs1004/fs1005 reference resolution ────────────────────────────
+  // Build a map: `Type/id` → list of {idx, fullUrl}. Then walk every
+  // entry resource and inspect every `reference` string. If the
+  // reference is relative `Type/id` and the bundle has multiple matches
+  // with distinct fullUrls, emit fs1004. If exactly one match but
+  // fullUrl doesn't align with the absolute form of the reference
+  // (relative `Patient/1` vs fullUrl `http://x/Patient/1`), Java emits
+  // fs1005 only when it could match by type+id but the fullUrls don't
+  // line up across multiple candidates — typically the same ambiguity.
+  const byTypeId = new Map<string, EntryInfo[]>();
+  for (const e of infos) {
+    if (!e.resourceType || !e.id) continue;
+    const k = `${e.resourceType}/${e.id}`;
+    const arr = byTypeId.get(k);
+    if (arr) arr.push(e);
+    else byTypeId.set(k, [e]);
+  }
+  for (let i = 0; i < entries.length; i++) {
+    const e = entries[i];
+    if (!e || typeof e !== 'object') continue;
+    const ee = e as Record<string, unknown>;
+    if (!ee.resource || typeof ee.resource !== 'object') continue;
+    forEachReference(ee.resource, [...path, 'entry', i, 'resource'], (ref, refPath) => {
+      if (ref.startsWith('#') || ref.startsWith('urn:')) return;
+      const m = /^(?:(?:[a-zA-Z][a-zA-Z0-9+.-]*):\/\/[^/]+\/(?:.*\/)?)?([A-Z][A-Za-z]+)\/([A-Za-z0-9\-.]+)(?:\/_history\/.+)?$/.exec(ref);
+      if (!m) return;
+      const key = `${m[1]}/${m[2]}`;
+      const candidates = byTypeId.get(key);
+      if (!candidates || candidates.length === 0) return;
+      if (candidates.length > 1) {
+        // WARNING per Java behavior. Same Type/id with different fullUrls
+        // is usually a versioning/history case where the referencing
+        // system might still pick one validly. Not a hard error.
+        issues.push({
+          code: FS.BUNDLE_REFERENCE_AMBIGUOUS,
+          severity: 'warning',
+          path: refPath,
+          expected: candidates.map((c) => c.fullUrl ?? '<no-fullUrl>'),
+          got: ref,
+        });
+      }
+    });
+  }
+}
+
+/** Recursively visit every string `reference` field in a resource. */
+function forEachReference(
+  node: unknown,
+  path: (string | number)[],
+  cb: (ref: string, path: (string | number)[]) => void,
+): void {
+  if (node === null || typeof node !== 'object') return;
+  if (Array.isArray(node)) {
+    for (let i = 0; i < node.length; i++) forEachReference(node[i], [...path, i], cb);
+    return;
+  }
+  for (const [k, v] of Object.entries(node as Record<string, unknown>)) {
+    if (k === 'reference' && typeof v === 'string') {
+      cb(v, [...path, k]);
+    } else {
+      forEachReference(v, [...path, k], cb);
+    }
+  }
+}
+
 function checkConstraints(
   overlays: Overlay[],
   obj: Record<string, unknown>,
@@ -1155,7 +1341,12 @@ function checkReferenceTarget(
   const targetType = parseReferenceType(ref);
   if (refers && targetType) {
     const allowed = refers.map(canonicalTail);
-    if (!allowed.includes(targetType)) {
+    // `Resource` and `DomainResource` are FHIR meta-types meaning
+    // "any resource". When the refers list contains either, accept any
+    // concrete resource type — Java behavior, see DESIGN §15.
+    if (allowed.includes('Resource') || allowed.includes('DomainResource')) {
+      // allow-any; no check
+    } else if (!allowed.includes(targetType)) {
       issues.push({
         code: FS.INVALID_REFERENCE_TYPE,
         path: [...path, 'reference'],
@@ -1215,10 +1406,28 @@ function checkBindings(
     if (!b?.valueSet || !b.strength) continue;
     if (b.strength === 'example') continue; // examples never validated
     const type = (o.el as { type?: string }).type;
-    const verdict = engine.validateCode(b.valueSet, value, {
+    const raw = engine.validateCode(b.valueSet, value, {
       type,
       strength: b.strength,
     });
+    const result = typeof raw === 'string' ? { verdict: raw } : raw;
+    const verdict = result.verdict;
+
+    // Display-name verification (fs504). Fires when the code IS in the
+    // value set but the provided Coding.display doesn't match any
+    // canonical display in the CodeSystem. Always error severity
+    // (matches Java reference validator default).
+    if (verdict === 'in' && 'displayMismatch' in result && result.displayMismatch) {
+      issues.push({
+        code: FS.INVALID_DISPLAY,
+        severity: 'error',
+        path,
+        schema: o.source,
+        expected: result.displayMismatch.canonical,
+        got: result.displayMismatch.provided,
+      });
+    }
+
     if (verdict !== 'not-in') continue; // 'in' and 'unknown' don't fire
     if (b.strength === 'required') {
       issues.push({

@@ -1,0 +1,124 @@
+suite: 'Bundle integrity rules (fs1201, fs1202, fs1004)'
+# Bundle-specific validation that runs once at the root:
+# - fs1201 duplicate id: two entries with same resourceType+id but
+#   different fullUrls
+# - fs1202 type-structure: Bundle.type=document → first entry must be
+#   Composition; type=message → first must be MessageHeader
+# - fs1004 reference ambiguous: a relative reference Type/id matches
+#   multiple entries with distinct fullUrls (Java: "Multiple matches
+#   in bundle for reference X")
+
+defaults:
+  useR4: true
+
+tests:
+  # ─── fs1202 type-structure ────────────────────────────────────────────
+  - desc: 'Bundle type=document, first entry is Composition → valid'
+    schemas: []
+    data:
+      resourceType: Bundle
+      type: document
+      entry:
+        - fullUrl: 'urn:uuid:c1'
+          resource:
+            resourceType: Composition
+            id: c1
+            status: final
+            type: { coding: [{ system: http://loinc.org, code: '11488-4' }] }
+            date: '2024-01-01'
+            author: [{ reference: 'urn:uuid:p1' }]
+            title: 'Note'
+        - fullUrl: 'urn:uuid:p1'
+          resource:
+            resourceType: Patient
+            id: p1
+    valid: true
+
+  - desc: 'Bundle type=document, first entry is Patient → fs1202'
+    schemas: []
+    data:
+      resourceType: Bundle
+      type: document
+      entry:
+        - fullUrl: 'urn:uuid:p1'
+          resource: { resourceType: Patient, id: p1 }
+    issues:
+      - { code: fs1202, path: [entry, 0, resource], expected: Composition, got: Patient }
+
+  - desc: 'Bundle type=message, first entry is Patient → fs1202'
+    schemas: []
+    data:
+      resourceType: Bundle
+      type: message
+      entry:
+        - fullUrl: 'urn:uuid:p1'
+          resource: { resourceType: Patient, id: p1 }
+    issues:
+      - { code: fs1202, path: [entry, 0, resource], expected: MessageHeader, got: Patient }
+
+  - desc: 'Bundle type=collection — no first-entry constraint'
+    schemas: []
+    data:
+      resourceType: Bundle
+      type: collection
+      entry:
+        - fullUrl: 'urn:uuid:p1'
+          resource: { resourceType: Patient, id: p1 }
+    valid: true
+
+  # ─── fs1201 duplicate id ──────────────────────────────────────────────
+  - desc: 'Two entries with same Patient/1 but different fullUrls → fs1201 (×2)'
+    schemas: []
+    data:
+      resourceType: Bundle
+      type: collection
+      entry:
+        - fullUrl: 'http://server.a/Patient/1'
+          resource: { resourceType: Patient, id: '1' }
+        - fullUrl: 'http://server.b/Patient/1'
+          resource: { resourceType: Patient, id: '1' }
+    issues:
+      - { code: fs1201, path: [entry, 0, resource, id] }
+      - { code: fs1201, path: [entry, 1, resource, id] }
+
+  - desc: 'Two entries Patient/1 with identical fullUrl → no fs1201 (logical dup)'
+    schemas: []
+    data:
+      resourceType: Bundle
+      type: collection
+      entry:
+        - fullUrl: 'http://server.a/Patient/1'
+          resource: { resourceType: Patient, id: '1' }
+        - fullUrl: 'http://server.a/Patient/1'
+          resource: { resourceType: Patient, id: '1' }
+    valid: true
+
+  # ─── fs1004 reference ambiguous ───────────────────────────────────────
+  - desc: 'Reference Patient/1 matches two entries with distinct fullUrls → fs1004'
+    # Composition.subject.reference = "Patient/1" matches both entries.
+    schemas: []
+    data:
+      resourceType: Bundle
+      type: collection
+      entry:
+        - fullUrl: 'urn:uuid:c1'
+          resource:
+            resourceType: Composition
+            id: c1
+            status: final
+            type: { coding: [{ code: x }] }
+            date: '2024-01-01'
+            author: [{ reference: 'urn:uuid:org1' }]
+            title: 'note'
+            subject: { reference: 'Patient/1' }
+        - fullUrl: 'http://a.org/Patient/1'
+          resource: { resourceType: Patient, id: '1' }
+        - fullUrl: 'http://b.org/Patient/1'
+          resource: { resourceType: Patient, id: '1' }
+    issues:
+      # 2 fs1201 (the two Patient/1 entries themselves)
+      - { code: fs1201, path: [entry, 1, resource, id] }
+      - { code: fs1201, path: [entry, 2, resource, id] }
+      # plus fs1004 (warning) on the ambiguous reference — same Type/id
+      # in two entries with distinct fullUrls is non-fatal per Java.
+      - { code: fs1004, severity: warning, path: [entry, 0, resource, subject, reference] }

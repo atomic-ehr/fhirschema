@@ -95,8 +95,6 @@ tests:
     - reference: Observation/example
     about:
     - reference: Patient/pat-good
-  skip: true
-  _skipReason: refers=[Resource] meta-type strictness (DESIGN §15) (see DESIGN §15 → Reference.refers)
 - desc: graham/mycommunication.valid.example
   schemas: []
   _loadProfile:
@@ -111,8 +109,6 @@ tests:
     - reference: Patient/pat-good
     about:
     - reference: Patient/pat-good
-  skip: true
-  _skipReason: refers=[Resource] meta-type strictness (DESIGN §15) (see DESIGN §15 → Reference.refers)
 - desc: graham/jv-patient-good
   schemas: []
   _loadProfile:

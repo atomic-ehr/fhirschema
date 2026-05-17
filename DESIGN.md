@@ -1027,6 +1027,7 @@ Literal validation (JSON type correct, value invalid):
 | fs501 | invalid-code-for-binding | error    | Code not in required value set |
 | fs502 | code-not-in-preferred    | warning  | Code not in preferred value set |
 | fs503 | code-not-in-extensible   | warning  | Code not in extensible value set |
+| fs504 | invalid-display          | error    | Coding.display doesn't match canonical CodeSystem display |
 | fs904 | unmatched-not-at-end     | error    | `rules: openAtEnd` violated: matched item appears after an unmatched one |
 
 ### fs6xx — Constraints
@@ -1064,6 +1065,14 @@ Literal validation (JSON type correct, value invalid):
 | fs1001 | invalid-reference-type | error    | Reference targets a disallowed resource type                      |
 | fs1002 | unresolved-reference   | warning  | Reference target could not be resolved                            |
 | fs1003 | fullurl-not-absolute   | error    | `Bundle.entry.fullUrl` is not an absolute URL or `urn:` reference |
+| fs1004 | bundle-ref-ambiguous   | warning  | Relative reference matches multiple Bundle entries by type+id     |
+
+### fs12xx — Bundle integrity
+
+| Code   | Name                  | Severity | Description                                                                |
+|--------|-----------------------|----------|----------------------------------------------------------------------------|
+| fs1201 | bundle-duplicate-id   | error    | Two Bundle entries share `resourceType/id` with distinct fullUrls          |
+| fs1202 | bundle-type-structure | error    | Bundle.type=document → first must be Composition; =message → MessageHeader |
 
 ### fs11xx — Extensions
 

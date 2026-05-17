@@ -12,7 +12,7 @@
 // `code` fields like Patient.gender, HumanName.use). When the server
 // can't decide it returns no `result` parameter and we report 'unknown'.
 
-import type { TerminologyEvaluator, TerminologyVerdict } from './index.js';
+import type { TerminologyEvaluator, TerminologyResult, TerminologyVerdict } from './index.js';
 
 export interface TxAdapterOptions {
   /** Server root. Default: `https://tx.health-samurai.io/fhir`. */
@@ -59,45 +59,56 @@ export class TxFhirOrgAdapter implements TerminologyEvaluator {
     valueSet: string,
     value: unknown,
     ctx: { type?: string; strength: string },
-  ): TerminologyVerdict {
+  ): TerminologyResult {
     if (ctx.strength === 'example') return 'unknown';
 
     const codings = extractCodings(value);
     if (codings.length === 0) return 'unknown';
 
-    // CodeableConcept semantics: any matching coding wins.
+    // CodeableConcept semantics: any matching coding wins for membership.
+    // Display mismatch is reported from the first coding that matched
+    // (otherwise from the last non-matching one).
     let sawNotIn = false;
     let sawUnknown = false;
+    let firstDisplayMismatch: { provided: string; canonical: string } | undefined;
     for (const c of codings) {
-      const verdict = this.lookup(valueSet, c);
-      if (verdict === 'in') return 'in';
-      if (verdict === 'not-in') sawNotIn = true;
-      if (verdict === 'unknown') sawUnknown = true;
+      const r = this.lookup(valueSet, c);
+      if (r.verdict === 'in') {
+        return r.displayMismatch ? { verdict: 'in', displayMismatch: r.displayMismatch } : 'in';
+      }
+      if (r.verdict === 'not-in') sawNotIn = true;
+      if (r.verdict === 'unknown') sawUnknown = true;
+      if (!firstDisplayMismatch && r.displayMismatch) firstDisplayMismatch = r.displayMismatch;
     }
-    if (sawNotIn && !sawUnknown) return 'not-in';
+    if (sawNotIn && !sawUnknown) {
+      return firstDisplayMismatch
+        ? { verdict: 'not-in', displayMismatch: firstDisplayMismatch }
+        : 'not-in';
+    }
     return 'unknown';
   }
 
   private lookup(
     valueSet: string,
-    coding: { system?: string; code: string },
-  ): TerminologyVerdict {
-    const key = `${valueSet}|${coding.system ?? ''}|${coding.code}`;
+    coding: { system?: string; code: string; display?: string },
+  ): { verdict: TerminologyVerdict; displayMismatch?: { provided: string; canonical: string } } {
+    const key = `${valueSet}|${coding.system ?? ''}|${coding.code}|${coding.display ?? ''}`;
     const cached = this.cache?.get(key);
-    if (cached !== undefined) return cached;
-    const verdict = this.callValidateCode(valueSet, coding);
-    this.cache?.set(key, verdict);
-    return verdict;
+    if (cached !== undefined) return cached as never;
+    const r = this.callValidateCode(valueSet, coding);
+    this.cache?.set(key, r as never);
+    return r;
   }
 
   private callValidateCode(
     valueSet: string,
-    coding: { system?: string; code: string },
-  ): TerminologyVerdict {
+    coding: { system?: string; code: string; display?: string },
+  ): { verdict: TerminologyVerdict; displayMismatch?: { provided: string; canonical: string } } {
     const params: Array<{
       name: string;
       valueUri?: string;
       valueCode?: string;
+      valueString?: string;
       valueBoolean?: boolean;
     }> = [
       { name: 'url', valueUri: valueSet },
@@ -111,6 +122,10 @@ export class TxFhirOrgAdapter implements TerminologyEvaluator {
       // `code`-typed fields). For multi-system VSes the server returns
       // no usable verdict → 'unknown'.
       params.push({ name: 'inferSystem', valueBoolean: true });
+    }
+    // Include display so the server can verify it against the CodeSystem.
+    if (coding.display) {
+      params.push({ name: 'display', valueString: coding.display });
     }
     const body = JSON.stringify({
       resourceType: 'Parameters',
@@ -136,41 +151,87 @@ export class TxFhirOrgAdapter implements TerminologyEvaluator {
       stdout: 'pipe',
       stderr: 'pipe',
     });
-    if (result.exitCode !== 0) return 'unknown';
+    if (result.exitCode !== 0) return { verdict: 'unknown' };
     const out = result.stdout.toString().trim();
-    if (!out) return 'unknown';
-    let parsed: { parameter?: { name: string; valueBoolean?: boolean }[] };
+    if (!out) return { verdict: 'unknown' };
+    type Param = {
+      name: string;
+      valueBoolean?: boolean;
+      valueString?: string;
+      resource?: {
+        resourceType?: string;
+        issue?: Array<{
+          severity?: string;
+          details?: {
+            coding?: Array<{ system?: string; code?: string }>;
+            text?: string;
+          };
+        }>;
+      };
+    };
+    let parsed: { parameter?: Param[] };
     try {
       parsed = JSON.parse(out);
     } catch {
-      return 'unknown';
+      return { verdict: 'unknown' };
     }
-    const r = parsed.parameter?.find((p) => p.name === 'result');
-    if (r?.valueBoolean === true) return 'in';
-    if (r?.valueBoolean === false) return 'not-in';
-    return 'unknown';
+    const result_param = parsed.parameter?.find((p) => p.name === 'result');
+    const display_param = parsed.parameter?.find((p) => p.name === 'display');
+    const issues_param = parsed.parameter?.find((p) => p.name === 'issues');
+
+    // Detect display-only mismatch: server reports an issue whose detail
+    // coding.code is `invalid-display` from tx-issue-type. In that case
+    // the code IS in the value set; only the display is wrong.
+    let isDisplayOnly = false;
+    const ooIssues = issues_param?.resource?.issue ?? [];
+    if (ooIssues.length > 0) {
+      isDisplayOnly = ooIssues.every((i) =>
+        (i.details?.coding ?? []).some(
+          (c) => c.code === 'invalid-display' && c.system?.endsWith('/tx-issue-type'),
+        ),
+      );
+    }
+    const canonicalDisplay = display_param?.valueString;
+    const displayMismatch =
+      coding.display && canonicalDisplay && coding.display !== canonicalDisplay
+        ? { provided: coding.display, canonical: canonicalDisplay }
+        : undefined;
+
+    if (result_param?.valueBoolean === true) {
+      return displayMismatch ? { verdict: 'in', displayMismatch } : { verdict: 'in' };
+    }
+    if (result_param?.valueBoolean === false) {
+      // Display-only mismatch: code IS in VS, only display wrong.
+      if (isDisplayOnly && displayMismatch) {
+        return { verdict: 'in', displayMismatch };
+      }
+      return displayMismatch ? { verdict: 'not-in', displayMismatch } : { verdict: 'not-in' };
+    }
+    return { verdict: 'unknown' };
   }
 }
 
-function extractCodings(value: unknown): Array<{ system?: string; code: string }> {
+function extractCodings(value: unknown): Array<{ system?: string; code: string; display?: string }> {
   if (typeof value === 'string') return [{ code: value }];
   if (value === null || typeof value !== 'object') return [];
   const obj = value as Record<string, unknown>;
   // Coding: `{system, code, display}`
   if (typeof obj.code === 'string') {
     const system = typeof obj.system === 'string' ? obj.system : undefined;
-    return [{ system, code: obj.code }];
+    const display = typeof obj.display === 'string' ? obj.display : undefined;
+    return [{ system, code: obj.code, display }];
   }
   // CodeableConcept: `{coding: [Coding, ...], text}`
   if (Array.isArray(obj.coding)) {
-    const out: Array<{ system?: string; code: string }> = [];
+    const out: Array<{ system?: string; code: string; display?: string }> = [];
     for (const c of obj.coding) {
       if (c && typeof c === 'object') {
-        const inner = c as { system?: unknown; code?: unknown };
+        const inner = c as { system?: unknown; code?: unknown; display?: unknown };
         if (typeof inner.code === 'string') {
           out.push({
             system: typeof inner.system === 'string' ? inner.system : undefined,
             code: inner.code,
+            display: typeof inner.display === 'string' ? inner.display : undefined,
           });
         }
       }

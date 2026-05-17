@@ -690,9 +690,6 @@ tests:
     type: document
     timestamp: '2024-12-01T13:28:17.239+02:00'
   valid: true
-  skip: true
-  _skipReason: 'Reference.refers=["Resource"] is a meta-type (allow-any); we strict-equality fail with fs1001. (DESIGN §15 → "Reference.refers:
-    [Resource] meta-type")'
 - desc: graham/contained
   schemas: []
   data:

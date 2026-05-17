@@ -1064,10 +1064,8 @@ tests:
         subject:
           reference: Patient/example
         effectiveDateTime: '2024-06-01'
-  valid: true
   skip: true
-  _skipReason: 'Same Graham data typo `uin:uuid:`; plus refers=["Resource"] meta-type strictness on Composition.section.entry. (DESIGN §15 → "Reference.refers:
-    [Resource] meta-type" + fs1003 rule)'
+  _skipReason: Graham data typo `uin:uuid:` (should be urn:uuid:); our fs1003 correctly catches it but Java tolerates. (DESIGN §15 → fs1003)
 - desc: graham/ref-policy-default-r4
   schemas: []
   data:

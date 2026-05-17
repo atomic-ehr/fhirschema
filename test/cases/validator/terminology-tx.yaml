@@ -226,3 +226,40 @@ tests:
     data:
       gender: xxx-not-in-vs
     valid: true
+
+  # ─── display verification (fs504) ─────────────────────────────────────
+  - desc: 'Coding with matching display → no fs504'
+    schemas:
+      - url: http://example.com/test/tx/CodingResource
+        type: CodingResource
+        elements:
+          gender:
+            type: Coding
+            binding:
+              strength: required
+              valueSet: http://hl7.org/fhir/ValueSet/administrative-gender
+    data:
+      gender:
+        system: http://hl7.org/fhir/administrative-gender
+        code: male
+        display: Male
+    valid: true
+
+  - desc: 'Coding with wrong display → fs504'
+    schemas:
+      - url: http://example.com/test/tx/CodingResource
+        type: CodingResource
+        elements:
+          gender:
+            type: Coding
+            binding:
+              strength: required
+              valueSet: http://hl7.org/fhir/ValueSet/administrative-gender
+    data:
+      gender:
+        system: http://hl7.org/fhir/administrative-gender
+        code: male
+        display: 'NotMale'
+    issues:
+      - { code: fs504, path: [gender], expected: 'Male', got: 'NotMale' }
+
