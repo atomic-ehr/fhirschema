@@ -1,0 +1,99 @@
+suite: 'Terminology bindings (fs5xx) — pluggable validator'
+# `binding: { strength, valueSet }` on an element checks the value against
+# a ValueSet via `options.terminology` plugin. Strengths:
+#   required    → fs501 on miss
+#   extensible  → fs503 warning on miss
+#   preferred   → fs502 warning on miss
+#   example     → no validation
+# Without `options.terminology` configured: all bindings silently skipped.
+
+# The runner wires a test TerminologyEvaluator: returns "in valueset" for
+# {valueset: 'urn:vs:colors', code: 'red'|'green'|'blue'}; else not-in.
+defaults:
+  useTerminology: true
+
+tests:
+  - desc: required binding — code in valueset → valid
+    schemas:
+      - elements:
+          color:
+            type: code
+            binding: { strength: required, valueSet: 'urn:vs:colors' }
+    data: { color: red }
+    valid: true
+
+  - desc: required binding — code not in valueset → fs501
+    schemas:
+      - elements:
+          color:
+            type: code
+            binding: { strength: required, valueSet: 'urn:vs:colors' }
+    data: { color: purple }
+    issues:
+      - { code: fs501, path: [color] }
+
+  - desc: extensible binding — code not in → fs503 warning
+    schemas:
+      - elements:
+          color:
+            type: code
+            binding: { strength: extensible, valueSet: 'urn:vs:colors' }
+    data: { color: purple }
+    issues:
+      - { code: fs503, path: [color], severity: warning }
+
+  - desc: preferred binding — code not in → fs502 warning
+    schemas:
+      - elements:
+          color:
+            type: code
+            binding: { strength: preferred, valueSet: 'urn:vs:colors' }
+    data: { color: purple }
+    issues:
+      - { code: fs502, path: [color], severity: warning }
+
+  - desc: example binding — no validation regardless of value
+    schemas:
+      - elements:
+          color:
+            type: code
+            binding: { strength: example, valueSet: 'urn:vs:colors' }
+    data: { color: 'whatever' }
+    valid: true
+
+  - desc: 'binding on Coding — check coding.code in valueset'
+    schemas:
+      - elements:
+          code:
+            type: Coding
+            binding: { strength: required, valueSet: 'urn:vs:colors' }
+    registry:
+      - url: Coding
+        name: Coding
+        type: Coding
+        kind: complex-type
+        class: complex-type
+        elements:
+          system: { type: uri }
+          code: { type: code }
+    data: { code: { code: red } }
+    valid: true
+
+  - desc: 'binding on Coding — code not in → fs501'
+    schemas:
+      - elements:
+          code:
+            type: Coding
+            binding: { strength: required, valueSet: 'urn:vs:colors' }
+    registry:
+      - url: Coding
+        name: Coding
+        type: Coding
+        kind: complex-type
+        class: complex-type
+        elements:
+          system: { type: uri }
+          code: { type: code }
+    data: { code: { code: purple } }
+    issues:
+      - { code: fs501, path: [code] }

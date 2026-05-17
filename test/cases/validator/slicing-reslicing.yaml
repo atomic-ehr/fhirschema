@@ -1,0 +1,109 @@
+suite: 'Reslicing — slicing inside slice.schema'
+# A slice's schema may itself contain elements with their own slicing.
+# Our recursive walk should pick up nested slicing naturally — the slice
+# schema is applied as overlay, then any nested array elements go through
+# walkArrayItems again.
+
+tests:
+  - desc: 'nested slicing inside a slice: outer s1, inner z1/z2 classification'
+    schemas:
+      - elements:
+          x:
+            type: Outer
+            array: true
+            slicing:
+              rules: open
+              slices:
+                s1:
+                  match: { a: 's1' }
+                  schema:
+                    elements:
+                      b:
+                        type: Inner
+                        array: true
+                        slicing:
+                          rules: open
+                          slices:
+                            z1:
+                              match: { code: 'z1' }
+                              min: 1
+                              max: 1
+                            z2:
+                              match: { code: 'z2' }
+                              min: 1
+                              max: 1
+    registry:
+      - url: Outer
+        name: Outer
+        type: Outer
+        kind: complex-type
+        class: complex-type
+        elements:
+          a: { type: string }
+          b: { type: Inner, array: true }
+      - url: Inner
+        name: Inner
+        type: Inner
+        kind: complex-type
+        class: complex-type
+        elements:
+          code: { type: code }
+    data:
+      x:
+        - a: 's1'
+          b:
+            - { code: 'z1' }
+            - { code: 'z2' }
+    valid: true
+
+  - desc: 'nested slicing — missing required inner slice → fs902 on inner array'
+    schemas:
+      - elements:
+          x:
+            type: Outer
+            array: true
+            slicing:
+              rules: open
+              slices:
+                s1:
+                  match: { a: 's1' }
+                  schema:
+                    elements:
+                      b:
+                        type: Inner
+                        array: true
+                        slicing:
+                          rules: open
+                          slices:
+                            z1:
+                              match: { code: 'z1' }
+                              min: 1
+                              max: 1
+                            z2:
+                              match: { code: 'z2' }
+                              min: 1
+                              max: 1
+    registry:
+      - url: Outer
+        name: Outer
+        type: Outer
+        kind: complex-type
+        class: complex-type
+        elements:
+          a: { type: string }
+          b: { type: Inner, array: true }
+      - url: Inner
+        name: Inner
+        type: Inner
+        kind: complex-type
+        class: complex-type
+        elements:
+          code: { type: code }
+    data:
+      x:
+        - a: 's1'
+          b:
+            - { code: 'z1' }
+            # z2 missing — required min 1
+    issues:
+      - { code: fs902, path: [x, 0, b] }

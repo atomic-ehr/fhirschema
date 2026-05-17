@@ -74,7 +74,9 @@ tests:
     issues:
       - { code: fs601, path: [] }
 
-  - desc: warning severity — fs601 emitted at warning level
+  - desc: 'warning severity — fs601 at warning level (asserted explicitly)'
+    # By default the runner asserts only on error-severity issues. Marking
+    # the expected entry with `severity: warning` opts into seeing warnings.
     schemas:
       - elements:
           x: { type: integer }
@@ -85,7 +87,7 @@ tests:
             severity: 'warning'
     data: {}
     issues:
-      - { code: fs601, path: [] }
+      - { code: fs601, path: [], severity: warning }
 
   - desc: constraint via overlay union — any overlay's constraints apply
     schemas:
@@ -117,3 +119,46 @@ tests:
       resourceType: Patient
       contact: [{ gender: unknown, name: { family: Doe } }]
     valid: true
+
+  # ─── sansara root-level constraints (translator fix unblocks; semantics differ) ─
+  # KNOWN DIVERGENCE: sansara reports root-level constraint failures at the
+  # offending child path (e.g. dom-2 at [contained, 0]); we emit at the scope
+  # where the constraint is DEFINED (root → []). Additionally, dom-3/dom-4
+  # require %resource/%context FHIRPath variables we don't yet thread to the
+  # engine, so they fire spuriously at root. To match sansara fully:
+  #   1. thread %resource into engine.evaluate ctx
+  #   2. for resource-level constraints with predicates like `contained.X`,
+  #      re-emit at the offending child path
+  # Both are non-trivial; leaving these tests as documented skips.
+
+  - desc: 'sansara/constraints-test: contained Practitioner with nested contained → dom-2'
+    skip: true
+    schemas: []
+    data:
+      resourceType: Patient
+      contained:
+        - resourceType: Practitioner
+          contained:
+            - resourceType: Patient
+    issues:
+      - { code: fs601, path: [contained, 0], expected: dom-2 }
+
+  - desc: 'sansara/constraints-test: contained Practitioner with no incoming reference → dom-3'
+    skip: true
+    schemas: []
+    data:
+      resourceType: Patient
+      contained:
+        - resourceType: Practitioner
+          id: practitioner-1
+    issues:
+      - { code: fs601, path: [contained, 0], expected: dom-3 }
+
+  # This one IS importable — Organization without name/identifier emits org-1
+  # at root scope, which matches sansara intent (just `[]` vs `[Organization]`
+  # path notation).
+  - desc: 'sansara/constraints-test: empty Organization → org-1'
+    schemas: []
+    data: { resourceType: Organization }
+    issues:
+      - { code: fs601, path: [], expected: org-1 }

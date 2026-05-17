@@ -1,0 +1,36 @@
+suite: 'modifierExtension must-understand (fs1102)'
+# Every modifierExtension MUST be understood (resolvable by URL). When ctx
+# can't resolve the URL, emit fs1102 — error severity per FHIR spec
+# (consumer cannot safely interpret the resource).
+
+defaults:
+  useR4: true
+
+tests:
+  - desc: 'modifierExtension with known URL (resolvable) → valid'
+    schemas: []
+    data:
+      resourceType: Patient
+      modifierExtension:
+        - url: 'http://hl7.org/fhir/StructureDefinition/patient-animal'
+          extension:
+            - url: species
+              valueCodeableConcept: { coding: [{ code: dog }] }
+    valid: true
+
+  - desc: 'modifierExtension with unknown URL → fs1102'
+    schemas: []
+    data:
+      resourceType: Patient
+      modifierExtension:
+        - url: 'http://example.com/unknown-modifier'
+    issues:
+      - { code: fs1102, path: [modifierExtension, 0] }
+
+  - desc: 'regular extension with unknown URL — silent (fs1101 is informational, not implemented)'
+    schemas: []
+    data:
+      resourceType: Patient
+      extension:
+        - url: 'http://example.com/unknown-extension'
+    valid: true

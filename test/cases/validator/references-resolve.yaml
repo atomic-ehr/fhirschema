@@ -1,0 +1,80 @@
+suite: 'Reference resolution (fs1002) — pluggable resolver'
+# When `options.referenceResolver` is wired, every Reference.reference is
+# checked for existence. Without resolver: skipped (fs1002 is deferred per
+# DESIGN §12). Verdicts:
+#   resolved          → no issue
+#   unresolved        → fs1002 (warning, sansara/java treat as warning)
+#   unknown           → silent (resolver can't decide)
+#
+# Test resolver knows: Patient/1, Patient/2, Organization/org1.
+
+defaults:
+  useReferenceResolver: true
+
+tests:
+  - desc: resolved reference is valid
+    schemas:
+      - elements:
+          subject: { type: Reference }
+    registry:
+      - url: Reference
+        name: Reference
+        type: Reference
+        kind: complex-type
+        class: complex-type
+        elements:
+          reference: { type: string }
+    data: { subject: { reference: 'Patient/1' } }
+    valid: true
+
+  - desc: unresolved reference → fs1002 warning
+    schemas:
+      - elements:
+          subject: { type: Reference }
+    registry:
+      - url: Reference
+        name: Reference
+        type: Reference
+        kind: complex-type
+        class: complex-type
+        elements:
+          reference: { type: string }
+    data: { subject: { reference: 'Patient/999' } }
+    issues:
+      - { code: fs1002, path: [subject, reference], severity: warning }
+
+  - desc: 'urn:/# references not resolved (out of scope)'
+    schemas:
+      - elements:
+          subject: { type: Reference }
+    registry:
+      - url: Reference
+        name: Reference
+        type: Reference
+        kind: complex-type
+        class: complex-type
+        elements:
+          reference: { type: string }
+    data: { subject: { reference: '#pat-1' } }
+    valid: true
+
+  - desc: 'fs1001 + fs1002 fire independently'
+    schemas:
+      - elements:
+          subject:
+            type: Reference
+            refers: [http://hl7.org/fhir/StructureDefinition/Patient]
+    registry:
+      - url: Reference
+        name: Reference
+        type: Reference
+        kind: complex-type
+        class: complex-type
+        elements:
+          reference: { type: string }
+    data: { subject: { reference: 'Organization/missing' } }
+    issues:
+      # type Organization is disallowed (refers=Patient)
+      - { code: fs1001, path: [subject, reference] }
+      # and the target doesn't resolve
+      - { code: fs1002, path: [subject, reference], severity: warning }

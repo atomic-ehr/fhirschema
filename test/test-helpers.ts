@@ -70,6 +70,10 @@ export type ValidatorSuite = {
     usePackages?: string[];
     /** Wire HL7 fhirpath.js into `options.fhirpath` for constraint eval. */
     useFhirpath?: boolean;
+    /** Wire a test terminology evaluator (urn:vs:colors → red/green/blue). */
+    useTerminology?: boolean;
+    /** Wire a test reference resolver (knows Patient/1, Patient/2, Organization/org1). */
+    useReferenceResolver?: boolean;
   };
   tests: ValidatorCase[];
 };

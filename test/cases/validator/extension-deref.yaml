@@ -1,0 +1,51 @@
+suite: 'Extension URL dereferencing — sub-extension validation via ctx.resolve'
+# When data carries `{url: 'http://x', extension: [...]}` and our overlay
+# is of type=Extension, the validator follows `url` via ctx.resolve to
+# pull in the extension definition's schema (sub-extensions, required,
+# etc.) and applies it as an additional overlay.
+
+defaults:
+  useR4: true
+  usePackages: [hl7.fhir.r4.core, hl7.fhir.us.core]
+
+tests:
+  - desc: 'us-core-race extension with required `text` sub-extension missing → fs902'
+    # sansara extension-test invalid case (skipped before — now unblocked)
+    schemas: []
+    data:
+      resourceType: Patient
+      meta:
+        profile: ['http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient']
+      extension:
+        - url: 'http://hl7.org/fhir/us/core/StructureDefinition/us-core-race'
+          extension:
+            - url: ombCategory
+              valueCoding:
+                system: 'urn:oid:2.16.840.1.113883.6.238'
+                code: '2106-3'
+      identifier: [{ system: sys, value: v }]
+      name: [{ given: [g], family: f }]
+      gender: male
+    issues:
+      # us-core-race internal slicing requires text slice min=1
+      - { code: fs902, path: [extension, 0, extension] }
+
+  - desc: 'us-core-race with both ombCategory + text → valid'
+    schemas: []
+    data:
+      resourceType: Patient
+      meta:
+        profile: ['http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient']
+      extension:
+        - url: 'http://hl7.org/fhir/us/core/StructureDefinition/us-core-race'
+          extension:
+            - url: ombCategory
+              valueCoding:
+                system: 'urn:oid:2.16.840.1.113883.6.238'
+                code: '2106-3'
+            - url: text
+              valueString: someText
+      identifier: [{ system: sys, value: v }]
+      name: [{ given: [g], family: f }]
+      gender: male
+    valid: true

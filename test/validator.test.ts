@@ -27,12 +27,43 @@ import type { FHIRSchema } from '../src/converter/types.js';
 import {
   validate,
   type FhirpathEvaluator,
+  type ReferenceResolver,
+  type TerminologyEvaluator,
   type ValidateContext,
   type ValidationIssue,
 } from '../src/validator/index.js';
 
 const fhirpathAdapter: FhirpathEvaluator = {
   evaluate: (expr, root) => fhirpath.evaluate(root, expr) as unknown[],
+};
+
+const TEST_VALUESETS: Record<string, Set<string>> = {
+  'urn:vs:colors': new Set(['red', 'green', 'blue']),
+};
+
+const terminologyAdapter: TerminologyEvaluator = {
+  validateCode: (valueSet, value) => {
+    const vs = TEST_VALUESETS[valueSet];
+    if (!vs) return 'unknown';
+    let code: unknown;
+    if (typeof value === 'string') code = value;
+    else if (value && typeof value === 'object') {
+      const v = value as Record<string, unknown>;
+      code = v.code; // Coding.code or CodeableConcept.coding[0].code (simplified)
+    }
+    if (typeof code !== 'string') return 'unknown';
+    return vs.has(code) ? 'in' : 'not-in';
+  },
+};
+
+const TEST_RESOURCES = new Set(['Patient/1', 'Patient/2', 'Organization/org1']);
+
+const referenceResolverAdapter: ReferenceResolver = {
+  resolve: (reference) => {
+    // Strip absolute URL prefix if present
+    const local = /([A-Z][A-Za-z]+\/[^/]+)$/.exec(reference)?.[1] ?? reference;
+    return TEST_RESOURCES.has(local) ? 'resolved' : 'unresolved';
+  },
 };
 import {
   buildResolverMap,
@@ -62,8 +93,12 @@ function normPath(p: unknown): (string | number)[] | undefined {
   return undefined;
 }
 
-function matchIssue(expected: ValidatorCase['issues'][number], actual: ValidationIssue): boolean {
+function matchIssue(
+  expected: { code: string; severity?: string; path?: unknown; expected?: unknown; got?: unknown },
+  actual: ValidationIssue,
+): boolean {
   if (expected.code !== actual.code) return false;
+  if (expected.severity !== undefined && expected.severity !== actual.severity) return false;
   const ep = normPath(expected.path);
   if (ep !== undefined) {
     if (JSON.stringify(ep) !== JSON.stringify(actual.path)) return false;
@@ -121,30 +156,47 @@ for (const file of files) {
           ...((t.registry as FHIRSchema[] | undefined) ?? []),
         ];
         const ctx = makeCtx(registry, baseMap);
-        const suiteOpts =
-          (defaults as { useFhirpath?: boolean } | undefined)?.useFhirpath === true
-            ? { fhirpath: fhirpathAdapter }
-            : {};
+        const suiteOpts: Record<string, unknown> = {};
+        const d = defaults as
+          | {
+              useFhirpath?: boolean;
+              useTerminology?: boolean;
+              useReferenceResolver?: boolean;
+            }
+          | undefined;
+        if (d?.useFhirpath === true) suiteOpts.fhirpath = fhirpathAdapter;
+        if (d?.useTerminology === true) suiteOpts.terminology = terminologyAdapter;
+        if (d?.useReferenceResolver === true)
+          suiteOpts.referenceResolver = referenceResolverAdapter;
         const opts = { ...suiteOpts, ...(t.options ?? {}) };
         const result = validate(ctx, t.schemas as FHIRSchema[], t.data, opts);
 
-        // valid: true → expect no issues at all.
+        // By default, tests assert only on ERROR-severity issues. Warnings
+        // and information surface in result but are invisible to the
+        // expected/surprise diff. To assert on a warning, declare the
+        // expected entry with explicit `severity: warning`.
         const expectedIssues = t.valid === true ? [] : (t.issues ?? []);
+        const expectErrorOnly = expectedIssues.every(
+          (ex) => ex.severity === undefined || ex.severity === 'error',
+        );
+        const actualIssues = expectErrorOnly
+          ? result.issues.filter((i) => i.severity === 'error')
+          : result.issues;
 
         // 1) Every expected issue must have a matching actual issue.
         for (const ex of expectedIssues) {
-          const found = result.issues.some((a) => matchIssue(ex, a));
+          const found = actualIssues.some((a) => matchIssue(ex, a));
           if (!found) {
             throw new Error(
-              `Missing expected issue ${JSON.stringify(ex)}\nGot: ${JSON.stringify(result.issues, null, 2)}`,
+              `Missing expected issue ${JSON.stringify(ex)}\nGot: ${JSON.stringify(actualIssues, null, 2)}`,
             );
           }
         }
 
-        // 2) No surprise issues either. Each actual issue must correspond to
-        //    one expected entry (by matchIssue). Catches over-firing.
+        // 2) No surprise issues. Each actual must correspond to one
+        //    expected entry. Catches over-firing.
         const used = new Set<number>();
-        for (const a of result.issues) {
+        for (const a of actualIssues) {
           const idx = expectedIssues.findIndex((ex, i) => !used.has(i) && matchIssue(ex, a));
           if (idx < 0) {
             throw new Error(
@@ -155,7 +207,7 @@ for (const file of files) {
         }
 
         // Sanity check: bun:test expects at least one expect()
-        expect(result.issues.length).toBe(expectedIssues.length);
+        expect(actualIssues.length).toBe(expectedIssues.length);
       });
     }
   });

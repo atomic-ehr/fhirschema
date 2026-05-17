@@ -27,14 +27,7 @@ tests:
       gender: male
     valid: true
 
-  # SKIP: This case checks the INNER slicing of us-core-race (sub-extension
-  # `text` is required). To detect that, the validator must dereference the
-  # extension URL to load us-core-race's own schema and apply its internal
-  # extension slicing. We don't yet do that — see DESIGN.md §15
-  # "deep extension validation". Sansara passes thanks to its
-  # extension-URL → schema deref logic.
   - desc: 'us-core-race: invalid — missing required `text` sub-extension → fs902'
-    skip: true
     schemas: []
     data:
       resourceType: Patient

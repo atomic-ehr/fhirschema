@@ -1,0 +1,73 @@
+suite: 'openAtEnd slicing — unmatched items must trail matched ones'
+# `rules: openAtEnd` requires all unmatched items to appear AFTER all
+# matched items. A matched item appearing after any unmatched item fires
+# fs904.
+
+tests:
+  - desc: 'openAtEnd: all matched then unmatched → valid'
+    schemas:
+      - elements:
+          tags:
+            type: code
+            array: true
+            slicing:
+              rules: openAtEnd
+              slices:
+                A: { match: a }
+                B: { match: b }
+    data: { tags: [a, b, x, y] }
+    valid: true
+
+  - desc: 'openAtEnd: matched, unmatched, matched → fs904 on trailing match'
+    schemas:
+      - elements:
+          tags:
+            type: code
+            array: true
+            slicing:
+              rules: openAtEnd
+              slices:
+                A: { match: a }
+                B: { match: b }
+    data: { tags: [a, x, b] }
+    issues:
+      - { code: fs904, path: [tags, 2] }
+
+  - desc: 'openAtEnd: only matched → valid'
+    schemas:
+      - elements:
+          tags:
+            type: code
+            array: true
+            slicing:
+              rules: openAtEnd
+              slices:
+                A: { match: a }
+    data: { tags: [a, a] }
+    valid: true
+
+  - desc: 'openAtEnd: only unmatched → valid'
+    schemas:
+      - elements:
+          tags:
+            type: code
+            array: true
+            slicing:
+              rules: openAtEnd
+              slices:
+                A: { match: a }
+    data: { tags: [x, y] }
+    valid: true
+
+  - desc: 'open (default): unmatched-matched is fine, no fs904'
+    schemas:
+      - elements:
+          tags:
+            type: code
+            array: true
+            slicing:
+              rules: open
+              slices:
+                A: { match: a }
+    data: { tags: [x, a] }
+    valid: true

@@ -430,6 +430,14 @@ interface ValidateOptions {
     fhirpath: { evaluate: (expr, root) => fhirpath.evaluate(root, expr) }
   });
   ```
+- `terminology?: TerminologyEvaluator` — pluggable value-set check.
+  Returns `'in' | 'not-in' | 'unknown'`. fs50x emitted per binding
+  strength (required→fs501 error; extensible→fs503 warning; preferred→
+  fs502 warning; example→never).
+- `referenceResolver?: ReferenceResolver` — pluggable Reference target
+  existence check. Returns `'resolved' | 'unresolved' | 'unknown'`.
+  fs1002 (warning) on `unresolved`. Fragment (`#x`) and `urn:` refs are
+  not passed to the resolver.
 
 `ValidationResult`:
 
@@ -1019,6 +1027,7 @@ Literal validation (JSON type correct, value invalid):
 | fs501 | invalid-code-for-binding | error    | Code not in required value set |
 | fs502 | code-not-in-preferred    | warning  | Code not in preferred value set |
 | fs503 | code-not-in-extensible   | warning  | Code not in extensible value set |
+| fs904 | unmatched-not-at-end     | error    | `rules: openAtEnd` violated: matched item appears after an unmatched one |
 
 ### fs6xx — Constraints
 
@@ -1140,33 +1149,17 @@ implementation.
 Not yet implemented in [src/validator/index.ts](src/validator/index.ts), in
 priority order:
 
-- **Slicing variants.** Core slicing works (open/closed, deep-partial match,
-  per-slice cardinality, slice schema overlays, `ordered: true`,
-  `@default` fallback). Still missing: `openAtEnd` position rule,
-  reslicing inside a slice schema, and the extension-URL convenience
-  sugar (`extensions` map).
-<!-- Choice types now implemented; removed from gaps. -->
-
-<!-- fixed[X] strict equality now implemented: translator preserves the
-distinction in `fixed: { type, value }` (separate from `pattern`), validator
-runs deep-equal check and emits fs206. Removed from gaps. -->
-
-<!-- FHIRPath constraints implemented as a pluggable evaluator
-(`options.fhirpath`). Default = silent skip. Tests wire HL7 fhirpath.js.
-Removed from gaps. -->
-
-- **Bindings (`fs5xx`).** Requires terminology server integration. Surfaced
-  as deferred work.
-- **Reference resolution (`fs1002`).** Sync target-type check (`fs1001`) is
-  implemented. Actual fetching/verifying target existence remains deferred
-  per §12.
-<!-- Contained / Bundle inner-resource walk implemented; removed from gaps. -->
-
-<!-- Strict mode implemented; removed from gaps. -->
-
-- **`modifierExtension` "must understand" rule.** Not yet emitted.
-- **Ordered slicing, `openAtEnd`.** Not yet enforced.
-- **Reslicing.** Not yet exercised.
+- **Slicing — extensions sugar.** Core slicing flavors all work
+  (open/closed/openAtEnd, ordered, @default, reslicing, deep-partial
+  match, per-slice cardinality, slice schema overlays). The
+  `extensions: { [url]: ... }` convenience map (sibling to `slicing`) is
+  still TODO — validator currently uses the full `slicing` block for
+  extension URL routing.
+- **Constraint context variables.** Pluggable FHIRPath engine doesn't yet
+  receive `%resource`, `%context` env. Some real-world R4 invariants (dom-3,
+  dom-4) reference them and may fire spuriously at root scope; affected
+  sansara cases are `skip: true` with explicit notes in
+  test/cases/validator/constraints.yaml.
 - **OperationOutcome adapter.** Caller-side adapter from `ValidationIssue[]`
   to `OperationOutcome` for FHIR-facing APIs.
 - **Permissive JSON shape (Java parity).** The HL7 Java reference
@@ -1253,7 +1246,7 @@ expected outcome:
 | Slicing (collection, fs901, fs902) | done | hand-seeded + sansara `slicing-validation/Simple slicings` + `extension-test` |
 | Cardinality on profiles | done | sansara `cardinality-test` |
 | Empty arrays / empty composites (FHIR no-empty rule) | done | sansara `validation-c/empty complex type` |
-| US Core profile validation | done (valid case; invalid needs extension URL deref) | sansara `extension-test` |
+| US Core profile validation | done (both valid + invalid sub-extension after F4) | sansara `extension-test` |
 | Graham fhir-test-cases (HL7 R5 curated) | done | 5 hand-picked cases (patient-good, group-choice-good, group-minimal, list-empty2, group-choice-bad1) |
 | Inner-resource walk (Bundle.entry, Patient.contained) | done | sansara `validation-c/Bundle` + `contained` (simplified) |
 | Strict mode (`options.strict: true`) | done | sansara `unknown-schemas-test/profile` (both strict + non-strict) |
@@ -1262,7 +1255,15 @@ expected outcome:
 | Excluded keys (`max: 0` → `excluded[]`, fs207) | done | hand-crafted; translator hoists `max="0"` to parent's `excluded[]` |
 | Ordered slicing (fs903) | done | hand-crafted; sansara `slicing-validation/ordered slicing` needs profile fixtures |
 | `@default` slice (fallback overlay for unmatched items) | done | hand-crafted; sansara `slicing-validation/@default slice` needs profile fixtures |
-| FHIRPath constraints (fs601) — pluggable engine | done | hand-crafted (7) + sansara `Patient.contact pat-1` (real R4 invariant) |
+| FHIRPath constraints (fs601) — pluggable engine | done | hand-crafted (7) + sansara `Patient.contact pat-1` + `Organization org-1` |
+| Top-level root constraints (translator gap) | done | unlocks R4 invariants on root (dom-*, org-*, etc.) |
+| Issue severity (`'error' \| 'warning' \| 'information'`) | done | constraints carry their declared severity; runner asserts only errors by default |
+| Terminology bindings (fs501/502/503) — pluggable | done | hand-crafted (7) |
+| Reference resolution (fs1002) — pluggable | done | hand-crafted (4); fragment/urn skipped |
+| Extension URL dereferencing (deep validation) | done | sansara us-core-race invalid sub-extension now passes |
+| Reslicing (slicing inside slice.schema) | done | recursive walk handles it; hand-crafted (2) |
+| openAtEnd slicing (fs904) | done | hand-crafted (5) |
+| modifierExtension MU rule (fs1102) | done | hand-crafted (3) |
 | Choice types | not yet | §9 |
 | Slicing | not yet | §10 |
 | `pattern[X]` / `fixed[X]` matching | not yet | §15 |

@@ -8,6 +8,13 @@
   "description": "Base StructureDefinition for Extension Type: Optional Extension Element - found in all resources.",
   "derivation": "specialization",
   "base": "http://hl7.org/fhir/StructureDefinition/Element",
+  "constraint": {
+    "ext-1": {
+      "expression": "extension.exists() != value.exists()",
+      "human": "Must have either extensions or value[x], not both",
+      "severity": "error"
+    }
+  },
   "elements": {
     "url": {
       "short": "identifies the meaning of the extension",

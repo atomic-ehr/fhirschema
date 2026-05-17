@@ -48,6 +48,11 @@ export const FS = {
   INVALID_PRIMITIVE_EXTENSION: 'fs401',
   MISALIGNED_ARRAYS: 'fs402',
 
+  // fs5xx — terminology bindings
+  INVALID_CODE_FOR_BINDING: 'fs501',
+  CODE_NOT_IN_PREFERRED: 'fs502',
+  CODE_NOT_IN_EXTENSIBLE: 'fs503',
+
   // fs6xx — constraints
   INVARIANT_VIOLATED: 'fs601',
 
@@ -62,9 +67,15 @@ export const FS = {
   SLICE_NOT_MATCHED: 'fs901',
   SLICE_CARDINALITY: 'fs902',
   SLICE_OUT_OF_ORDER: 'fs903',
+  UNMATCHED_NOT_AT_END: 'fs904',
 
   // fs10xx — references
   INVALID_REFERENCE_TYPE: 'fs1001',
+  UNRESOLVED_REFERENCE: 'fs1002',
+
+  // fs11xx — extensions
+  UNKNOWN_EXTENSION: 'fs1101',
+  MODIFIER_EXTENSION_NOT_UNDERSTOOD: 'fs1102',
 } as const;
 
 export type FSCode = (typeof FS)[keyof typeof FS];

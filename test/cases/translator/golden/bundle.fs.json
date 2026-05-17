@@ -8,6 +8,53 @@
   "description": "A container for a collection of resources.",
   "derivation": "specialization",
   "base": "http://hl7.org/fhir/StructureDefinition/Resource",
+  "constraint": {
+    "bdl-7": {
+      "expression": "(type = 'history') or entry.where(fullUrl.exists()).select(fullUrl&resource.meta.versionId).isDistinct()",
+      "human": "FullUrl must be unique in a bundle, or else entries with the same fullUrl must have different meta.versionId (except in history bundles)",
+      "severity": "error"
+    },
+    "bdl-9": {
+      "expression": "type = 'document' implies (identifier.system.exists() and identifier.value.exists())",
+      "human": "A document must have an identifier with a system and a value",
+      "severity": "error"
+    },
+    "bdl-3": {
+      "expression": "entry.all(request.exists() = (%resource.type = 'batch' or %resource.type = 'transaction' or %resource.type = 'history'))",
+      "human": "entry.request mandatory for batch/transaction/history, otherwise prohibited",
+      "severity": "error"
+    },
+    "bdl-4": {
+      "expression": "entry.all(response.exists() = (%resource.type = 'batch-response' or %resource.type = 'transaction-response' or %resource.type = 'history'))",
+      "human": "entry.response mandatory for batch-response/transaction-response/history, otherwise prohibited",
+      "severity": "error"
+    },
+    "bdl-12": {
+      "expression": "type = 'message' implies entry.first().resource.is(MessageHeader)",
+      "human": "A message must have a MessageHeader as the first resource",
+      "severity": "error"
+    },
+    "bdl-1": {
+      "expression": "total.empty() or (type = 'searchset') or (type = 'history')",
+      "human": "total only when a search or history",
+      "severity": "error"
+    },
+    "bdl-2": {
+      "expression": "entry.search.empty() or (type = 'searchset')",
+      "human": "entry.search only when a search",
+      "severity": "error"
+    },
+    "bdl-11": {
+      "expression": "type = 'document' implies entry.first().resource.is(Composition)",
+      "human": "A document must have a Composition as the first resource",
+      "severity": "error"
+    },
+    "bdl-10": {
+      "expression": "type = 'document' implies (timestamp.hasValue())",
+      "human": "A document must have a date",
+      "severity": "error"
+    }
+  },
   "elements": {
     "identifier": {
       "short": "Persistent identifier for the bundle",

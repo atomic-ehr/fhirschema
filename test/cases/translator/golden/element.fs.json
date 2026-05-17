@@ -7,6 +7,13 @@
   "version": "4.0.1",
   "description": "Base StructureDefinition for Element Type: Base definition for all elements in a resource.",
   "abstract": true,
+  "constraint": {
+    "ele-1": {
+      "expression": "hasValue() or (children().count() > id.count())",
+      "human": "All FHIR elements must have a @value or children",
+      "severity": "error"
+    }
+  },
   "elements": {
     "id": {
       "representation": [

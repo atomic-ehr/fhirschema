@@ -13,7 +13,7 @@ imported into our YAML suite, which are pending, and which we mark
 
 | deftest | sub-test | status | where | notes |
 |---|---|---|---|---|
-| `constraints-test` (L42) | base constraints (L47) — root invariants (dom-2 etc.) | 🟡 | — | feature done (fs601); root-level R4 invariants not in our fixtures (translator gap on root-level `.constraint`) |
+| `constraints-test` (L42) | base constraints (L47) — root invariants | 🟡 | `constraints.yaml` | F1 translator gap closed; org-1 imported. dom-2/dom-3 need %resource/%context FHIRPath wiring — skipped with notes |
 | | complex type constraints (L92) — Patient.contact pat-1 | ✅ | `constraints.yaml` | imported with HL7 fhirpath.js adapter |
 | | contained-invariant-profile (L106) | ⏳ | — | uses external profile; importable once fhirpath + profile loading wired |
 | | constraint on bundled resource (L116) | ⏳ | — | combo of Bundle + FHIRPath; mechanism in place |
@@ -72,7 +72,7 @@ imported into our YAML suite, which are pending, and which we mark
 | | match profile effect (L2146) | ⛔ | — | same |
 | | independent effects bug #6609 (L2170) | ⛔ | — | same |
 | `extension-test` (L2189) | us-core-race valid slicing (L2194) | ✅ | `us-core.yaml` | |
-| | us-core-race invalid sub-extension (L2210) | ⛔ | `us-core.yaml` (skip) | needs extension URL dereferencing |
+| | us-core-race invalid sub-extension (L2210) | ✅ | `us-core.yaml` | F4 extension URL deref unlocks this |
 | `multiple-slice-match-test` (L2229) | | ⛔ | — | `slice.match` as array-of-patterns (AND semantics) — translator + validator change |
 | `primitive-extensions-test` (L2261) | valid extension on birthDate (L2294, L2318) | ⏳ | partly via `primitive-extensions.yaml` | re-import with proper FHIR examples |
 | | invalid extension on birthDate (L2305) | ⏳ | — | |

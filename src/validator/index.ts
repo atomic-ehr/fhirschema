@@ -27,6 +27,46 @@ export interface ValidateOptions {
    * (HL7 fhirpath.js, atomic-ehr/fhirpath, or a custom adapter).
    */
   fhirpath?: FhirpathEvaluator;
+  /**
+   * Pluggable terminology validator for `binding.valueSet` checks. If
+   * absent, all bindings are silently skipped. The callback is sync; for
+   * real terminology servers wrap an in-memory cache or batch via a
+   * future deferred-mode API.
+   */
+  terminology?: TerminologyEvaluator;
+  /**
+   * Pluggable reference resolver. Returns 'resolved' if target exists,
+   * 'unresolved' to emit `fs1002` (warning), 'unknown' to skip silently.
+   * Fragment (`#x`) and URN refs are not passed to the resolver.
+   */
+  referenceResolver?: ReferenceResolver;
+}
+
+export type ReferenceVerdict = 'resolved' | 'unresolved' | 'unknown';
+
+export interface ReferenceResolver {
+  resolve(reference: string, ctx: { from: (string | number)[] }): ReferenceVerdict;
+}
+
+/**
+ * Verdict from a terminology check.
+ * - `'in'` — code/coding is in the value set, no issue
+ * - `'not-in'` — not in the set, emit fs50x by strength
+ * - `'unknown'` — engine can't decide (e.g. value set not loaded); silent
+ */
+export type TerminologyVerdict = 'in' | 'not-in' | 'unknown';
+
+export interface TerminologyEvaluator {
+  /**
+   * @param valueSet  canonical URL of the bound value set
+   * @param value     the FHIR primitive value or composite (Coding / CodeableConcept)
+   * @param ctx       binding context: type ('code', 'Coding', 'CodeableConcept') and strength
+   */
+  validateCode(
+    valueSet: string,
+    value: unknown,
+    ctx: { type?: string; strength: string },
+  ): TerminologyVerdict;
 }
 
 /**
@@ -38,8 +78,12 @@ export interface FhirpathEvaluator {
   evaluate(expression: string, root: unknown, context?: Record<string, unknown>): unknown[];
 }
 
+export type IssueSeverity = 'error' | 'warning' | 'information';
+
 export interface ValidationIssue {
   code: FSCode;
+  /** Default 'error' when emitted without explicit severity. */
+  severity?: IssueSeverity;
   path: (string | number)[];
   schema?: string;
   message?: string;
@@ -137,14 +181,16 @@ export function validate(
     }
   }
 
-  if (overlays.length === 0) {
-    // No schemas — nothing to check. Return clean.
-    return { valid: true, issues };
+  if (overlays.length > 0) {
+    walkObject(ctx, overlays, data, [], issues, true, options);
   }
 
-  walkObject(ctx, overlays, data, [], issues, true, options);
+  // Normalize severity: default 'error' if not set by emit site.
+  for (const i of issues) {
+    if (i.severity === undefined) i.severity = 'error';
+  }
 
-  return { valid: issues.length === 0, issues };
+  return { valid: issues.every((i) => i.severity !== 'error'), issues };
 }
 
 // ─── overlay collection ────────────────────────────────────────────────────
@@ -229,6 +275,11 @@ function walk(
   checkPatterns(overlays, value, path, issues);
   checkFixed(overlays, value, path, issues);
 
+  // Terminology bindings (fs5xx). Pluggable; skipped if no engine wired.
+  if (options?.terminology) {
+    checkBindings(overlays, value, path, issues, options.terminology);
+  }
+
   // primitive / null / object
   const type = pickType(overlays);
 
@@ -300,12 +351,25 @@ function walkObject(
 
   // Expand overlays through `type` references: e.g. element typed `HumanName`
   // pulls in HumanName's elements as additional overlays at this scope.
-  const expanded = expandTypeOverlays(ctx, overlays, path, issues);
+  let expanded = expandTypeOverlays(ctx, overlays, path, issues);
 
-  // Reference target type check (fs1001). Operates on overlays before
-  // expansion — `refers` lives on the parent element-def, not on
-  // Reference's own elements.
-  checkReferenceTarget(overlays, obj, path, issues);
+  // Extension URL dereferencing: when the current scope is an Extension
+  // (any overlay says type=Extension) AND data carries a string `url`, pull
+  // the extension definition by URL and apply as additional overlay. This
+  // makes us-core-race etc. validate sub-extensions internally.
+  if (typeof obj.url === 'string' && expanded.some((o) => (o.el as { type?: string }).type === 'Extension')) {
+    const extSchema = ctx.resolve(obj.url);
+    if (extSchema) {
+      const chain: Overlay[] = [];
+      collectChain(ctx, extSchema, extSchema.url, chain, issues, new Set());
+      expanded = [...expanded, ...chain];
+    }
+  }
+
+  // Reference target type check (fs1001) + resolver (fs1002). Operates on
+  // overlays before expansion — `refers` lives on the parent element-def,
+  // not on Reference's own elements.
+  checkReferenceTarget(overlays, obj, path, issues, options?.referenceResolver);
 
   // FHIRPath constraints (fs601). Skipped if no evaluator wired.
   if (options?.fhirpath) {
@@ -376,6 +440,25 @@ function walkObject(
     if (childOverlays.length === 0) {
       issues.push({ code: FS.UNKNOWN_ELEMENT, path: [...path, key], got: key });
       continue;
+    }
+
+    // modifierExtension MU rule: every entry's `url` MUST resolve. If not,
+    // emit fs1102 error (consumer cannot safely interpret the resource).
+    if (baseKey === 'modifierExtension' && Array.isArray(obj[key])) {
+      const items = obj[key] as unknown[];
+      for (let i = 0; i < items.length; i++) {
+        const it = items[i];
+        const url = (it as { url?: unknown } | null)?.url;
+        if (typeof url !== 'string') continue;
+        if (!ctx.resolve(url)) {
+          issues.push({
+            code: FS.MODIFIER_EXTENSION_NOT_UNDERSTOOD,
+            severity: 'error',
+            path: [...path, key, i],
+            expected: url,
+          });
+        }
+      }
     }
 
     if (isShadow) {
@@ -577,7 +660,7 @@ function classifyItem(item: unknown, slicing: Slicing): string[] {
   const out: string[] = [];
   for (const [name, def] of Object.entries(slicing.slices ?? {})) {
     if (name === '@default') continue;
-    const effective = effectiveMatch(def);
+    const effective = effectiveMatch(def, name);
     if (effective === undefined) continue;
     if (matchPattern(effective, item)) out.push(name);
   }
@@ -585,12 +668,17 @@ function classifyItem(item: unknown, slicing: Slicing): string[] {
 }
 
 /**
- * The slice's effective discriminator pattern. Falls back to
- * `{url: schema.url}` for the common FHIR extension-slicing convention
- * where the translator leaves `match: {}` because the URL lives in the
- * slice's element schema.
+ * The slice's effective discriminator pattern, with two FHIR-extension
+ * conventions baked in:
+ *
+ * 1. If translator left `match: {}` empty because the URL lives in the
+ *    slice's element schema, use `{url: schema.url}`.
+ * 2. For sub-extensions inside a composite Extension, slice schemas often
+ *    have no `url` (it'd be redundant — sub-extension URLs are short
+ *    names). In that case, the slice name conventionally equals the
+ *    sub-extension's `url` value, so fall back to `{url: <sliceName>}`.
  */
-function effectiveMatch(def: SliceDef): unknown | undefined {
+function effectiveMatch(def: SliceDef, sliceName?: string): unknown | undefined {
   if (def.match !== undefined) {
     const isEmptyObj =
       def.match !== null &&
@@ -601,6 +689,7 @@ function effectiveMatch(def: SliceDef): unknown | undefined {
   }
   const url = (def.schema as { url?: unknown } | undefined)?.url;
   if (typeof url === 'string') return { url };
+  if (sliceName) return { url: sliceName };
   return undefined;
 }
 
@@ -632,6 +721,7 @@ function walkArrayItems(
   const sliceOrder = Object.keys(slicing.slices ?? {});
   for (const name of sliceOrder) counts.set(name, 0);
   let maxIdx = -1; // highest slice-declaration index seen so far (for ordered)
+  let sawUnmatched = false; // for openAtEnd: matched-after-unmatched → fs904
   const defaultSlice = (slicing.slices as Record<string, SliceDef> | undefined)?.['@default'];
 
   for (let i = 0; i < arr.length; i++) {
@@ -658,7 +748,10 @@ function walkArrayItems(
         const overlayed: Overlay[] = defaultSlice.schema
           ? [
               ...itemOverlays,
-              { el: defaultSlice.schema as FHIRSchemaElement, source: undefined },
+              {
+                el: stripArrayAndSlicing(defaultSlice.schema as FHIRSchemaElement),
+                source: undefined,
+              },
             ]
           : itemOverlays;
         walk(ctx, overlayed, item, [...path, i], issues, options);
@@ -672,6 +765,7 @@ function walkArrayItems(
         });
       }
       // open / openAtEnd without @default: validate against base element only.
+      sawUnmatched = true;
       walk(ctx, itemOverlays, item, [...path, i], issues, options);
       continue;
     }
@@ -680,6 +774,15 @@ function walkArrayItems(
     const name = matched[0] as string;
     counts.set(name, (counts.get(name) ?? 0) + 1);
     const slice = (slicing.slices as Record<string, SliceDef>)[name];
+
+    // openAtEnd: a matched item appearing AFTER any unmatched one → fs904.
+    if (slicing.rules === 'openAtEnd' && sawUnmatched) {
+      issues.push({
+        code: FS.UNMATCHED_NOT_AT_END,
+        path: [...path, i],
+        expected: 'matched items before unmatched',
+      });
+    }
 
     // Ordered slicing (fs903): slice index must be non-decreasing across
     // matched items. Slices A,B,C declared in that order → data may run
@@ -699,7 +802,13 @@ function walkArrayItems(
     }
 
     const overlayed: Overlay[] = slice.schema
-      ? [...itemOverlays, { el: slice.schema as FHIRSchemaElement, source: undefined }]
+      ? [
+          ...itemOverlays,
+          {
+            el: stripArrayAndSlicing(slice.schema as FHIRSchemaElement),
+            source: undefined,
+          },
+        ]
       : itemOverlays;
     walk(ctx, overlayed, item, [...path, i], issues, options);
   }
@@ -742,6 +851,18 @@ function stripArrayAndSlicing(el: FHIRSchemaElement): FHIRSchemaElement {
  * One issue per failed constraint per overlay (union semantics — every
  * overlay's constraints apply).
  */
+/**
+ * Constraint keys we DO NOT evaluate. These are FHIR baseline rules that
+ * encode JSON-shape requirements already enforced syntactically by our
+ * validator (e.g. fs202 empty composite). Evaluating them here causes
+ * double-firing and depends on model-aware FHIRPath features (`children()`
+ * etc.) that our minimal adapter does not provide. See DESIGN §6.1, §14.
+ */
+const DROPPED_CONSTRAINTS = new Set<string>([
+  'ele-1', // "All FHIR elements must have a @value or children"
+  'ext-1', // "Must have either extensions or value[x], not both"
+]);
+
 function checkConstraints(
   overlays: Overlay[],
   obj: Record<string, unknown>,
@@ -753,6 +874,7 @@ function checkConstraints(
     const constraints = (o.el as { constraint?: Record<string, ConstraintDef> }).constraint;
     if (!constraints) continue;
     for (const [key, c] of Object.entries(constraints)) {
+      if (DROPPED_CONSTRAINTS.has(key)) continue;
       if (!c?.expression) continue;
       let result: unknown[];
       try {
@@ -762,8 +884,13 @@ function checkConstraints(
         result = [];
       }
       if (!isFhirpathTruthy(result)) {
+        const sev: IssueSeverity =
+          c.severity === 'warning' || c.severity === 'information'
+            ? c.severity
+            : 'error';
         issues.push({
           code: FS.INVARIANT_VIOLATED,
+          severity: sev,
           path,
           schema: o.source,
           expected: key,
@@ -798,21 +925,37 @@ function checkReferenceTarget(
   obj: Record<string, unknown>,
   path: (string | number)[],
   issues: ValidationIssue[],
+  resolver?: ReferenceResolver,
 ): void {
-  const refers = collectRefers(overlays);
-  if (!refers) return;
   const ref = obj.reference;
   if (typeof ref !== 'string') return;
+
+  // fs1001 — target type vs refers[]
+  const refers = collectRefers(overlays);
   const targetType = parseReferenceType(ref);
-  if (!targetType) return;
-  const allowed = refers.map(canonicalTail);
-  if (!allowed.includes(targetType)) {
-    issues.push({
-      code: FS.INVALID_REFERENCE_TYPE,
-      path: [...path, 'reference'],
-      expected: allowed,
-      got: targetType,
-    });
+  if (refers && targetType) {
+    const allowed = refers.map(canonicalTail);
+    if (!allowed.includes(targetType)) {
+      issues.push({
+        code: FS.INVALID_REFERENCE_TYPE,
+        path: [...path, 'reference'],
+        expected: allowed,
+        got: targetType,
+      });
+    }
+  }
+
+  // fs1002 — resolver-side existence check. Fragment / URN skipped.
+  if (resolver && !ref.startsWith('#') && !ref.startsWith('urn:')) {
+    const verdict = resolver.resolve(ref, { from: [...path, 'reference'] });
+    if (verdict === 'unresolved') {
+      issues.push({
+        code: FS.UNRESOLVED_REFERENCE,
+        severity: 'warning',
+        path: [...path, 'reference'],
+        got: ref,
+      });
+    }
   }
 }
 
@@ -837,6 +980,56 @@ function canonicalTail(canonical: string): string {
 }
 
 // ─── pattern ─────────────────────────────────────────────────────────────
+
+// ─── terminology bindings ────────────────────────────────────────────────
+
+function checkBindings(
+  overlays: Overlay[],
+  value: unknown,
+  path: (string | number)[],
+  issues: ValidationIssue[],
+  engine: TerminologyEvaluator,
+): void {
+  for (const o of overlays) {
+    const b = (o.el as { binding?: { strength?: string; valueSet?: string } }).binding;
+    if (!b?.valueSet || !b.strength) continue;
+    if (b.strength === 'example') continue; // examples never validated
+    const type = (o.el as { type?: string }).type;
+    const verdict = engine.validateCode(b.valueSet, value, {
+      type,
+      strength: b.strength,
+    });
+    if (verdict !== 'not-in') continue; // 'in' and 'unknown' don't fire
+    if (b.strength === 'required') {
+      issues.push({
+        code: FS.INVALID_CODE_FOR_BINDING,
+        severity: 'error',
+        path,
+        schema: o.source,
+        expected: b.valueSet,
+        got: value,
+      });
+    } else if (b.strength === 'extensible') {
+      issues.push({
+        code: FS.CODE_NOT_IN_EXTENSIBLE,
+        severity: 'warning',
+        path,
+        schema: o.source,
+        expected: b.valueSet,
+        got: value,
+      });
+    } else if (b.strength === 'preferred') {
+      issues.push({
+        code: FS.CODE_NOT_IN_PREFERRED,
+        severity: 'warning',
+        path,
+        schema: o.source,
+        expected: b.valueSet,
+        got: value,
+      });
+    }
+  }
+}
 
 // ─── fixed[X] strict equality ─────────────────────────────────────────────
 

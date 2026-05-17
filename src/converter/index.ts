@@ -187,7 +187,26 @@ export function translate(
   const header = buildResourceHeader(structureDefinition, context);
   const elements = getDifferential(structureDefinition);
 
-  // Note: Root element constraints are not included in the output
+  // Root element constraints — captured into FHIRSchema.constraint at top level.
+  // Root element is the differential entry whose path has no dot (e.g. "Patient",
+  // not "Patient.name").
+  const rootElement = (structureDefinition.differential?.element ?? []).find(
+    (e) => !e.path.includes('.'),
+  );
+  if (Array.isArray(rootElement?.constraint) && rootElement.constraint.length > 0) {
+    const rootConstraints: Record<
+      string,
+      { expression: string; human: string; severity: string }
+    > = {};
+    for (const c of rootElement.constraint) {
+      rootConstraints[c.key] = {
+        expression: c.expression,
+        human: c.human,
+        severity: c.severity,
+      };
+    }
+    (header as Record<string, unknown>).constraint = rootConstraints;
+  }
 
   // Initialize stack with header
   let stack: Record<string, unknown>[] = [header];
