@@ -22,10 +22,10 @@ tests:
       system: http://unitsofmeasure.org
       value: 18
   skip: true
-  _skipReason: 'unmappable Java messages — bring back when each translates to fsNNN. outs=["WARNING: A definition for CodeSystem ''http://example.org''
-    could not be found, so the code cannot be validated", "ERROR: The code provided (http://unitsofmeasure.org#m) was not found in the value set
-    ''Common UCUM Codes for Age'' (http://hl7.org/fhir/ValueSet/age-units|4.0.1), and a code from this value set is required: The provided code
-    ''http://unitsofmeasure.org#m'' was not found in the value set ''http://hl7.org/fhir/ValueSet/age-units|4.0.1''"] (see DESIGN §15)'
+  _skipReason: 'unmappable Java outs=["WARNING: A definition for CodeSystem ''http://example.org'' could not be found, so the code cannot be validated",
+    "ERROR: The code provided (http://unitsofmeasure.org#m) was not found in the value set ''Common UCUM Codes for Age'' (http://hl7.org/fhir/ValueSet/age-units|4.0.1),
+    and a code from this value set is required: The provided code ''http://unitsofmeasure.org#m'' was not found in the value set ''http://hl7.org/fhir/ValueSet/age-units|4.0.1''"]
+    (DESIGN §15)'
 - desc: graham/fixed-quantity-binding-observation-2
   schemas: []
   _loadProfile:
@@ -42,6 +42,144 @@ tests:
       code: m
       system: http://unitsofmeasure.org
       value: 18
+  valid: true
+- desc: graham/medstmt-ips
+  schemas: []
+  _loadProfile:
+  - medstmt-ips-profile.xml
+  data:
+    resourceType: MedicationStatement
+    id: eumfh-39-07-1
+    text:
+      status: generated
+      div: '<div xmlns="http://www.w3.org/1999/xhtml"><p><b>Generated Narrative with Details</b></p><p><b>id</b>: eumfh-39-07-1</p><p><b>status</b>:
+        active</p><p><b>medication</b>: <a href="Medication-eumfh-39-07-1.html">simvastatin. Generated Summary: id: eumfh-39-07-1; <span title="Codes:
+        {http://www.nlm.nih.gov/research/umls/rxnorm 757704}, {http://www.whocc.no/atc C10AA01}">Fluspiral 50 mcg</span>; <span title="Codes:
+        {http://www.nlm.nih.gov/research/umls/rxnorm 1294713}, {http://standardterms.edqm.eu 10219000}">Disintegrating Oral Product</span></a></p><p><b>subject</b>:
+        <a href="Patient-eumfh-39-07.html">Alexander Heig (inject 39-07). Generated Summary: id: eumfh-39-07; 39-07, EUR01P0001; active; Alexander
+        Heig ; gender: male; birthDate: 1957-01-01</a></p><p><b>effective</b>: 01/01/2014 12:00:00 AM --&gt; (ongoing)</p><p><b>dosage</b>: </p></div>'
+    status: active
+    medicationReference:
+      reference: Medication/eumfh-39-07-1
+      display: simvastatin
+    subject:
+      reference: Patient/eumfh-39-07
+      display: Alexander Heig (inject 39-07)
+    effectivePeriod:
+      start: '2014'
+    dosage:
+    - text: 40 mg/day
+      timing:
+        repeat:
+          frequency: 1
+          period: 1
+          periodUnit: d
+      doseAndRate:
+      - doseQuantity:
+          value: 40
+          unit: mg
+          system: http://unitsofmeasure.org
+          code: mg
+  valid: true
+- desc: graham/mycommunication.invalid
+  schemas: []
+  _loadProfile:
+  - mycommunication.structureDefinition.xml
+  data:
+    resourceType: Communication
+    id: myCommInvalid
+    status: completed
+    basedOn:
+    - reference: Observation/example
+    partOf:
+    - reference: Observation/example
+    about:
+    - reference: Patient/pat-good
+  skip: true
+  _skipReason: refers=[Resource] meta-type strictness (DESIGN §15) (see DESIGN §15 → Reference.refers)
+- desc: graham/mycommunication.valid.example
+  schemas: []
+  _loadProfile:
+  - mycommunication.structureDefinition.xml
+  data:
+    resourceType: Communication
+    id: myCommValid
+    status: completed
+    basedOn:
+    - reference: Patient/pat-good
+    partOf:
+    - reference: Patient/pat-good
+    about:
+    - reference: Patient/pat-good
+  skip: true
+  _skipReason: refers=[Resource] meta-type strictness (DESIGN §15) (see DESIGN §15 → Reference.refers)
+- desc: graham/jv-patient-good
+  schemas: []
+  _loadProfile:
+  - jv-patient-profile-res.xml
+  - jv-patient-profile-dt.xml
+  data:
+    resourceType: Patient
+    name:
+    - use: official
+      family: Meyer
+      given:
+      - Niels
+      - Christian
+      prefix:
+      - Mr
+    - use: usual
+      given:
+      - Bubber
+    maritalStatus:
+      coding:
+      - system: http://terminology.hl7.org/CodeSystem/v3-MaritalStatus
+        code: M
+        display: Married
+    identifier:
+    - system: urn:oid:1.2.208.176.1.2
+      value: '1112640001'
+    gender: male
+    birthDate: '1964-12-11'
+    generalPractitioner:
+    - identifier:
+        system: urn:oid:1.2.208.176.1.1
+        value: '73456734567345673456'
+      display: Charlottenlund Lægehus
+  valid: true
+- desc: graham/jv-patient-bad
+  schemas: []
+  _loadProfile:
+  - jv-patient-profile-res.xml
+  - jv-patient-profile-dt.xml
+  data:
+    resourceType: Patient
+    name:
+    - use: official
+      family: Meyer
+      given:
+      - Niels
+      - Christian
+      prefix:
+      - Mr
+    - use: usual
+      given:
+      - Bubber
+    maritalStatus:
+      coding:
+      - system: http://terminology.hl7.org/CodeSystem/v3-MaritalStatus
+        code: M
+        display: Married
+    identifier:
+    - system: urn:oid:1.2.208.176.1.2
+      value: '1112640001'
+    gender: male
+    birthDate: '1964-12-11'
+    generalPractitioner:
+    - identifier:
+        system: urn:oid:1.2.208.176.1.1
+        value: '73456'
+      display: Charlottenlund Lægehus
   valid: true
 - desc: graham/bb-obs-value-is-not-quantity
   schemas: []
@@ -111,8 +249,63 @@ tests:
     resourceType: Patient
     id: pat-good
     active: true
-  skip: true
-  _skipReason: profile-specific min=1 not firing; needs investigation. Likely profile-loading path missing inheritance step. (see DESIGN §15)
+  issues:
+  - code: fs301
+  _applyProfile: true
+- desc: graham/patient-min-none
+  schemas: []
+  _loadProfile:
+  - patient-min-profile-none.xml
+  data:
+    resourceType: Patient
+    id: pat-good
+    active: true
+  valid: true
+- desc: graham/patient-min-none1
+  schemas: []
+  _loadProfile:
+  - patient-min-profile-none1.xml
+  data:
+    resourceType: Patient
+    id: pat-good
+    active: true
+  valid: true
+- desc: graham/patient-min-fixed
+  schemas: []
+  _loadProfile:
+  - patient-min-profile-fixed.xml
+  data:
+    resourceType: Patient
+    id: pat-good
+    active: true
+  valid: true
+- desc: graham/patient-min-fixed1
+  schemas: []
+  _loadProfile:
+  - patient-min-profile-fixed1.xml
+  data:
+    resourceType: Patient
+    id: pat-good
+    active: true
+  valid: true
+- desc: graham/patient-min-pattern
+  schemas: []
+  _loadProfile:
+  - patient-min-profile-pattern.xml
+  data:
+    resourceType: Patient
+    id: pat-good
+    active: true
+  valid: true
+- desc: graham/patient-min-pattern1
+  schemas: []
+  _loadProfile:
+  - patient-min-profile-pattern1.xml
+  data:
+    resourceType: Patient
+    id: pat-good
+    active: true
+  valid: true
 - desc: graham/parameters-profiled-resource-valid
   schemas: []
   _loadProfile:
@@ -209,12 +402,11 @@ tests:
         display: Often true
       text: Often true
   skip: true
-  _skipReason: 'unmappable Java messages — bring back when each translates to fsNNN. outs=["INFORMATION: The URL value ''#9mEtDcPhOj7HjaHj'' might
-    be wrong because it appears to point to an internal target, but there is no matching target", "ERROR: Wrong Display Name ''Within the past
-    12 months the food we bought just didn''t last and we didn''t have money to get more [U.S. FSS]'' for http://loinc.org#88123-5. Valid display
-    is one of 2 choices: ''Within the past 12 months the food we bought just didn''t last and we didn''t have money to get more'' (en-US) or ''Within
-    the past 12 months the food we bought just didn''t last and we didn''t have money to get more'' (en-US) (for the language(s) ''en-US'')"]
-    (see DESIGN §15)'
+  _skipReason: 'unmappable Java outs=["INFORMATION: The URL value ''#9mEtDcPhOj7HjaHj'' might be wrong because it appears to point to an internal
+    target, but there is no matching target", "ERROR: Wrong Display Name ''Within the past 12 months the food we bought just didn''t last and
+    we didn''t have money to get more [U.S. FSS]'' for http://loinc.org#88123-5. Valid display is one of 2 choices: ''Within the past 12 months
+    the food we bought just didn''t last and we didn''t have money to get more'' (en-US) or ''Within the past 12 months the food we bought just
+    didn''t last and we didn''t have money to get more'' (en-US) (for the language(s) ''en-US'')"] (DESIGN §15)'
 - desc: graham/type-subtype-slicing1
   schemas: []
   _loadProfile:
@@ -1030,12 +1222,10 @@ tests:
           use: work
           rank: 1
   skip: true
-  _skipReason: 'unmappable Java messages — bring back when each translates to fsNNN. outs=["WARNING: None of the codings provided are in the value
-    set ''IdentifierType'' (http://hl7.org/fhir/ValueSet/identifier-type|4.0.1), and a coding should come from this value set unless it has no
-    suitable code (note that the validator cannot judge what is suitable) (codes = http://terminology.hl7.org/CodeSystem/v2-0203#RI)", "ERROR:
-    Hyperlink ''#Organization_01c31a2f-321d-4c6e-8349-206af8a88088'' at ''div/p/a'' for ''See above (Organization/01c31a2f-321d-4c6e-8349-206af8a88088)''
-    does not resolve", "ERROR: Hyperlink ''#List_7e8a5789-f41a-496f-94ad-fef0999bbcbe'' at ''div/p/a'' for ''See above (List/7e8a5789-f41a-496f-94ad-fef0999bbcbe)''
-    does not resolve"] (see DESIGN §15)'
+  _skipReason: 'unmappable Java outs=["WARNING: None of the codings provided are in the value set ''IdentifierType'' (http://hl7.org/fhir/ValueSet/identifier-type|4.0.1),
+    and a coding should come from this value set unless it has no suitable code (note that the validator cannot judge what is suitable) (codes
+    = http://terminology.hl7.org/CodeSystem/v2-0203#RI)", "ERROR: Hyperlink ''#Organization_01c31a2f-321d-4c6e-8349-206af8a88088'' at ''div/p/a''
+    for ''See above (Organization/01c31a2f-321d-4c6e-8349-206af8a88088)'' does not resolve"] (DESIGN §15)'
 - desc: graham/valueset-import-legacy-test
   schemas: []
   _loadProfile:
@@ -1057,7 +1247,8 @@ tests:
   valid: true
 - desc: graham/uuid-extension
   schemas: []
-  _loadProfile: []
+  _loadProfile:
+  - uuid-ext.xml
   data:
     resourceType: Medication
     id: medication-example
@@ -1085,9 +1276,9 @@ tests:
       lotNumber: '84735612'
       expirationDate: '2025-07-26'
   skip: true
-  _skipReason: 'unmappable Java messages — bring back when each translates to fsNNN. outs=[''ERROR: The extension https://example.com/StructureDefinition/is-extemp
-    could not be found so is not allowed here'', "ERROR: Unknown code ''56248011000036107'' in the CodeSystem ''http://snomed.info/sct'' version
-    ''http://snomed.info/sct/900000000000207008/version/20250201'' (International Edition)"] (see DESIGN §15)'
+  _skipReason: 'unmappable Java outs=[''ERROR: The extension https://example.com/StructureDefinition/is-extemp could not be found so is not allowed
+    here'', "ERROR: Unknown code ''56248011000036107'' in the CodeSystem ''http://snomed.info/sct'' version ''http://snomed.info/sct/900000000000207008/version/20250201''
+    (International Edition)"] (DESIGN §15)'
 - desc: graham/bundle-invariant
   schemas: []
   _loadProfile:
@@ -1328,10 +1519,8 @@ tests:
         type:
         - code: string
   skip: true
-  _skipReason: 'unmappable Java messages — bring back when each translates to fsNNN. outs=["WARNING: Review the extension type for ext-derived:
-    extensions should not have a context of Element unless it''s really intended that they can be used anywhere", "ERROR: Value is ''http://hl7.org/fhir/test/StructureDefinition/ext-derived''
-    but is fixed to ''http://hl7.org/fhir/test/StructureDefinition/ext-base'' in the profile , because the value must match the fixed value define
-    in ''http://hl7.org/fhir/test/StructureDefinition/ext-base''"] (see DESIGN §15)'
+  _skipReason: Profile defines fixed value on Extension.url; our checkFixed runs but doesn't catch it in the profile-on-extension context. Needs
+    investigation. (DESIGN §15)
 - desc: graham/ext-derived-circle
   schemas: []
   _loadProfile:
@@ -1692,8 +1881,8 @@ tests:
     - item:
         reference: '#MyAppointmentExample'
   skip: true
-  _skipReason: 'unmappable Java messages — bring back when each translates to fsNNN. outs=["ERROR: Hyperlink ''#hcListExample/MyAppointmentExample''
-    at ''div/table/tr/td/a'' for ''Appointment: status = proposed'' does not resolve"] (see DESIGN §15)'
+  _skipReason: 'unmappable Java outs=["ERROR: Hyperlink ''#hcListExample/MyAppointmentExample'' at ''div/table/tr/td/a'' for ''Appointment: status
+    = proposed'' does not resolve"] (DESIGN §15)'
 - desc: graham/type-slicing-multiple
   schemas: []
   _loadProfile:
@@ -1872,11 +2061,10 @@ tests:
       documentation: Test target profile
       type: Reference
   skip: true
-  _skipReason: 'unmappable Java messages — bring back when each translates to fsNNN. outs=["WARNING: The ''in'' profile http://hl7.org/fhir/test/StructureDefinition/op-def-in-profile|2.1.0
-    defines a parameter ''in'' but this is not in the parameters list in the operation definition", "ERROR: The parameter ''questionnaire'' has
-    a value for ''min'' of ''1'' in the ''in'' profile 1 that is different to ''0'' which is the value in the parameter definition in the operation
-    definition", "ERROR: The parameter ''questionnaire'' has a value for ''max'' of ''1'' in the ''in'' profile 1 that is different to ''*'' which
-    is the value in the parameter definition in the operation definition"] (see DESIGN §15)'
+  _skipReason: 'unmappable Java outs=["WARNING: The ''in'' profile http://hl7.org/fhir/test/StructureDefinition/op-def-in-profile|2.1.0 defines
+    a parameter ''in'' but this is not in the parameters list in the operation definition", "ERROR: The parameter ''questionnaire'' has a value
+    for ''min'' of ''1'' in the ''in'' profile 1 that is different to ''0'' which is the value in the parameter definition in the operation definition"]
+    (DESIGN §15)'
 - desc: graham/opdef2-params
   schemas: []
   _loadProfile:
@@ -2019,7 +2207,7 @@ tests:
     inputProfile: http://hl7.org/fhir/uv/sdc/StructureDefinition/parameters-opdef2-params-in
     outputProfile: http://hl7.org/fhir/uv/sdc/StructureDefinition/parameters-opdef2-params-out
   skip: true
-  _skipReason: no java outcome file (see DESIGN §15)
+  _skipReason: no java outcome (DESIGN §15)
 - desc: graham/cc-pattern-system-only
   schemas: []
   _loadProfile:
@@ -2044,7 +2232,7 @@ tests:
           coding:
           - system: https://gematik.de/fhir/isik/CodeSystem/TestCodeSystem
   skip: true
-  _skipReason: no java outcome file (see DESIGN §15)
+  _skipReason: no java outcome (DESIGN §15)
 - desc: graham/standards-status-x-r4
   schemas: []
   _loadProfile:
@@ -2128,7 +2316,7 @@ tests:
         device:
           reference: '#contained-device'
   skip: true
-  _skipReason: no java outcome file (see DESIGN §15)
+  _skipReason: no java outcome (DESIGN §15)
 - desc: graham/pat-fixed-date
   schemas: []
   _loadProfile:
@@ -2138,7 +2326,7 @@ tests:
     id: test-pass-fixed-date-top-level
     birthDate: '2024-01-01'
   skip: true
-  _skipReason: no java outcome file (see DESIGN §15)
+  _skipReason: no java outcome (DESIGN §15)
 - desc: graham/pat-minvalue-date
   schemas: []
   _loadProfile:
@@ -2148,7 +2336,7 @@ tests:
     id: test-pass-fixed-date-top-level
     birthDate: '2024-01-01'
   skip: true
-  _skipReason: no java outcome file (see DESIGN §15)
+  _skipReason: no java outcome (DESIGN §15)
 - desc: graham/param-mintime
   schemas: []
   _loadProfile:
@@ -2163,7 +2351,7 @@ tests:
     - name: value
       valueTime: '14:12:00'
   skip: true
-  _skipReason: no java outcome file (see DESIGN §15)
+  _skipReason: no java outcome (DESIGN §15)
 - desc: graham/obs-max-decimal
   schemas: []
   _loadProfile:
@@ -2180,7 +2368,7 @@ tests:
       system: http://unitsofmeasure.org
       code: mg
   skip: true
-  _skipReason: no java outcome file (see DESIGN §15)
+  _skipReason: no java outcome (DESIGN §15)
 - desc: graham/toplevel-minvalueduration-pass
   schemas: []
   _loadProfile:
@@ -2229,7 +2417,7 @@ tests:
       contentType: image/jpeg
       data: SGVsbG8gV29ybGQ=
   skip: true
-  _skipReason: no java outcome file (see DESIGN §15)
+  _skipReason: no java outcome (DESIGN §15)
 - desc: graham/media-mime-type-notx
   schemas: []
   _loadProfile:
@@ -2242,4 +2430,4 @@ tests:
       contentType: image/jpeg
       data: SGVsbG8gV29ybGQ=
   skip: true
-  _skipReason: no java outcome file (see DESIGN §15)
+  _skipReason: no java outcome (DESIGN §15)

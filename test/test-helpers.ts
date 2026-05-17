@@ -137,6 +137,7 @@ function isPlainObject(v: unknown): v is Record<string, unknown> {
 
 import type { FHIRSchema, StructureDefinition } from '../src/converter/types.js';
 import { translate } from '../src/converter/index.js';
+import { XMLParser } from 'fast-xml-parser';
 
 const FIXTURES_ROOT = join(import.meta.dir, 'fixtures');
 
@@ -187,10 +188,86 @@ export function loadProfileSchema(relPath: string): FHIRSchema {
   } catch {
     throw new Error(`profile file not found: ${full}`);
   }
-  const sd = JSON.parse(raw) as StructureDefinition;
+  const sd: StructureDefinition = relPath.endsWith('.xml')
+    ? (fhirXmlToJson(raw) as StructureDefinition)
+    : (JSON.parse(raw) as StructureDefinition);
   const schema = translate(sd);
   _profileCache.set(relPath, schema);
   return schema;
+}
+
+// FHIR fields that are always arrays inside an ElementDefinition (or
+// other deep contexts) even when only one occurrence is present. We use
+// the jpath argument to gate — only force-array when we're under the
+// `differential.element[]` / `snapshot.element[]` path, plus a couple
+// of top-level always-array fields. FHIR JSON spec says single-instance
+// still needs the [] wrapper for these.
+const ELEMENT_ARRAY_FIELDS = new Set([
+  'type', 'constraint', 'discriminator', 'extension', 'modifierExtension',
+  'representation', 'code', 'mapping', 'alias', 'targetProfile', 'profile',
+]);
+const ALWAYS_ARRAY_FIELDS = new Set([
+  'element', 'identifier', 'contact', 'useContext', 'jurisdiction',
+]);
+const _xmlParser = new XMLParser({
+  ignoreAttributes: false,
+  attributeNamePrefix: '@',
+  parseAttributeValue: false,
+  parseTagValue: false,
+  isArray: (name, jpath) => {
+    if (ALWAYS_ARRAY_FIELDS.has(name)) return true;
+    if (ELEMENT_ARRAY_FIELDS.has(name) && /\.element(\.|$)/.test(String(jpath))) return true;
+    return false;
+  },
+});
+
+/**
+ * Convert FHIR XML (single root element under `<StructureDefinition>` etc.)
+ * to the FHIR JSON shape our translator consumes.
+ *
+ * Conventions:
+ * - Every primitive is `<element value="X"/>` → `"element": "X"`
+ * - Wrapper elements (`<element>...</element>`) → nested object
+ * - Sibling repeats become arrays (fast-xml-parser already does this)
+ * - `xmlns`, `?xml`, and other meta attrs are dropped
+ */
+function fhirXmlToJson(xml: string): unknown {
+  const parsed = _xmlParser.parse(xml) as Record<string, unknown>;
+  // Drop the XML declaration; find the first non-meta root.
+  let root: Record<string, unknown> | undefined;
+  let rootName: string | undefined;
+  for (const [k, v] of Object.entries(parsed)) {
+    if (k.startsWith('?')) continue;
+    root = v as Record<string, unknown>;
+    rootName = k;
+    break;
+  }
+  if (!root || !rootName) throw new Error('no XML root element found');
+  const json = collapseFhirNode(root);
+  if (typeof json === 'object' && json !== null) {
+    (json as Record<string, unknown>).resourceType = rootName;
+  }
+  return json;
+}
+
+function collapseFhirNode(node: unknown): unknown {
+  if (node === null || node === undefined) return node;
+  if (Array.isArray(node)) return node.map(collapseFhirNode);
+  if (typeof node !== 'object') return node;
+  const obj = node as Record<string, unknown>;
+  const keys = Object.keys(obj);
+  // Primitive: `<el value="X"/>` parses to `{@value: "X"}` (possibly with
+  // other attrs we ignore). Collapse to the bare value.
+  if ('@value' in obj && keys.every((k) => k.startsWith('@'))) {
+    return obj['@value'];
+  }
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(obj)) {
+    if (k.startsWith('@')) continue; // drop other attributes (xmlns etc.)
+    if (k === '#text') continue;
+    out[k] = collapseFhirNode(v);
+  }
+  return out;
 }
 
 /**

@@ -67,6 +67,10 @@ const PACKAGES: Pkg[] = [
     url: 'https://packages.simplifier.net/hl7.fhir.us.core/3.1.0' },
   { id: 'hl7.fhir.us.core', version: '3.1.1',
     url: 'https://packages.simplifier.net/hl7.fhir.us.core/3.1.1' },
+  { id: 'hl7.fhir.uv.shc-vaccination', version: '0.6.2',
+    url: 'https://packages.simplifier.net/hl7.fhir.uv.shc-vaccination/0.6.2' },
+  { id: 'hl7.fhir.uv.cgm', version: '1.0.0-ballot',
+    url: 'https://packages.simplifier.net/hl7.fhir.uv.cgm/1.0.0-ballot' },
 ];
 
 async function downloadAndExtract(pkg: Pkg, dest: string): Promise<void> {

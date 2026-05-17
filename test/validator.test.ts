@@ -170,6 +170,31 @@ for (const file of files) {
         } else if (typeof lp === 'string') {
           profileLoaded.push(loadProfileSchema(lp));
         }
+        // `_applyProfile: true` — inject loaded profile URLs into
+        // `data.meta.profile` so they apply to validation. Mirrors Java
+        // validator CLI's `-profile X` flag. Opt-in: most _loadProfile
+        // tests register a profile for ctx lookup, not for application.
+        //
+        // `_applyProfileUrl: "http://..."` — inject a specific URL into
+        // `data.meta.profile` (for cases where the profile is loaded via
+        // a package, not _loadProfile, but we still want to apply it).
+        let mungedData = t.data;
+        const apply = (t as { _applyProfile?: unknown })._applyProfile === true;
+        const applyUrl = (t as { _applyProfileUrl?: unknown })._applyProfileUrl;
+        const urlsToApply: string[] = [];
+        if (apply) {
+          for (const s of profileLoaded) if (s.url) urlsToApply.push(s.url);
+        }
+        if (typeof applyUrl === 'string') urlsToApply.push(applyUrl);
+        if (urlsToApply.length > 0 && mungedData !== null && typeof mungedData === 'object') {
+          const d = mungedData as Record<string, unknown>;
+          const m = (d.meta ?? {}) as Record<string, unknown>;
+          const existing = Array.isArray(m.profile) ? (m.profile as unknown[]) : [];
+          mungedData = {
+            ...d,
+            meta: { ...m, profile: [...existing, ...urlsToApply] },
+          };
+        }
         const registry = [
           ...((defaults?.registry as FHIRSchema[] | undefined) ?? []),
           ...((t.registry as FHIRSchema[] | undefined) ?? []),
@@ -200,7 +225,7 @@ for (const file of files) {
         if (d?.useReferenceResolver === true)
           suiteOpts.referenceResolver = referenceResolverAdapter;
         const opts = { ...suiteOpts, ...(t.options ?? {}) };
-        const result = validate(ctx, t.schemas as FHIRSchema[], t.data, opts);
+        const result = validate(ctx, t.schemas as FHIRSchema[], mungedData, opts);
 
         // By default, tests assert only on ERROR-severity issues. Warnings
         // and information surface in result but are invisible to the

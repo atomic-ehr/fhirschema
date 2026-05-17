@@ -2,6 +2,55 @@ suite: Graham fhir-test-cases — IG-package (R4)
 defaults:
   useR4: true
 tests:
+- desc: graham/dr-eh
+  schemas: []
+  data:
+    resourceType: DocumentReference
+    id: episode-summary
+    meta:
+      profile:
+      - http://hl7.org/fhir/us/core/StructureDefinition/us-core-documentreference
+    identifier:
+    - system: urn:ietf:rfc:3986
+      value: urn:oid:2.16.840.1.113883.19.5.99999.1
+    status: current
+    type:
+      coding:
+      - system: http://loinc.org
+        code: 34133-9
+        display: Summary of episode note
+      text: CCD Document
+    category:
+    - coding:
+      - system: http://hl7.org/fhir/us/core/CodeSystem/us-core-documentreference-category
+        code: clinical-note
+        display: Clinical Note
+      text: Clinical Note
+    subject:
+      reference: Device/foo
+      display: Amy Shaw
+    date: '2016-03-09T15:29:46Z'
+    author:
+    - reference: Practitioner/practitioner-1
+      display: Ronald Bone, MD
+    description: Pulmonology clinic acute visit
+    content:
+    - attachment:
+        contentType: text/plain
+        url: /Binary/1-note
+        title: 'Uri where the data can be found: [base]/Binary/1-note'
+      format:
+        system: urn:oid:1.3.6.1.4.1.19376.1.2.3
+        code: urn:hl7-org:sdwg:ccda-structuredBody:2.1
+        display: Documents following C-CDA constraints using a structured body
+    context:
+      period:
+        start: '2004-12-23T08:00:00+11:00'
+        end: '2004-12-23T08:01:00+11:00'
+  _usePackages:
+  - hl7.fhir.us.core@3.1.0
+  skip: true
+  _skipReason: Expected fs1001 not firing; profile-specific reference type check on Reference target. Needs investigation. (DESIGN §15)
 - desc: graham/us-docref.json
   schemas: []
   data:
@@ -82,57 +131,294 @@ tests:
   _usePackages:
   - hl7.fhir.us.core@3.1.1
   valid: true
-- desc: graham/dr-eh
+- desc: graham/bnd-slicing-cgm
   schemas: []
   data:
-    resourceType: DocumentReference
-    id: episode-summary
-    meta:
-      profile:
-      - http://hl7.org/fhir/us/core/StructureDefinition/us-core-documentreference
-    identifier:
-    - system: urn:ietf:rfc:3986
-      value: urn:oid:2.16.840.1.113883.19.5.99999.1
-    status: current
-    type:
-      coding:
-      - system: http://loinc.org
-        code: 34133-9
-        display: Summary of episode note
-      text: CCD Document
-    category:
-    - coding:
-      - system: http://hl7.org/fhir/us/core/CodeSystem/us-core-documentreference-category
-        code: clinical-note
-        display: Clinical Note
-      text: Clinical Note
-    subject:
-      reference: Device/foo
-      display: Amy Shaw
-    date: '2016-03-09T15:29:46Z'
-    author:
-    - reference: Practitioner/practitioner-1
-      display: Ronald Bone, MD
-    description: Pulmonology clinic acute visit
-    content:
-    - attachment:
-        contentType: text/plain
-        url: /Binary/1-note
-        title: 'Uri where the data can be found: [base]/Binary/1-note'
-      format:
-        system: urn:oid:1.3.6.1.4.1.19376.1.2.3
-        code: urn:hl7-org:sdwg:ccda-structuredBody:2.1
-        display: Documents following C-CDA constraints using a structured body
-    context:
-      period:
-        start: '2004-12-23T08:00:00+11:00'
-        end: '2004-12-23T08:01:00+11:00'
+    resourceType: Bundle
+    id: cgmDataSubmissionBundle
+    type: transaction
+    timestamp: '2024-05-02T14:30:00Z'
+    entry:
+    - fullUrl: https://example.org/DiagnosticReport/cgmSummaryPDFExample
+      resource:
+        resourceType: DiagnosticReport
+        id: cgmSummaryPDFExample
+        status: final
+        category:
+        - coding:
+          - system: http://terminology.hl7.org/CodeSystem/v2-0074
+            code: LAB
+        code:
+          coding:
+          - system: http://hl7.org/fhir/uv/cgm/CodeSystem/cgm-summary-codes-temporary
+            code: cgm-summary
+        subject:
+          reference: Patient/patientExample
+        effectivePeriod:
+          start: '2024-05-01'
+          end: '2024-05-14'
+        issued: '2024-05-15T14:30:00Z'
+        result:
+        - reference: Observation/cgmSummaryExample
+        presentedForm:
+        - contentType: application/pdf
+          data: JVBERi0xLjAKJcK1wrYKCjEgMCBvYmoKPDwvVHlwZS9DYXRhbG9nL1BhZ2VzIDIgMCBSPj4KZW5kb2JqCgoyIDAgb2JqCjw8L0tpZHNbMyAwIFJdL0NvdW50IDEvVHlwZS9QYWdlcy9NZWRpYUJveFswIDAgNTk1IDc5Ml0+PgplbmRvYmoKCjMgMCBvYmoKPDwvVHlwZS9QYWdlL1BhcmVudCAyIDAgUi9Db250ZW50cyA0IDAgUi9SZXNvdXJjZXM8PD4+Pj4KZW5kb2JqCgo0IDAgb2JqCjw8L0xlbmd0aCA1OD4+CnN0cmVhbQpxCkJUCi8gOTYgVGYKMSAwIDAgMSAzNiA2ODQgVG0KKEZISVIgQ0dNISkgVGoKRVQKUQoKZW5kc3RyZWFtCmVuZG9iagoKeHJlZgowIDUKMDAwMDAwMDAwMCA2NTUzNiBmIAowMDAwMDAwMDE2IDAwMDAwIG4gCjAwMDAwMDAwNjIgMDAwMDAgbiAKMDAwMDAwMDEzNiAwMDAwMCBuIAowMDAwMDAwMjA5IDAwMDAwIG4gCgp0cmFpbGVyCjw8L1NpemUgNS9Sb290IDEgMCBSPj4Kc3RhcnR4cmVmCjMxNgolJUVPRgoK
+      request:
+        method: POST
+        url: DiagnosticReport
+    - fullUrl: https://example.org/Observation/cgmSummaryExample
+      resource:
+        resourceType: Observation
+        id: cgmSummaryExample
+        status: final
+        category:
+        - coding:
+          - system: http://terminology.hl7.org/CodeSystem/observation-category
+            code: laboratory
+        code:
+          coding:
+          - system: http://hl7.org/fhir/uv/cgm/CodeSystem/cgm-summary-codes-temporary
+            code: cgm-summary
+        subject:
+          reference: Patient/patientExample
+        effectivePeriod:
+          start: '2024-05-01'
+          end: '2024-05-31'
+        hasMember:
+        - reference: Observation/cgmSummaryMeanGlucoseMassPerVolumeExample
+        - reference: Observation/cgmSummaryTimesInRangesExample
+        - reference: Observation/cgmSummaryGMIExample
+        - reference: Observation/cgmSummaryCoefficientOfVariationExample
+        - reference: Observation/cgmSummaryDaysOfWearExample
+        - reference: Observation/cgmSummarySensorActivePercentageExample
+      request:
+        method: POST
+        url: Observation
+    - fullUrl: https://example.org/Observation/cgmSummaryMeanGlucoseMassPerVolumeExample
+      resource:
+        resourceType: Observation
+        id: cgmSummaryMeanGlucoseMassPerVolumeExample
+        status: final
+        category:
+        - coding:
+          - system: http://terminology.hl7.org/CodeSystem/observation-category
+            code: laboratory
+        code:
+          coding:
+          - system: http://loinc.org
+            code: 97507-8
+        subject:
+          reference: Patient/patientExample
+        effectivePeriod:
+          start: '2024-05-01'
+          end: '2024-05-31'
+        valueQuantity:
+          value: 145
+          unit: mg/dl
+          system: http://unitsofmeasure.org
+          code: mg/dL
+      request:
+        method: POST
+        url: Observation
+    - fullUrl: https://example.org/Observation/cgmSummaryTimesInRangesExample
+      resource:
+        resourceType: Observation
+        id: cgmSummaryTimesInRangesExample
+        status: final
+        category:
+        - coding:
+          - system: http://terminology.hl7.org/CodeSystem/observation-category
+            code: laboratory
+        code:
+          coding:
+          - system: http://loinc.org
+            code: 106793-3
+        subject:
+          reference: Patient/patientExample
+        effectivePeriod:
+          start: '2024-05-01'
+          end: '2024-05-31'
+        component:
+        - code:
+            coding:
+            - system: http://loinc.org
+              code: 104642-4
+          valueQuantity:
+            value: 3
+            unit: '%'
+            system: http://unitsofmeasure.org
+            code: '%'
+        - code:
+            coding:
+            - system: http://loinc.org
+              code: 104641-6
+          valueQuantity:
+            value: 8
+            unit: '%'
+            system: http://unitsofmeasure.org
+            code: '%'
+        - code:
+            coding:
+            - system: http://loinc.org
+              code: 97510-2
+          valueQuantity:
+            value: 65
+            unit: '%'
+            system: http://unitsofmeasure.org
+            code: '%'
+        - code:
+            coding:
+            - system: http://loinc.org
+              code: 104640-8
+          valueQuantity:
+            value: 20
+            unit: '%'
+            system: http://unitsofmeasure.org
+            code: '%'
+        - code:
+            coding:
+            - system: http://loinc.org
+              code: 104639-0
+          valueQuantity:
+            value: 4
+            unit: '%'
+            system: http://unitsofmeasure.org
+            code: '%'
+      request:
+        method: POST
+        url: Observation
+    - fullUrl: https://example.org/Observation/cgmSummaryGMIExample
+      resource:
+        resourceType: Observation
+        id: cgmSummaryGMIExample
+        status: final
+        category:
+        - coding:
+          - system: http://terminology.hl7.org/CodeSystem/observation-category
+            code: laboratory
+        code:
+          coding:
+          - system: http://loinc.org
+            code: 97506-0
+        subject:
+          reference: Patient/patientExample
+        effectivePeriod:
+          start: '2024-05-01'
+          end: '2024-05-31'
+        valueQuantity:
+          value: 6.8
+          unit: '%'
+          system: http://unitsofmeasure.org
+          code: '%'
+      request:
+        method: POST
+        url: Observation
+    - fullUrl: https://example.org/Observation/cgmSummaryCoefficientOfVariationExample
+      resource:
+        resourceType: Observation
+        id: cgmSummaryCoefficientOfVariationExample
+        status: final
+        category:
+        - coding:
+          - system: http://terminology.hl7.org/CodeSystem/observation-category
+            code: laboratory
+        code:
+          coding:
+          - system: http://loinc.org
+            code: 104638-2
+        subject:
+          reference: Patient/patientExample
+        effectivePeriod:
+          start: '2024-05-01'
+          end: '2024-05-31'
+        valueQuantity:
+          value: 34
+          unit: '%'
+          system: http://unitsofmeasure.org
+          code: '%'
+      request:
+        method: POST
+        url: Observation
+    - fullUrl: https://example.org/Observation/cgmSummaryDaysOfWearExample
+      resource:
+        resourceType: Observation
+        id: cgmSummaryDaysOfWearExample
+        status: final
+        category:
+        - coding:
+          - system: http://terminology.hl7.org/CodeSystem/observation-category
+            code: laboratory
+        code:
+          coding:
+          - system: http://loinc.org
+            code: 104636-6
+        subject:
+          reference: Patient/patientExample
+        effectivePeriod:
+          start: '2024-05-01'
+          end: '2024-05-31'
+        valueQuantity:
+          value: 28
+          unit: days
+          system: http://unitsofmeasure.org
+          code: d
+      request:
+        method: POST
+        url: Observation
+    - fullUrl: https://example.org/Observation/cgmSummarySensorActivePercentageExample
+      resource:
+        resourceType: Observation
+        id: cgmSummarySensorActivePercentageExample
+        status: final
+        category:
+        - coding:
+          - system: http://terminology.hl7.org/CodeSystem/observation-category
+            code: laboratory
+        code:
+          coding:
+          - system: http://loinc.org
+            code: 104637-4
+        subject:
+          reference: Patient/patientExample
+        effectivePeriod:
+          start: '2024-05-01'
+          end: '2024-05-31'
+        valueQuantity:
+          value: 95
+          unit: '%'
+          system: http://unitsofmeasure.org
+          code: '%'
+      request:
+        method: POST
+        url: Observation
+    - fullUrl: https://example.org/Observation/cgmSensorReadingMassPerVolumeExample
+      resource:
+        resourceType: Observation
+        id: cgmSensorReadingMassPerVolumeExample
+        status: final
+        category:
+        - coding:
+          - system: http://terminology.hl7.org/CodeSystem/observation-category
+            code: laboratory
+        code:
+          coding:
+          - system: http://loinc.org
+            code: 99504-3
+        subject:
+          reference: Patient/patientExample
+        effectiveDateTime: '2024-05-02T10:15:00Z'
+        valueQuantity:
+          value: 120
+          unit: mg/dl
+          system: http://unitsofmeasure.org
+          code: mg/dL
+      request:
+        method: POST
+        url: Observation
   _usePackages:
-  - hl7.fhir.us.core@3.1.0
-  skip: true
-  _skipReason: 'unmappable Java messages outs=["WARNING: A definition for CodeSystem ''urn:oid:1.3.6.1.4.1.19376.1.2.3'' could not be found, so
-    the code cannot be validated", "ERROR: The type ''Device'' implied by the reference URL Device/foo is not a valid Target for this element
-    (must be one of [Patient])"] (DESIGN §15)'
+  - hl7.fhir.uv.cgm@1.0.0-ballot
+  _applyProfileUrl: http://hl7.org/fhir/uv/cgm/StructureDefinition/cgm-data-submission-bundle
+  valid: true
 - desc: graham/condition-with-extensions-on-pattern
   schemas: []
   data:
@@ -170,7 +456,7 @@ tests:
     subject:
       reference: Patient/12345
   skip: true
-  _skipReason: 'IG fixtures missing: [''de.medizininformatikinitiative.kerndatensatz.diagnose@1.0.4''] (add to prepare-fixtures, DESIGN §15)'
+  _skipReason: 'IG fixtures missing: [''de.medizininformatikinitiative.kerndatensatz.diagnose@1.0.4''] (DESIGN §15)'
 - desc: graham/no.gastronet
   schemas: []
   data:
@@ -522,7 +808,7 @@ tests:
           value: '46372864397'
         name: Test Clinic
   skip: true
-  _skipReason: 'IG fixtures missing: [''colonoscopyreport.no@0.7.4''] (add to prepare-fixtures, DESIGN §15)'
+  _skipReason: 'IG fixtures missing: [''colonoscopyreport.no@0.7.4''] (DESIGN §15)'
 - desc: graham/no.gastronet.message-limit
   schemas: []
   data:
@@ -874,7 +1160,7 @@ tests:
           value: '46372864397'
         name: Test Clinic
   skip: true
-  _skipReason: 'IG fixtures missing: [''colonoscopyreport.no@0.7.4''] (add to prepare-fixtures, DESIGN §15)'
+  _skipReason: 'IG fixtures missing: [''colonoscopyreport.no@0.7.4''] / no java outcome (DESIGN §15)'
 - desc: graham/mimic
   schemas: []
   data:
@@ -914,7 +1200,7 @@ tests:
     serviceProvider:
       reference: Organization/ee172322-118b-5716-abbc-18e4c5437ecc
   skip: true
-  _skipReason: 'IG fixtures missing: [''mimic-0.1.2''] (add to prepare-fixtures, DESIGN §15)'
+  _skipReason: 'IG fixtures missing: [''mimic-0.1.2''] (DESIGN §15)'
 - desc: graham/bundle-urn
   schemas: []
   data:
@@ -1152,7 +1438,7 @@ tests:
               valueString: Gesamtkörper
   skip: true
   _skipReason: 'IG fixtures missing: [''kbv.basis@1.2.0'', ''de.basisprofil.r4@0.9.13'', ''de.gevko.emdaf@1.2.0'', ''kbv.mio.diga@1.0.0-festlegung'']
-    (add to prepare-fixtures, DESIGN §15)'
+    (DESIGN §15)'
 - desc: graham/obs-de-notx
   schemas: []
   data:
@@ -1222,7 +1508,7 @@ tests:
               valueString: Gesamtkörper
   skip: true
   _skipReason: 'IG fixtures missing: [''kbv.basis@1.2.0'', ''de.basisprofil.r4@0.9.13'', ''de.gevko.emdaf@1.2.0'', ''kbv.mio.diga@1.0.0-festlegung'']
-    (add to prepare-fixtures, DESIGN §15)'
+    (DESIGN §15)'
 - desc: graham/med-example
   schemas: []
   data:
@@ -1277,7 +1563,7 @@ tests:
               display: Blutgerinnungsfaktor X
   skip: true
   _skipReason: 'IG fixtures missing: [''de.medizininformatikinitiative.kerndatensatz.medikation@2.0.0-ballot1'', ''basisprofil.de@0.2.40'', ''de.basisprofil.r4@1.0.0'']
-    (add to prepare-fixtures, DESIGN §15)'
+    (DESIGN §15)'
 - desc: graham/ips-htmlrefs-forwards
   schemas: []
   data:
@@ -5352,293 +5638,7 @@ tests:
         - identity: argonaut-dq-dstu2
           map: Patient.communication.language
   skip: true
-  _skipReason: 'IG fixtures missing: [''hl7.fhir.us.core@8.0.0-ballot''] (add to prepare-fixtures, DESIGN §15)'
-- desc: graham/bnd-slicing-cgm
-  schemas: []
-  data:
-    resourceType: Bundle
-    id: cgmDataSubmissionBundle
-    type: transaction
-    timestamp: '2024-05-02T14:30:00Z'
-    entry:
-    - fullUrl: https://example.org/DiagnosticReport/cgmSummaryPDFExample
-      resource:
-        resourceType: DiagnosticReport
-        id: cgmSummaryPDFExample
-        status: final
-        category:
-        - coding:
-          - system: http://terminology.hl7.org/CodeSystem/v2-0074
-            code: LAB
-        code:
-          coding:
-          - system: http://hl7.org/fhir/uv/cgm/CodeSystem/cgm-summary-codes-temporary
-            code: cgm-summary
-        subject:
-          reference: Patient/patientExample
-        effectivePeriod:
-          start: '2024-05-01'
-          end: '2024-05-14'
-        issued: '2024-05-15T14:30:00Z'
-        result:
-        - reference: Observation/cgmSummaryExample
-        presentedForm:
-        - contentType: application/pdf
-          data: JVBERi0xLjAKJcK1wrYKCjEgMCBvYmoKPDwvVHlwZS9DYXRhbG9nL1BhZ2VzIDIgMCBSPj4KZW5kb2JqCgoyIDAgb2JqCjw8L0tpZHNbMyAwIFJdL0NvdW50IDEvVHlwZS9QYWdlcy9NZWRpYUJveFswIDAgNTk1IDc5Ml0+PgplbmRvYmoKCjMgMCBvYmoKPDwvVHlwZS9QYWdlL1BhcmVudCAyIDAgUi9Db250ZW50cyA0IDAgUi9SZXNvdXJjZXM8PD4+Pj4KZW5kb2JqCgo0IDAgb2JqCjw8L0xlbmd0aCA1OD4+CnN0cmVhbQpxCkJUCi8gOTYgVGYKMSAwIDAgMSAzNiA2ODQgVG0KKEZISVIgQ0dNISkgVGoKRVQKUQoKZW5kc3RyZWFtCmVuZG9iagoKeHJlZgowIDUKMDAwMDAwMDAwMCA2NTUzNiBmIAowMDAwMDAwMDE2IDAwMDAwIG4gCjAwMDAwMDAwNjIgMDAwMDAgbiAKMDAwMDAwMDEzNiAwMDAwMCBuIAowMDAwMDAwMjA5IDAwMDAwIG4gCgp0cmFpbGVyCjw8L1NpemUgNS9Sb290IDEgMCBSPj4Kc3RhcnR4cmVmCjMxNgolJUVPRgoK
-      request:
-        method: POST
-        url: DiagnosticReport
-    - fullUrl: https://example.org/Observation/cgmSummaryExample
-      resource:
-        resourceType: Observation
-        id: cgmSummaryExample
-        status: final
-        category:
-        - coding:
-          - system: http://terminology.hl7.org/CodeSystem/observation-category
-            code: laboratory
-        code:
-          coding:
-          - system: http://hl7.org/fhir/uv/cgm/CodeSystem/cgm-summary-codes-temporary
-            code: cgm-summary
-        subject:
-          reference: Patient/patientExample
-        effectivePeriod:
-          start: '2024-05-01'
-          end: '2024-05-31'
-        hasMember:
-        - reference: Observation/cgmSummaryMeanGlucoseMassPerVolumeExample
-        - reference: Observation/cgmSummaryTimesInRangesExample
-        - reference: Observation/cgmSummaryGMIExample
-        - reference: Observation/cgmSummaryCoefficientOfVariationExample
-        - reference: Observation/cgmSummaryDaysOfWearExample
-        - reference: Observation/cgmSummarySensorActivePercentageExample
-      request:
-        method: POST
-        url: Observation
-    - fullUrl: https://example.org/Observation/cgmSummaryMeanGlucoseMassPerVolumeExample
-      resource:
-        resourceType: Observation
-        id: cgmSummaryMeanGlucoseMassPerVolumeExample
-        status: final
-        category:
-        - coding:
-          - system: http://terminology.hl7.org/CodeSystem/observation-category
-            code: laboratory
-        code:
-          coding:
-          - system: http://loinc.org
-            code: 97507-8
-        subject:
-          reference: Patient/patientExample
-        effectivePeriod:
-          start: '2024-05-01'
-          end: '2024-05-31'
-        valueQuantity:
-          value: 145
-          unit: mg/dl
-          system: http://unitsofmeasure.org
-          code: mg/dL
-      request:
-        method: POST
-        url: Observation
-    - fullUrl: https://example.org/Observation/cgmSummaryTimesInRangesExample
-      resource:
-        resourceType: Observation
-        id: cgmSummaryTimesInRangesExample
-        status: final
-        category:
-        - coding:
-          - system: http://terminology.hl7.org/CodeSystem/observation-category
-            code: laboratory
-        code:
-          coding:
-          - system: http://loinc.org
-            code: 106793-3
-        subject:
-          reference: Patient/patientExample
-        effectivePeriod:
-          start: '2024-05-01'
-          end: '2024-05-31'
-        component:
-        - code:
-            coding:
-            - system: http://loinc.org
-              code: 104642-4
-          valueQuantity:
-            value: 3
-            unit: '%'
-            system: http://unitsofmeasure.org
-            code: '%'
-        - code:
-            coding:
-            - system: http://loinc.org
-              code: 104641-6
-          valueQuantity:
-            value: 8
-            unit: '%'
-            system: http://unitsofmeasure.org
-            code: '%'
-        - code:
-            coding:
-            - system: http://loinc.org
-              code: 97510-2
-          valueQuantity:
-            value: 65
-            unit: '%'
-            system: http://unitsofmeasure.org
-            code: '%'
-        - code:
-            coding:
-            - system: http://loinc.org
-              code: 104640-8
-          valueQuantity:
-            value: 20
-            unit: '%'
-            system: http://unitsofmeasure.org
-            code: '%'
-        - code:
-            coding:
-            - system: http://loinc.org
-              code: 104639-0
-          valueQuantity:
-            value: 4
-            unit: '%'
-            system: http://unitsofmeasure.org
-            code: '%'
-      request:
-        method: POST
-        url: Observation
-    - fullUrl: https://example.org/Observation/cgmSummaryGMIExample
-      resource:
-        resourceType: Observation
-        id: cgmSummaryGMIExample
-        status: final
-        category:
-        - coding:
-          - system: http://terminology.hl7.org/CodeSystem/observation-category
-            code: laboratory
-        code:
-          coding:
-          - system: http://loinc.org
-            code: 97506-0
-        subject:
-          reference: Patient/patientExample
-        effectivePeriod:
-          start: '2024-05-01'
-          end: '2024-05-31'
-        valueQuantity:
-          value: 6.8
-          unit: '%'
-          system: http://unitsofmeasure.org
-          code: '%'
-      request:
-        method: POST
-        url: Observation
-    - fullUrl: https://example.org/Observation/cgmSummaryCoefficientOfVariationExample
-      resource:
-        resourceType: Observation
-        id: cgmSummaryCoefficientOfVariationExample
-        status: final
-        category:
-        - coding:
-          - system: http://terminology.hl7.org/CodeSystem/observation-category
-            code: laboratory
-        code:
-          coding:
-          - system: http://loinc.org
-            code: 104638-2
-        subject:
-          reference: Patient/patientExample
-        effectivePeriod:
-          start: '2024-05-01'
-          end: '2024-05-31'
-        valueQuantity:
-          value: 34
-          unit: '%'
-          system: http://unitsofmeasure.org
-          code: '%'
-      request:
-        method: POST
-        url: Observation
-    - fullUrl: https://example.org/Observation/cgmSummaryDaysOfWearExample
-      resource:
-        resourceType: Observation
-        id: cgmSummaryDaysOfWearExample
-        status: final
-        category:
-        - coding:
-          - system: http://terminology.hl7.org/CodeSystem/observation-category
-            code: laboratory
-        code:
-          coding:
-          - system: http://loinc.org
-            code: 104636-6
-        subject:
-          reference: Patient/patientExample
-        effectivePeriod:
-          start: '2024-05-01'
-          end: '2024-05-31'
-        valueQuantity:
-          value: 28
-          unit: days
-          system: http://unitsofmeasure.org
-          code: d
-      request:
-        method: POST
-        url: Observation
-    - fullUrl: https://example.org/Observation/cgmSummarySensorActivePercentageExample
-      resource:
-        resourceType: Observation
-        id: cgmSummarySensorActivePercentageExample
-        status: final
-        category:
-        - coding:
-          - system: http://terminology.hl7.org/CodeSystem/observation-category
-            code: laboratory
-        code:
-          coding:
-          - system: http://loinc.org
-            code: 104637-4
-        subject:
-          reference: Patient/patientExample
-        effectivePeriod:
-          start: '2024-05-01'
-          end: '2024-05-31'
-        valueQuantity:
-          value: 95
-          unit: '%'
-          system: http://unitsofmeasure.org
-          code: '%'
-      request:
-        method: POST
-        url: Observation
-    - fullUrl: https://example.org/Observation/cgmSensorReadingMassPerVolumeExample
-      resource:
-        resourceType: Observation
-        id: cgmSensorReadingMassPerVolumeExample
-        status: final
-        category:
-        - coding:
-          - system: http://terminology.hl7.org/CodeSystem/observation-category
-            code: laboratory
-        code:
-          coding:
-          - system: http://loinc.org
-            code: 99504-3
-        subject:
-          reference: Patient/patientExample
-        effectiveDateTime: '2024-05-02T10:15:00Z'
-        valueQuantity:
-          value: 120
-          unit: mg/dl
-          system: http://unitsofmeasure.org
-          code: mg/dL
-      request:
-        method: POST
-        url: Observation
-  skip: true
-  _skipReason: 'IG fixtures missing: [''hl7.fhir.uv.cgm@1.0.0-ballot''] (add to prepare-fixtures, DESIGN §15)'
+  _skipReason: 'IG fixtures missing: [''hl7.fhir.us.core@8.0.0-ballot''] (DESIGN §15)'
 - desc: graham/scoring-test
   schemas: []
   data:
@@ -5823,7 +5823,7 @@ tests:
           display: Spanish
       preferred: true
   skip: true
-  _skipReason: 'IG fixtures missing: [''hl7.fhir.us.core@8.0.0''] (add to prepare-fixtures, DESIGN §15)'
+  _skipReason: 'IG fixtures missing: [''hl7.fhir.us.core@8.0.0''] (DESIGN §15)'
 - desc: graham/valueset-dependency-version-1
   schemas: []
   data:
@@ -5842,7 +5842,7 @@ tests:
       display: Amy V. Shaw
     onsetDateTime: '2016-08-10'
   skip: true
-  _skipReason: no java outcome / unmappable (DESIGN §15)
+  _skipReason: no java outcome (DESIGN §15)
 - desc: graham/valueset-dependency-version-2
   schemas: []
   data:
@@ -5861,7 +5861,7 @@ tests:
       display: Amy V. Shaw
     onsetDateTime: '2016-08-10'
   skip: true
-  _skipReason: no java outcome / unmappable (DESIGN §15)
+  _skipReason: no java outcome (DESIGN §15)
 - desc: graham/valueset-dependency-version-3
   schemas: []
   data:
@@ -5880,7 +5880,7 @@ tests:
       display: Amy V. Shaw
     onsetDateTime: '2016-08-10'
   skip: true
-  _skipReason: no java outcome / unmappable (DESIGN §15)
+  _skipReason: no java outcome (DESIGN §15)
 - desc: graham/valueset-dependency-version-4
   schemas: []
   data:
@@ -5899,7 +5899,7 @@ tests:
       display: Amy V. Shaw
     onsetDateTime: '2016-08-10'
   skip: true
-  _skipReason: no java outcome / unmappable (DESIGN §15)
+  _skipReason: no java outcome (DESIGN §15)
 - desc: graham/valueset-dependency-version-5
   schemas: []
   data:
@@ -5918,7 +5918,7 @@ tests:
       display: Amy V. Shaw
     onsetDateTime: '2016-08-10'
   skip: true
-  _skipReason: no java outcome / unmappable (DESIGN §15)
+  _skipReason: no java outcome (DESIGN §15)
 - desc: graham/valueset-dependency-version-6
   schemas: []
   data:
@@ -5937,7 +5937,7 @@ tests:
       display: Amy V. Shaw
     onsetDateTime: '2016-08-10'
   skip: true
-  _skipReason: no java outcome / unmappable (DESIGN §15)
+  _skipReason: no java outcome (DESIGN §15)
 - desc: graham/sdc-inv-1
   schemas: []
   data:
@@ -5968,4 +5968,4 @@ tests:
       answerValueSet: http://hl7.org/a/1
       type: decimal
   skip: true
-  _skipReason: 'IG fixtures missing: [''hl7.fhir.uv.sdc@4.0.0-ballot''] (add to prepare-fixtures, DESIGN §15)'
+  _skipReason: 'IG fixtures missing: [''hl7.fhir.uv.sdc@4.0.0-ballot''] / no java outcome (DESIGN §15)'
