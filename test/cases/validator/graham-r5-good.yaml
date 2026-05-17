@@ -814,3 +814,341 @@ tests:
     device:
       display: Apple Watch 4.1
   valid: true
+- desc: graham/list-contained
+  schemas: []
+  data:
+    resourceType: List
+    id: val1
+    contained:
+    - resourceType: Patient
+      id: pat
+    status: current
+    mode: changes
+    subject:
+      reference: '#pat'
+  valid: true
+  skip: true
+  _skipReason: Java permissive scalar-where-array (List.subject is 0..*, data is scalar). Spec-strict default — would need opt-in `options.permissiveArrayShape`.
+    (DESIGN §15 → "Permissive JSON shape (Java parity)")
+- desc: graham/fhirpath-good
+  schemas: []
+  data:
+    resourceType: CareTeam
+    participant:
+    - member:
+        reference: Practitioner/1
+      onBehalfOf:
+        reference: Practitioner/2
+  valid: true
+  skip: true
+  _skipReason: Reference target type narrowed via FHIRPath %context on profile; we only honor literal refers[]. (DESIGN §15 → "Reference resolution
+    semantics")
+- desc: graham/ext-ctxt-resource-good
+  schemas: []
+  data:
+    resourceType: Patient
+    meta:
+      extension:
+      - url: http://hl7.org/fhir/uv/security-label-ds4p/StructureDefinition/extension-must-display
+        valueAnnotation:
+          text: Test Text
+    name:
+    - text: Test Name
+  valid: true
+- desc: graham/bundle-url-dash
+  schemas: []
+  data:
+    resourceType: Bundle
+    id: bundle-collection
+    meta:
+      lastUpdated: '2023-02-07T06:43:30Z'
+    type: collection
+    entry:
+    - fullUrl: http://example-url.org/artifacts/PlanDefinition/Test
+      resource:
+        id: Test
+        name: TestPlan
+        resourceType: PlanDefinition
+        status: active
+        title: Test Plan
+        url: http://example-url.org/artifacts/PlanDefinition/Test
+  valid: true
+- desc: graham/bundle-conditional-reference-good
+  schemas: []
+  data:
+    resourceType: Bundle
+    id: bundle
+    type: transaction
+    entry:
+    - fullUrl: http://example.org/Observation/observation1
+      resource:
+        resourceType: Observation
+        id: observation1
+        status: preliminary
+        code:
+          coding:
+          - system: http://example.org/obs-code
+            code: obs1
+        valueQuantity:
+          value: 1
+          system: http://unitsofmeasure.org
+          code: cm
+        device:
+          reference: Device?identifier=1234&what=
+      request:
+        method: POST
+        url: Observation
+  valid: true
+- desc: graham/reslicing-good-extensions
+  schemas: []
+  data:
+    resourceType: AuditEvent
+    id: MyAuditEventInstance
+    meta:
+      profile:
+      - http://example.org/reslicedextension/StructureDefinition/MyAuditEventProfile
+    agent:
+    - extension:
+      - valueIdentifier:
+          system: http://hl7.org/fhir/sid/us-npi
+          value: '12345'
+        url: http://hl7.org/fhir/StructureDefinition/auditevent-AlternativeUserID
+      - valueIdentifier:
+          system: http://hl7.org/fhir/sid/us-ssn
+          value: '67890'
+        url: http://hl7.org/fhir/StructureDefinition/auditevent-AlternativeUserID
+      who:
+        reference: Patient/Bob
+    code:
+      coding:
+      - code: '110122'
+        system: http://dicom.nema.org/resources/ontology/DCM
+        display: Login
+    recorded: '2013-06-20T23:41:23Z'
+    source:
+      observer:
+        reference: Patient/Bob
+  valid: true
+- desc: graham/mixed-request-canonical-targets-profile
+  schemas: []
+  data:
+    resourceType: StructureDefinition
+    id: pqcmc-quality-specification2
+    url: http://example.com/fhir/example/StructureDefinition/pqcmc-quality-specification2
+    version: 1.0.0
+    name: QualitySpecification2
+    title: Quality Specification
+    status: active
+    description: A quality specification is for a drug product or drug substance (excipient, API or raw material).
+    fhirVersion: 5.0.0
+    kind: resource
+    abstract: false
+    type: PlanDefinition
+    baseDefinition: http://hl7.org/fhir/StructureDefinition/PlanDefinition
+    derivation: constraint
+    differential:
+      element:
+      - id: PlanDefinition.identifier
+        path: PlanDefinition.identifier
+        max: '1'
+        mustSupport: true
+      - id: PlanDefinition.version
+        path: PlanDefinition.version
+        short: Specification Version
+        definition: 'The alphanumeric text assigned by the sponsor to a particular edition of a specification. [Source: SME Defined].coding
+
+          Examples: 2.1, 13.2, ST1, 00001, 00002, &lt;companyname&gt;001, etc.
+
+          Note: This value should be unique across all specifications for a given material, not just those with the same name'
+        min: 1
+        mustSupport: true
+      - id: PlanDefinition.title
+        path: PlanDefinition.title
+        short: Specification Title
+        definition: "The textual identification for the specification. [Source: SME Defined].coding\n Example: &lt;drug name&gt; 75 mg chewable\
+          \ tablets\n Note: This may include the name of the drug substance, product or the raw material/excipients."
+        min: 1
+        mustSupport: true
+      - id: PlanDefinition.subtitle
+        path: PlanDefinition.subtitle
+        short: Specification Subtitle
+        definition: 'An additional textual identification for the specification [Source: SME Defined].coding.'
+        min: 0
+        mustSupport: true
+      - id: PlanDefinition.status
+        path: PlanDefinition.status
+        mustSupport: true
+      - id: PlanDefinition.subject[x]
+        path: PlanDefinition.subject[x]
+        slicing:
+          discriminator:
+          - type: type
+            path: $this
+          ordered: false
+          rules: open
+        min: 1
+      - id: PlanDefinition.subject[x]:subjectReference
+        path: PlanDefinition.subject[x]
+        sliceName: subjectReference
+        min: 1
+        max: '1'
+        type:
+        - code: Reference
+          targetProfile:
+          - http://hl7.org/fhir/StructureDefinition/MedicinalProductDefinition
+          - http://hl7.org/fhir/StructureDefinition/SubstanceDefinition
+        mustSupport: true
+  valid: true
+- desc: graham/ref-policy-default-r5
+  schemas: []
+  data:
+    resourceType: Bundle
+    id: ref-policy-base
+    type: collection
+    entry:
+    - fullUrl: urn:uuid:9ce2a97b-5cab-4986-814f-4734016e6084
+      resource:
+        resourceType: List
+        id: smp-medlist-1
+        status: current
+        mode: working
+        code:
+          coding:
+          - system: http://loinc.org
+            code: 104207-6
+        subject:
+        - reference: Patient/example
+          display: US Core Example Patient
+        date: '2024-07-01'
+        source:
+          reference: Practitioner/practitioner-1
+        entry:
+        - date: '2024-07-01'
+          item:
+            reference: urn:uuid:23ac0bc6-0959-4181-8af0-6db5e2ef8176
+        - date: '2024-07-01'
+          item:
+            reference: urn:uuid:23ac0bc6-0959-4181-8af0-6db5e2ef8176-X
+    - fullUrl: http://hl7.org/fhir/test/Patient/example
+      resource:
+        resourceType: Patient
+        id: example
+        name:
+        - text: John Smith
+        generalPractitioner:
+        - reference: Practitioner/practitioner-1
+    - fullUrl: uin:uuid:cd7f9309-2530-4adf-9b94-e44548361e8a
+      resource:
+        resourceType: Patient
+        id: example1
+        name:
+        - text: Jane Smith
+        generalPractitioner:
+        - reference: Practitioner/practitioner-1
+    - fullUrl: urn:uuid:4e5aa5f2-dd58-47b0-83c8-6bea38669e67
+      resource:
+        resourceType: Practitioner
+        id: practitioner-1
+        name:
+        - text: John Smith
+    - fullUrl: urn:uuid:23ac0bc6-0959-4181-8af0-6db5e2ef8176
+      resource:
+        resourceType: Observation
+        id: smp-obs-bundle-1
+        status: final
+        code:
+          coding:
+          - system: http://www.nlm.nih.gov/research/umls/rxnorm
+            code: '428759'
+            display: metformin 250 MG Oral Tablet
+        subject:
+          reference: Patient/example
+        effectiveDateTime: '2024-06-01'
+  valid: true
+  skip: true
+  _skipReason: 'Same Graham data typo `uin:uuid:`; plus refers=["Resource"] meta-type strictness on Composition.section.entry. (DESIGN §15 → "Reference.refers:
+    [Resource] meta-type" + fs1003 rule)'
+- desc: graham/ref-policy-default-r4
+  schemas: []
+  data:
+    resourceType: Bundle
+    id: ref-policy-base
+    type: collection
+    entry:
+    - fullUrl: urn:uuid:9ce2a97b-5cab-4986-814f-4734016e6084
+      resource:
+        resourceType: List
+        id: smp-medlist-1
+        status: current
+        mode: working
+        code:
+          coding:
+          - system: http://loinc.org
+            code: 104207-6
+        subject:
+        - reference: Patient/example
+          display: US Core Example Patient
+        date: '2024-07-01'
+        source:
+          reference: Practitioner/practitioner-1
+        entry:
+        - date: '2024-07-01'
+          item:
+            reference: urn:uuid:23ac0bc6-0959-4181-8af0-6db5e2ef8176
+        - date: '2024-07-01'
+          item:
+            reference: urn:uuid:23ac0bc6-0959-4181-8af0-6db5e2ef8176-X
+    - fullUrl: http://hl7.org/fhir/test/Patient/example
+      resource:
+        resourceType: Patient
+        id: example
+        name:
+        - text: John Smith
+        generalPractitioner:
+        - reference: Practitioner/practitioner-1
+    - fullUrl: uin:uuid:cd7f9309-2530-4adf-9b94-e44548361e8a
+      resource:
+        resourceType: Patient
+        id: example1
+        name:
+        - text: Jane Smith
+        generalPractitioner:
+        - reference: Practitioner/practitioner-1
+    - fullUrl: urn:uuid:4e5aa5f2-dd58-47b0-83c8-6bea38669e67
+      resource:
+        resourceType: Practitioner
+        id: practitioner-1
+        name:
+        - text: John Smith
+    - fullUrl: urn:uuid:23ac0bc6-0959-4181-8af0-6db5e2ef8176
+      resource:
+        resourceType: Observation
+        id: smp-obs-bundle-1
+        status: final
+        code:
+          coding:
+          - system: http://www.nlm.nih.gov/research/umls/rxnorm
+            code: '428759'
+            display: metformin 250 MG Oral Tablet
+        subject:
+          reference: Patient/example
+        effectiveDateTime: '2024-06-01'
+  valid: true
+  skip: true
+  _skipReason: Bundle.entry.fullUrl typo `uin:uuid:` (vs `urn:uuid:`) in upstream Graham data. Our fs1003 is correct; Java seemingly tolerates
+    the typo. (DESIGN §15 → fs1003 absolute-URL rule)
+- desc: graham/standards-status-r5
+  schemas: []
+  data:
+    resourceType: CodeSystem
+    extension:
+    - url: http://hl7.org/fhir/StructureDefinition/structuredefinition-standards-status
+      valueCode: draft
+    url: http://hl7.org/fhir/test/CodeSystem/cs-stds-status
+    version: 0.1.0
+    name: STDsStatus
+    title: STDs Status
+    status: draft
+    experimental: false
+    content: not-present
+  valid: true

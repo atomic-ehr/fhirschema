@@ -1,0 +1,1571 @@
+suite: Graham fhir-test-cases — profile-loading (R5, skipped pending infra)
+defaults:
+  usePackages:
+  - hl7.fhir.r5.core
+tests:
+- desc: graham/patient-au-5
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''profile-patient-au.xml'',
+    supporting=[], version=5.0, dataFile=''patient-au-5.json'' (see DESIGN §15)'
+  schemas: []
+  data:
+    resourceType: Patient
+    id: au-5
+    text:
+      status: generated
+      div: '<div xmlns="http://www.w3.org/1999/xhtml"><p><b>Generated Narrative with Details</b></p><p><b>id</b>: example5</p><p><b>meta</b>:
+        </p><p><b>identifier</b>: Medicare Number = 22968184811</p><p><b>name</b>: Sarah Simmons </p><p><b>telecom</b>: ph: (03) 4455 6677</p><p><b>gender</b>:
+        female</p><p><b>birthDate</b>: Sep 7, 1977</p><p><b>address</b>: 55 Sarah Street Strahan TAS 7468 AU </p><p><b>generalPractitioner</b>:
+        <a href="Practitioner-example3.html">Generated Summary: id: example3; HPI-I = 8003611234567893; Francis Fernando </a></p><p><b>managingOrganization</b>:
+        <a href="Organization-example3.html">Generated Summary: id: example3; ABN = 51824754455; <span title="Codes: {http://hl7.org/fhir/organization-type
+        prov}">Healthcare Provider</span>; name: Devonport Family Medicine Clinic; reception@example.dfmc.com.au(WORK), fax: (03) 8543 5557(WORK),
+        ph: (03) 8543 5556(WORK)</a></p><h3>Links</h3><table class="grid"><tr><td>-</td><td><b>Other</b></td><td><b>Type</b></td></tr><tr><td>*</td><td><a
+        href="RelatedPerson-example2.html">Generated Summary: id: example2; Medicare Number = 22968184811; <span title="Codes: {http://hl7.org/fhir/v3/RoleCode
+        MTH}">mother</span>; Sarah Simmons ; ssimmons@example.amail.com.au(HOME), ph: (03) 4455 6677(HOME); gender: female; birthDate: Sep 7,
+        1977</a></td><td>seealso</td></tr></table></div>'
+    identifier:
+    - type:
+        coding:
+        - system: http://terminology.hl7.org/CodeSystem/v2-0203
+          code: MC
+          display: Patient's Medicare number
+        text: Medicare Number
+      system: http://ns.electronichealth.net.au/id/medicare-number
+      value: '22968184811'
+      period:
+        end: 2022-12
+    name:
+    - family: Simmons
+      given:
+      - Sarah
+    telecom:
+    - system: phone
+      value: (03) 4455 6677
+    gender: female
+    birthDate: '1977-09-07'
+    address:
+    - line:
+      - 55 Sarah Street
+      city: Strahan
+      state: TAS
+      postalCode: '7468'
+      country: AU
+    generalPractitioner:
+    - reference: Practitioner/example3
+    managingOrganization:
+      reference: Organization/example3
+    link:
+    - other:
+        reference: RelatedPerson/example2
+      type: seealso
+- desc: graham/bp
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''bp-profile.xml'',
+    supporting=[], version=5.0, dataFile=''bp.json'' (see DESIGN §15)'
+  schemas: []
+  data:
+    resourceType: Observation
+    id: blood-pressure
+    meta:
+      profile:
+      - http://hl7.org/fhir/StructureDefinition/vitalsigns
+    text:
+      status: generated
+      div: '<div xmlns="http://www.w3.org/1999/xhtml"><p><b>Generated Narrative with Details</b></p><p><b>id</b>: blood-pressure</p><p><b>meta</b>:
+        </p><p><b>identifier</b>: urn:uuid:187e0c12-8dd2-67e2-99b2-bf273c878281</p><p><b>basedOn</b>: </p><p><b>status</b>: final</p><p><b>category</b>:
+        Vital Signs <span>(Details : {http://terminology.hl7.org/CodeSystem/observation-category code ''vital-signs'' = ''Vital Signs'', given
+        as ''Vital Signs''})</span></p><p><b>code</b>: Blood pressure systolic &amp; diastolic <span>(Details : {LOINC code ''85354-9'' = ''Blood
+        pressure panel with all children optional'', given as ''Blood pressure panel with all children optional''})</span></p><p><b>subject</b>:
+        <a>Patient/example</a></p><p><b>effective</b>: 17/09/2012</p><p><b>performer</b>: <a>Practitioner/example</a></p><p><b>interpretation</b>:
+        Below low normal <span>(Details : {http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation code ''L'' = ''Low'', given as ''low''})</span></p><p><b>bodySite</b>:
+        Right arm <span>(Details : {SNOMED CT code ''368209003'' = ''Right upper arm'', given as ''Right arm''})</span></p><blockquote><p><b>component</b></p><p><b>code</b>:
+        Systolic blood pressure <span>(Details : {LOINC code ''8480-6'' = ''Systolic blood pressure'', given as ''Systolic blood pressure''};
+        {SNOMED CT code ''271649006'' = ''Systolic blood pressure'', given as ''Systolic blood pressure''}; {http://acme.org/devices/clinical-codes
+        code ''bp-s'' = ''bp-s'', given as ''Systolic Blood pressure''})</span></p><p><b>value</b>: 107 mmHg<span> (Details: UCUM code mm[Hg]
+        = ''mmHg'')</span></p><p><b>interpretation</b>: Normal <span>(Details : {http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation
+        code ''N'' = ''Normal'', given as ''normal''})</span></p></blockquote><blockquote><p><b>component</b></p><p><b>code</b>: Diastolic blood
+        pressure <span>(Details : {LOINC code ''8462-4'' = ''Diastolic blood pressure'', given as ''Diastolic blood pressure''})</span></p><p><b>value</b>:
+        60 mmHg<span> (Details: UCUM code mm[Hg] = ''mmHg'')</span></p><p><b>interpretation</b>: Below low normal <span>(Details : {http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation
+        code ''L'' = ''Low'', given as ''low''})</span></p></blockquote></div>'
+    identifier:
+    - system: urn:ietf:rfc:3986
+      value: urn:uuid:187e0c12-8dd2-67e2-99b2-bf273c878281
+    basedOn:
+    - identifier:
+        system: https://acme.org/identifiers
+        value: '1234'
+    status: final
+    category:
+    - coding:
+      - system: http://terminology.hl7.org/CodeSystem/observation-category
+        code: vital-signs
+        display: Vital Signs
+    code:
+      coding:
+      - system: http://loinc.org
+        code: 85354-9
+        display: Blood pressure panel with all children optional
+      text: Blood pressure systolic & diastolic
+    subject:
+      reference: Patient/example
+    effectiveDateTime: '2012-09-17'
+    performer:
+    - reference: Practitioner/example
+    interpretation:
+    - coding:
+      - system: http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation
+        code: L
+        display: low
+      text: Below low normal
+    bodySite:
+      coding:
+      - system: http://snomed.info/sct
+        code: '368209003'
+        display: Right arm
+    component:
+    - code:
+        coding:
+        - system: http://loinc.org
+          code: 8480-6
+          display: Systolic blood pressure
+        - system: http://snomed.info/sct
+          code: '271649006'
+          display: Systolic blood pressure
+        - system: http://acme.org/devices/clinical-codes
+          code: bp-s
+          display: Systolic Blood pressure
+      valueQuantity:
+        value: 107
+        unit: mmHg
+        system: http://unitsofmeasure.org
+        code: mm[Hg]
+      interpretation:
+      - coding:
+        - system: http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation
+          code: N
+          display: normal
+        text: Normal
+    - code:
+        coding:
+        - system: http://loinc.org
+          code: 8462-4
+          display: Diastolic blood pressure
+      valueQuantity:
+        value: 60
+        unit: mmHg
+        system: http://unitsofmeasure.org
+        code: mm[Hg]
+      interpretation:
+      - coding:
+        - system: http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation
+          code: L
+          display: low
+        text: Below low normal
+- desc: graham/string-extensions-and-constraints-example
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''string-extensions-and-constraints-profile.xml'',
+    supporting=[], version=5.0, dataFile=''string-extensions-and-constraints-example.xml'' (see DESIGN §15)'
+  schemas: []
+  data:
+    _xmlDataFile: string-extensions-and-constraints-example.xml
+- desc: graham/patient-patternidentifier-bad
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''patient-patternidentifier-profile.xml'',
+    supporting=[], version=5.0, dataFile=''patient-patternidentifier-bad.xml'' (see DESIGN §15)'
+  schemas: []
+  data:
+    _xmlDataFile: patient-patternidentifier-bad.xml
+- desc: graham/patient-patternidentifier-badmultiple
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''patient-patternidentifier-profile.xml'',
+    supporting=[], version=5.0, dataFile=''patient-patternidentifier-badmultiple.xml'' (see DESIGN §15)'
+  schemas: []
+  data:
+    _xmlDataFile: patient-patternidentifier-badmultiple.xml
+- desc: graham/patient-patternidentifier-good
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''patient-patternidentifier-profile.xml'',
+    supporting=[], version=5.0, dataFile=''patient-patternidentifier-good.xml'' (see DESIGN §15)'
+  schemas: []
+  data:
+    _xmlDataFile: patient-patternidentifier-good.xml
+- desc: graham/patient-patternidentifierslice-bad
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''patient-patternidentifierslice-profile.xml'',
+    supporting=[], version=5.0, dataFile=''patient-patternidentifierslice-bad.xml'' (see DESIGN §15)'
+  schemas: []
+  data:
+    _xmlDataFile: patient-patternidentifierslice-bad.xml
+- desc: graham/patient-patternidentifierslice-good
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''patient-patternidentifierslice-profile.xml'',
+    supporting=[], version=5.0, dataFile=''patient-patternidentifierslice-good.xml'' (see DESIGN §15)'
+  schemas: []
+  data:
+    _xmlDataFile: patient-patternidentifierslice-good.xml
+- desc: graham/patient-patternidentifierslice-goodmultiple
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''patient-patternidentifierslice-profile.xml'',
+    supporting=[], version=5.0, dataFile=''patient-patternidentifierslice-goodmultiple.xml'' (see DESIGN §15)'
+  schemas: []
+  data:
+    _xmlDataFile: patient-patternidentifierslice-goodmultiple.xml
+- desc: graham/patient-warning-maritalstatus
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''patient-conform-profile.xml'',
+    supporting=[], version=5.0, dataFile=''patient-warning-maritalstatus.xml'' (see DESIGN §15)'
+  schemas: []
+  data:
+    _xmlDataFile: patient-warning-maritalstatus.xml
+- desc: graham/slice-profile-and-local-patient
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''slice-profile-and-local-profile.xml'',
+    supporting=[], version=5.0, dataFile=''slice-profile-and-local-patient.xml'' (see DESIGN §15)'
+  schemas: []
+  data:
+    _xmlDataFile: slice-profile-and-local-patient.xml
+- desc: graham/extension-slice
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''extension-slice-profile.xml'',
+    supporting=[], version=5.0, dataFile=''extension-slice.xml'' (see DESIGN §15)'
+  schemas: []
+  data:
+    _xmlDataFile: extension-slice.xml
+- desc: graham/slice-by-polymorphic-type2
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''slice-by-polymorphic-type2-profile.xml'',
+    supporting=[], version=5.0, dataFile=''slice-by-polymorphic-type2.xml'' (see DESIGN §15)'
+  schemas: []
+  data:
+    _xmlDataFile: slice-by-polymorphic-type2.xml
+- desc: graham/observation-bp
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''observation-bp-profile.xml'',
+    supporting=[], version=5.0, dataFile=''observation-bp.xml'' (see DESIGN §15)'
+  schemas: []
+  data:
+    _xmlDataFile: observation-bp.xml
+- desc: graham/observation-bp-bad-onlydiastolic
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''observation-bp-profile.xml'',
+    supporting=[], version=5.0, dataFile=''observation-bp-bad-onlydiastolic.xml'' (see DESIGN §15)'
+  schemas: []
+  data:
+    _xmlDataFile: observation-bp-bad-onlydiastolic.xml
+- desc: graham/observation-bp-localcode
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''observation-bp-profile-twocodesrequired.xml'',
+    supporting=[], version=5.0, dataFile=''observation-bp-localcode.xml'' (see DESIGN §15)'
+  schemas: []
+  data:
+    _xmlDataFile: observation-bp-localcode.xml
+- desc: graham/invariant.example
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''invariant.profile.xml'',
+    supporting=[], version=5.0, dataFile=''invariant.example.xml'' (see DESIGN §15)'
+  schemas: []
+  data:
+    _xmlDataFile: invariant.example.xml
+- desc: graham/patient-contained-org
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''patient-contained-org-profile.xml'',
+    supporting=[], version=5.0, dataFile=''patient-contained-org.xml'' (see DESIGN §15)'
+  schemas: []
+  data:
+    _xmlDataFile: patient-contained-org.xml
+- desc: graham/multi-profile-same-resource
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''multi-profile-same-resource-profile.xml'',
+    supporting=[], version=5.0, dataFile=''multi-profile-same-resource.xml'' (see DESIGN §15)'
+  schemas: []
+  data:
+    _xmlDataFile: multi-profile-same-resource.xml
+- desc: graham/azatadha/example-params-1
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''azatadha/param-profile.xml'',
+    supporting=[], version=5.0, dataFile=''azatadha/example-params-1.xml'' (see DESIGN §15)'
+  schemas: []
+  data:
+    _xmlDataFile: azatadha/example-params-1.xml
+- desc: graham/profile-slicing-ok-1
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''profile-slicing-profile-open.xml'',
+    supporting=[], version=5.0, dataFile=''profile-slicing-ok-1.xml'' (see DESIGN §15)'
+  schemas: []
+  data:
+    _xmlDataFile: profile-slicing-ok-1.xml
+- desc: graham/profile-slicing-bad-1
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''profile-slicing-profile-open.xml'',
+    supporting=[], version=5.0, dataFile=''profile-slicing-bad-1.xml'' (see DESIGN §15)'
+  schemas: []
+  data:
+    _xmlDataFile: profile-slicing-bad-1.xml
+- desc: graham/value-slicing-ok-1
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''value-slicing-profile-open.xml'',
+    supporting=[], version=5.0, dataFile=''value-slicing-ok-1.xml'' (see DESIGN §15)'
+  schemas: []
+  data:
+    _xmlDataFile: value-slicing-ok-1.xml
+- desc: graham/value-slicing-bad-1
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''value-slicing-profile-open.xml'',
+    supporting=[], version=5.0, dataFile=''value-slicing-bad-1.xml'' (see DESIGN §15)'
+  schemas: []
+  data:
+    _xmlDataFile: value-slicing-bad-1.xml
+- desc: graham/observation-maxvs-base
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''maxvalueset-profile.xml'',
+    supporting=[], version=5.0, dataFile=''observation-maxvs-base.xml'' (see DESIGN §15)'
+  schemas: []
+  data:
+    _xmlDataFile: observation-maxvs-base.xml
+- desc: graham/observation-maxvs-ex
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''maxvalueset-profile.xml'',
+    supporting=[], version=5.0, dataFile=''observation-maxvs-ex.xml'' (see DESIGN §15)'
+  schemas: []
+  data:
+    _xmlDataFile: observation-maxvs-ex.xml
+- desc: graham/observation-maxvs-text
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''maxvalueset-profile.xml'',
+    supporting=[], version=5.0, dataFile=''observation-maxvs-text.xml'' (see DESIGN §15)'
+  schemas: []
+  data:
+    _xmlDataFile: observation-maxvs-text.xml
+- desc: graham/observation-maxvs-wrong
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''maxvalueset-profile.xml'',
+    supporting=[], version=5.0, dataFile=''observation-maxvs-wrong.xml'' (see DESIGN §15)'
+  schemas: []
+  data:
+    _xmlDataFile: observation-maxvs-wrong.xml
+- desc: graham/demo-example-3
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''demo-profile-1.xml'',
+    supporting=[], version=5.0, dataFile=''demo-example-1.xml'' (see DESIGN §15)'
+  schemas: []
+  data:
+    _xmlDataFile: demo-example-1.xml
+- desc: graham/patient_as_operator_issue-r5
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=None, supporting=[''patient_structureDef_as_operator_issue.xml''],
+    version=5.0.0, dataFile=''patient_example_as_operator_issue.xml'' (see DESIGN §15)'
+  schemas: []
+  data:
+    _xmlDataFile: patient_example_as_operator_issue.xml
+- desc: graham/reslicing-instance
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=None, supporting=[''reslicing-profile.json''],
+    version=5.0, dataFile=''reslicing-instance.json'' (see DESIGN §15)'
+  schemas: []
+  data:
+    resourceType: AuditEvent
+    id: MyAuditEventInstance
+    meta:
+      profile:
+      - http://example.org/reslicedextension/StructureDefinition/MyAuditEventProfile
+    agent:
+    - extension:
+      - valueIdentifier:
+          system: http://hl7.org/fhir/sid/us-npi
+          value: '67890'
+          use: official
+        url: http://hl7.org/fhir/StructureDefinition/auditevent-AlternativeUserID
+      - valueIdentifier:
+          system: https://test
+          value: test
+        url: http://hl7.org/fhir/StructureDefinition/auditevent-AlternativeUserID
+      who:
+        reference: Patient/Bob
+    code:
+      coding:
+      - code: '110122'
+        system: http://dicom.nema.org/resources/ontology/DCM
+        display: Login
+    recorded: '2013-06-20T23:41:23Z'
+    source:
+      observer:
+        reference: Patient/Bob
+- desc: graham/capstmt-deprecated
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=None, supporting=[''capstmt-extension-something.xml''],
+    version=5.0, dataFile=''capstmt-deprecated.json'' (see DESIGN §15)'
+  schemas: []
+  data:
+    resourceType: CapabilityStatement
+    status: active
+    date: '2023-08-10'
+    kind: requirements
+    description: something
+    fhirVersion: 5.0.0
+    format:
+    - json
+    rest:
+    - mode: server
+      extension:
+      - url: http://hl7.org/fhir/test/StructureDefinition/something
+        valueString: http://something
+- desc: graham/capstmt-deprecated-profile
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=None, supporting=[''capstmt-extension-something.xml''],
+    version=5.0, dataFile=''capstmt-deprecated-profile.json'' (see DESIGN §15)'
+  schemas: []
+  data:
+    resourceType: StructureDefinition
+    id: capstmt-deprecated-profile
+    url: http://hl7.org/fhir/test/StructureDefinition/capstmt-deprecated-profile
+    version: 1.0.0-ballot
+    name: Example
+    title: Example
+    status: active
+    experimental: false
+    date: '2022-04-20'
+    description: Example
+    fhirVersion: 5.0.0
+    kind: resource
+    abstract: false
+    type: CapabilityStatement
+    baseDefinition: http://hl7.org/fhir/StructureDefinition/CapabilityStatement
+    derivation: constraint
+    differential:
+      element:
+      - id: CapabilityStatement.rest.extension
+        path: CapabilityStatement.rest.extension
+        sliceName: something
+        type:
+        - code: Extension
+          profile:
+          - http://hl7.org/fhir/test/StructureDefinition/something
+- desc: graham/inactive-active-active
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''inactive-sd-active.json'',
+    supporting=[''inactive-cs.json'', ''inactive-vs-active.json''], version=5.0, dataFile=''inactive-ex-active.json'' (see DESIGN §15)'
+  schemas: []
+  data:
+    resourceType: Parameters
+    parameter:
+    - name: code
+      valueCoding:
+        system: http://hl7.org/fhir/validation-test/CodeSystem/inactive
+        code: codeActive
+- desc: graham/inactive-inactive-active
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''inactive-sd-active.json'',
+    supporting=[''inactive-cs.json'', ''inactive-vs-active.json''], version=5.0, dataFile=''inactive-ex-inactive.json'' (see DESIGN §15)'
+  schemas: []
+  data:
+    resourceType: Parameters
+    parameter:
+    - name: code
+      valueCoding:
+        system: http://hl7.org/fhir/validation-test/CodeSystem/inactive
+        code: codeInactive
+- desc: graham/inactive-retired-active
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''inactive-sd-active.json'',
+    supporting=[''inactive-cs.json'', ''inactive-vs-active.json''], version=5.0, dataFile=''inactive-ex-retired.json'' (see DESIGN §15)'
+  schemas: []
+  data:
+    resourceType: Parameters
+    parameter:
+    - name: code
+      valueCoding:
+        system: http://hl7.org/fhir/validation-test/CodeSystem/inactive
+        code: codeRetired
+- desc: graham/inactive-active-inactive
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''inactive-sd-inactive.json'',
+    supporting=[''inactive-cs.json'', ''inactive-vs-inactive.json''], version=5.0, dataFile=''inactive-ex-active.json'' (see DESIGN §15)'
+  schemas: []
+  data:
+    resourceType: Parameters
+    parameter:
+    - name: code
+      valueCoding:
+        system: http://hl7.org/fhir/validation-test/CodeSystem/inactive
+        code: codeActive
+- desc: graham/inactive-inactive-inactive
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''inactive-sd-inactive.json'',
+    supporting=[''inactive-cs.json'', ''inactive-vs-inactive.json''], version=5.0, dataFile=''inactive-ex-inactive.json'' (see DESIGN §15)'
+  schemas: []
+  data:
+    resourceType: Parameters
+    parameter:
+    - name: code
+      valueCoding:
+        system: http://hl7.org/fhir/validation-test/CodeSystem/inactive
+        code: codeInactive
+- desc: graham/inactive-retired-inactive
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''inactive-sd-inactive.json'',
+    supporting=[''inactive-cs.json'', ''inactive-vs-inactive.json''], version=5.0, dataFile=''inactive-ex-retired.json'' (see DESIGN §15)'
+  schemas: []
+  data:
+    resourceType: Parameters
+    parameter:
+    - name: code
+      valueCoding:
+        system: http://hl7.org/fhir/validation-test/CodeSystem/inactive
+        code: codeRetired
+- desc: graham/mi-use-derived
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=None, supporting=[''mi-defn-base.xml'',
+    ''mi-use-base.xml'', ''mi-defn-derived.xml''], version=5.0, dataFile=''mi-use-derived.xml'' (see DESIGN §15)'
+  schemas: []
+  data:
+    _xmlDataFile: mi-use-derived.xml
+- desc: graham/mi-use-distinct
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=None, supporting=[''mi-defn-base.xml'',
+    ''mi-use-base.xml'', ''mi-defn-distinct.xml''], version=5.0, dataFile=''mi-use-distinct.xml'' (see DESIGN §15)'
+  schemas: []
+  data:
+    _xmlDataFile: mi-use-distinct.xml
+- desc: graham/mi-use-imposed
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=None, supporting=[''mi-defn-base.xml'',
+    ''mi-use-base.xml'', ''mi-defn-imposed.xml''], version=5.0, dataFile=''mi-use-imposed.xml'' (see DESIGN §15)'
+  schemas: []
+  data:
+    _xmlDataFile: mi-use-imposed.xml
+- desc: graham/slice-instance
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''slice-profile.json'',
+    supporting=[], version=5.0, dataFile=''slice-instance.json'' (see DESIGN §15)'
+  schemas: []
+  data:
+    resourceType: Patient
+    id: slice-instance
+    telecom:
+    - system: phone
+      value: +1 555 111 1111
+      use: home
+    - system: email
+      value: one@one.com
+    - system: phone
+      value: +1 555 222 2222
+    - system: email
+      value: two@two.com
+      use: home
+- desc: graham/additional-bindings-observation-1
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''additional-bindings-profile-1.json'',
+    supporting=[''additional-bindings-vs1.json''], version=5.0, dataFile=''additional-bindings-observation.json'' (see DESIGN §15)'
+  schemas: []
+  data:
+    resourceType: Observation
+    status: final
+    code:
+      coding:
+      - system: http://loinc.org
+        code: 100066-0
+- desc: graham/additional-bindings-observation-uc-y
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''additional-bindings-profile-uc.json'',
+    supporting=[''additional-bindings-profile-cs.json''], version=5.0, dataFile=''additional-bindings-observation-uc-y.json'' (see DESIGN §15)'
+  schemas: []
+  data:
+    resourceType: Observation
+    status: final
+    category:
+    - coding:
+      - system: http://hl7.org/fhir/test/StructureDefinition/additional-bindings-profile-cs
+        code: digital-access
+      text: digital-access
+    code:
+      coding:
+      - system: http://loinc.org
+        code: 100066-0
+- desc: graham/additional-bindings-observation-uc-n
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''additional-bindings-profile-uc.json'',
+    supporting=[''additional-bindings-profile-cs.json''], version=5.0, dataFile=''additional-bindings-observation-uc-n.json'' (see DESIGN §15)'
+  schemas: []
+  data:
+    resourceType: Observation
+    status: final
+    category:
+    - coding:
+      - system: http://hl7.org/fhir/test/StructureDefinition/additional-bindings-profile-cs
+        code: sdoh-category-unspecified
+      text: sdoh-category-unspecified
+    code:
+      coding:
+      - system: http://loinc.org
+        code: 100066-0
+- desc: graham/deprecated-extension
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=None, supporting=[''StructureDefinition-deprecated.json''],
+    version=5.0, dataFile=''patient-deprecated-extension.json'' (see DESIGN §15)'
+  schemas: []
+  data:
+    resourceType: Patient
+    active: true
+    extension:
+    - url: http://hl7.org/fhir/test/StructureDefinition/deprecated
+      valueString: something
+- desc: graham/standards-status-x-r5
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=None, supporting=[''cs-stds-status-ext.json''],
+    version=5.0, dataFile=''cs-stds-status-x.json'' (see DESIGN §15)'
+  schemas: []
+  data:
+    resourceType: CodeSystem
+    extension:
+    - url: http://hl7.org/fhir/StructureDefinition/structuredefinition-standards-status-x
+      valueCode: draft
+    url: http://hl7.org/fhir/test/CodeSystem/cs-stds-status
+    version: 0.1.0
+    name: STDsStatus
+    title: STDs Status
+    status: draft
+    experimental: false
+    content: not-present
+- desc: graham/aggregation-apart-good5
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''aggregation-profile.xml'',
+    supporting=[], version=5.0, dataFile=''aggregation-instance.xml'' (see DESIGN §15)'
+  schemas: []
+  data:
+    _xmlDataFile: aggregation-instance.xml
+- desc: graham/aggregation-apart-bad5
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''aggregation-profile.xml'',
+    supporting=[], version=5.0, dataFile=''aggregation-instance.xml'' (see DESIGN §15)'
+  schemas: []
+  data:
+    _xmlDataFile: aggregation-instance.xml
+- desc: graham/aggregation-bundle-good5
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''aggregation-profile-bundle.xml'',
+    supporting=[''aggregation-profile.xml''], version=5.0, dataFile=''aggregation-bundle-good.xml'' (see DESIGN §15)'
+  schemas: []
+  data:
+    _xmlDataFile: aggregation-bundle-good.xml
+- desc: graham/aggregation-bundle-bad5
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''aggregation-profile-bundle.xml'',
+    supporting=[''aggregation-profile.xml''], version=5.0, dataFile=''aggregation-bundle-bad.xml'' (see DESIGN §15)'
+  schemas: []
+  data:
+    _xmlDataFile: aggregation-bundle-bad.xml
+- desc: graham/cw-card-tighten
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=None, supporting=[''compliesWith/card-tighten-base.json''],
+    version=5.0, dataFile=''compliesWith/card-tighten.json'' (see DESIGN §15)'
+  schemas: []
+  data:
+    resourceType: StructureDefinition
+    id: complies-with-card-tighten
+    url: http://hl7.org/fhir/test/StructureDefinition/complies-with-card-tighten
+    name: Complieswithcardtighten
+    title: complies-with-card-tighten
+    status: active
+    kind: resource
+    abstract: false
+    type: Patient
+    baseDefinition: http://hl7.org/fhir/StructureDefinition/Patient
+    derivation: constraint
+    extension:
+    - url: http://hl7.org/fhir/StructureDefinition/structuredefinition-compliesWithProfile
+      valueCanonical: http://hl7.org/fhir/test/StructureDefinition/complies-with-card-tighten-base
+    differential:
+      element:
+      - id: Patient
+        path: Patient
+      - id: Patient.name
+        path: Patient.name
+        min: 2
+        max: '3'
+- desc: graham/cw-card-loosen-min
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=None, supporting=[''compliesWith/card-loosen-min-base.json''],
+    version=5.0, dataFile=''compliesWith/card-loosen-min.json'' (see DESIGN §15)'
+  schemas: []
+  data:
+    resourceType: StructureDefinition
+    id: complies-with-card-loosen-min
+    url: http://hl7.org/fhir/test/StructureDefinition/complies-with-card-loosen-min
+    name: Complieswithcardloosenmin
+    title: complies-with-card-loosen-min
+    status: active
+    kind: resource
+    abstract: false
+    type: Patient
+    baseDefinition: http://hl7.org/fhir/StructureDefinition/Patient
+    derivation: constraint
+    extension:
+    - url: http://hl7.org/fhir/StructureDefinition/structuredefinition-compliesWithProfile
+      valueCanonical: http://hl7.org/fhir/test/StructureDefinition/complies-with-card-loosen-min-base
+    differential:
+      element:
+      - id: Patient
+        path: Patient
+      - id: Patient.name
+        path: Patient.name
+        min: 0
+        max: '*'
+- desc: graham/cw-card-widen-max
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=None, supporting=[''compliesWith/card-widen-max-base.json''],
+    version=5.0, dataFile=''compliesWith/card-widen-max.json'' (see DESIGN §15)'
+  schemas: []
+  data:
+    resourceType: StructureDefinition
+    id: complies-with-card-widen-max
+    url: http://hl7.org/fhir/test/StructureDefinition/complies-with-card-widen-max
+    name: Complieswithcardwidenmax
+    title: complies-with-card-widen-max
+    status: active
+    kind: resource
+    abstract: false
+    type: Patient
+    baseDefinition: http://hl7.org/fhir/StructureDefinition/Patient
+    derivation: constraint
+    extension:
+    - url: http://hl7.org/fhir/StructureDefinition/structuredefinition-compliesWithProfile
+      valueCanonical: http://hl7.org/fhir/test/StructureDefinition/complies-with-card-widen-max-base
+    differential:
+      element:
+      - id: Patient
+        path: Patient
+      - id: Patient.name
+        path: Patient.name
+        min: 0
+        max: '5'
+- desc: graham/cw-card-narrow-to-required
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=None, supporting=[''compliesWith/card-narrow-to-required-base.json''],
+    version=5.0, dataFile=''compliesWith/card-narrow-to-required.json'' (see DESIGN §15)'
+  schemas: []
+  data:
+    resourceType: StructureDefinition
+    id: complies-with-card-narrow-to-required
+    url: http://hl7.org/fhir/test/StructureDefinition/complies-with-card-narrow-to-required
+    name: Complieswithcardnarrowtorequired
+    title: complies-with-card-narrow-to-required
+    status: active
+    kind: resource
+    abstract: false
+    type: Patient
+    baseDefinition: http://hl7.org/fhir/StructureDefinition/Patient
+    derivation: constraint
+    extension:
+    - url: http://hl7.org/fhir/StructureDefinition/structuredefinition-compliesWithProfile
+      valueCanonical: http://hl7.org/fhir/test/StructureDefinition/complies-with-card-narrow-to-required-base
+    differential:
+      element:
+      - id: Patient
+        path: Patient
+      - id: Patient.active
+        path: Patient.active
+        min: 1
+        max: '1'
+- desc: graham/cw-card-prohibit-allowed
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=None, supporting=[''compliesWith/card-prohibit-allowed-base.json''],
+    version=5.0, dataFile=''compliesWith/card-prohibit-allowed.json'' (see DESIGN §15)'
+  schemas: []
+  data:
+    resourceType: StructureDefinition
+    id: complies-with-card-prohibit-allowed
+    url: http://hl7.org/fhir/test/StructureDefinition/complies-with-card-prohibit-allowed
+    name: Complieswithcardprohibitallowed
+    title: complies-with-card-prohibit-allowed
+    status: active
+    kind: resource
+    abstract: false
+    type: Patient
+    baseDefinition: http://hl7.org/fhir/StructureDefinition/Patient
+    derivation: constraint
+    extension:
+    - url: http://hl7.org/fhir/StructureDefinition/structuredefinition-compliesWithProfile
+      valueCanonical: http://hl7.org/fhir/test/StructureDefinition/complies-with-card-prohibit-allowed-base
+    differential:
+      element:
+      - id: Patient
+        path: Patient
+      - id: Patient.telecom
+        path: Patient.telecom
+        max: '0'
+- desc: graham/cw-card-prohibit-required
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=None, supporting=[''compliesWith/card-prohibit-required-base.json''],
+    version=5.0, dataFile=''compliesWith/card-prohibit-required.json'' (see DESIGN §15)'
+  schemas: []
+  data:
+    resourceType: StructureDefinition
+    id: complies-with-card-prohibit-required
+    url: http://hl7.org/fhir/test/StructureDefinition/complies-with-card-prohibit-required
+    name: Complieswithcardprohibitrequired
+    title: complies-with-card-prohibit-required
+    status: active
+    kind: resource
+    abstract: false
+    type: Patient
+    baseDefinition: http://hl7.org/fhir/StructureDefinition/Patient
+    derivation: constraint
+    extension:
+    - url: http://hl7.org/fhir/StructureDefinition/structuredefinition-compliesWithProfile
+      valueCanonical: http://hl7.org/fhir/test/StructureDefinition/complies-with-card-prohibit-required-base
+    differential:
+      element:
+      - id: Patient
+        path: Patient
+      - id: Patient.name
+        path: Patient.name
+        max: '0'
+- desc: graham/cw-constraint-additional
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=None, supporting=[''compliesWith/constraint-additional-base.json''],
+    version=5.0, dataFile=''compliesWith/constraint-additional.json'' (see DESIGN §15)'
+  schemas: []
+  data:
+    resourceType: StructureDefinition
+    id: complies-with-constraint-additional
+    url: http://hl7.org/fhir/test/StructureDefinition/complies-with-constraint-additional
+    name: Complieswithconstraintadditional
+    title: complies-with-constraint-additional
+    status: active
+    kind: resource
+    abstract: false
+    type: Patient
+    baseDefinition: http://hl7.org/fhir/StructureDefinition/Patient
+    derivation: constraint
+    extension:
+    - url: http://hl7.org/fhir/StructureDefinition/structuredefinition-compliesWithProfile
+      valueCanonical: http://hl7.org/fhir/test/StructureDefinition/complies-with-constraint-additional-base
+    differential:
+      element:
+      - id: Patient
+        path: Patient
+      - id: Patient.name
+        path: Patient.name
+        min: 1
+        constraint:
+        - key: cwt-1
+          severity: error
+          human: Must have a family name
+          expression: family.exists()
+- desc: graham/cw-constraint-missing
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=None, supporting=[''compliesWith/constraint-missing-base.json''],
+    version=5.0, dataFile=''compliesWith/constraint-missing.json'' (see DESIGN §15)'
+  schemas: []
+  data:
+    resourceType: StructureDefinition
+    id: complies-with-constraint-missing
+    url: http://hl7.org/fhir/test/StructureDefinition/complies-with-constraint-missing
+    name: Complieswithconstraintmissing
+    title: complies-with-constraint-missing
+    status: active
+    kind: resource
+    abstract: false
+    type: Patient
+    baseDefinition: http://hl7.org/fhir/StructureDefinition/Patient
+    derivation: constraint
+    extension:
+    - url: http://hl7.org/fhir/StructureDefinition/structuredefinition-compliesWithProfile
+      valueCanonical: http://hl7.org/fhir/test/StructureDefinition/complies-with-constraint-missing-base
+    differential:
+      element:
+      - id: Patient
+        path: Patient
+      - id: Patient.name
+        path: Patient.name
+        min: 1
+- desc: graham/cw-constraint-stricter
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=None, supporting=[''compliesWith/constraint-stricter-base.json''],
+    version=5.0, dataFile=''compliesWith/constraint-stricter.json'' (see DESIGN §15)'
+  schemas: []
+  data:
+    resourceType: StructureDefinition
+    id: complies-with-constraint-stricter
+    url: http://hl7.org/fhir/test/StructureDefinition/complies-with-constraint-stricter
+    name: Complieswithconstraintstricter
+    title: complies-with-constraint-stricter
+    status: active
+    kind: resource
+    abstract: false
+    type: Patient
+    baseDefinition: http://hl7.org/fhir/StructureDefinition/Patient
+    derivation: constraint
+    extension:
+    - url: http://hl7.org/fhir/StructureDefinition/structuredefinition-compliesWithProfile
+      valueCanonical: http://hl7.org/fhir/test/StructureDefinition/complies-with-constraint-stricter-base
+    differential:
+      element:
+      - id: Patient
+        path: Patient
+      - id: Patient.name
+        path: Patient.name
+        min: 1
+        constraint:
+        - key: cwt-1
+          severity: error
+          human: Name must have text or family
+          expression: text.exists() or family.exists()
+        - key: cwt-2
+          severity: error
+          human: Name must have family
+          expression: family.exists()
+- desc: graham/cw-binding-subset
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=None, supporting=[''compliesWith/binding-subset-base.json''],
+    version=5.0, dataFile=''compliesWith/binding-subset.json'' (see DESIGN §15)'
+  schemas: []
+  data:
+    resourceType: StructureDefinition
+    id: complies-with-binding-subset
+    url: http://hl7.org/fhir/test/StructureDefinition/complies-with-binding-subset
+    name: Complieswithbindingsubset
+    title: complies-with-binding-subset
+    status: active
+    kind: resource
+    abstract: false
+    type: Patient
+    baseDefinition: http://hl7.org/fhir/StructureDefinition/Patient
+    derivation: constraint
+    contained:
+    - resourceType: ValueSet
+      id: vs-gender-subset
+      url: http://hl7.org/fhir/test/ValueSet/vs-gender-subset
+      name: SubsetGender
+      status: active
+      compose:
+        include:
+        - system: http://hl7.org/fhir/administrative-gender
+          concept:
+          - code: male
+          - code: female
+    extension:
+    - url: http://hl7.org/fhir/StructureDefinition/structuredefinition-compliesWithProfile
+      valueCanonical: http://hl7.org/fhir/test/StructureDefinition/complies-with-binding-subset-base
+    differential:
+      element:
+      - id: Patient
+        path: Patient
+      - id: Patient.gender
+        path: Patient.gender
+        min: 1
+        binding:
+          strength: required
+          valueSet: '#vs-gender-subset'
+- desc: graham/cw-binding-superset
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=None, supporting=[''compliesWith/binding-superset-base.json''],
+    version=5.0, dataFile=''compliesWith/binding-superset.json'' (see DESIGN §15)'
+  schemas: []
+  data:
+    resourceType: StructureDefinition
+    id: complies-with-binding-superset
+    url: http://hl7.org/fhir/test/StructureDefinition/complies-with-binding-superset
+    name: Complieswithbindingsuperset
+    title: complies-with-binding-superset
+    status: active
+    kind: resource
+    abstract: false
+    type: Patient
+    baseDefinition: http://hl7.org/fhir/StructureDefinition/Patient
+    derivation: constraint
+    contained:
+    - resourceType: ValueSet
+      id: vs-gender-big
+      url: http://hl7.org/fhir/test/ValueSet/vs-gender-big
+      name: BigGender
+      status: active
+      compose:
+        include:
+        - system: http://hl7.org/fhir/administrative-gender
+          concept:
+          - code: male
+          - code: female
+          - code: other
+          - code: unknown
+    extension:
+    - url: http://hl7.org/fhir/StructureDefinition/structuredefinition-compliesWithProfile
+      valueCanonical: http://hl7.org/fhir/test/StructureDefinition/complies-with-binding-superset-base
+    differential:
+      element:
+      - id: Patient
+        path: Patient
+      - id: Patient.gender
+        path: Patient.gender
+        min: 1
+        binding:
+          strength: required
+          valueSet: '#vs-gender-big'
+- desc: graham/cw-binding-strength-weaker
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=None, supporting=[''compliesWith/binding-strength-weaker-base.json''],
+    version=5.0, dataFile=''compliesWith/binding-strength-weaker.json'' (see DESIGN §15)'
+  schemas: []
+  data:
+    resourceType: StructureDefinition
+    id: complies-with-binding-strength-weaker
+    url: http://hl7.org/fhir/test/StructureDefinition/complies-with-binding-strength-weaker
+    name: Complieswithbindingstrengthweaker
+    title: complies-with-binding-strength-weaker
+    status: active
+    kind: resource
+    abstract: false
+    type: Patient
+    baseDefinition: http://hl7.org/fhir/StructureDefinition/Patient
+    derivation: constraint
+    contained:
+    - resourceType: ValueSet
+      id: vs-marital
+      url: http://hl7.org/fhir/test/ValueSet/vs-marital
+      name: MaritalStatus
+      status: active
+      compose:
+        include:
+        - system: http://terminology.hl7.org/CodeSystem/v3-MaritalStatus
+          concept:
+          - code: A
+          - code: D
+          - code: M
+          - code: S
+          - code: W
+    extension:
+    - url: http://hl7.org/fhir/StructureDefinition/structuredefinition-compliesWithProfile
+      valueCanonical: http://hl7.org/fhir/test/StructureDefinition/complies-with-binding-strength-weaker-base
+    differential:
+      element:
+      - id: Patient
+        path: Patient
+      - id: Patient.maritalStatus
+        path: Patient.maritalStatus
+        binding:
+          strength: extensible
+          valueSet: '#vs-marital'
+- desc: graham/cw-binding-strength-stronger
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=None, supporting=[''compliesWith/binding-strength-stronger-base.json''],
+    version=5.0, dataFile=''compliesWith/binding-strength-stronger.json'' (see DESIGN §15)'
+  schemas: []
+  data:
+    resourceType: StructureDefinition
+    id: complies-with-binding-strength-stronger
+    url: http://hl7.org/fhir/test/StructureDefinition/complies-with-binding-strength-stronger
+    name: Complieswithbindingstrengthstronger
+    title: complies-with-binding-strength-stronger
+    status: active
+    kind: resource
+    abstract: false
+    type: Patient
+    baseDefinition: http://hl7.org/fhir/StructureDefinition/Patient
+    derivation: constraint
+    contained:
+    - resourceType: ValueSet
+      id: vs-marital2
+      url: http://hl7.org/fhir/test/ValueSet/vs-marital2
+      name: MaritalStatus2
+      status: active
+      compose:
+        include:
+        - system: http://terminology.hl7.org/CodeSystem/v3-MaritalStatus
+          concept:
+          - code: A
+          - code: D
+          - code: M
+          - code: S
+          - code: W
+    extension:
+    - url: http://hl7.org/fhir/StructureDefinition/structuredefinition-compliesWithProfile
+      valueCanonical: http://hl7.org/fhir/test/StructureDefinition/complies-with-binding-strength-stronger-base
+    differential:
+      element:
+      - id: Patient
+        path: Patient
+      - id: Patient.maritalStatus
+        path: Patient.maritalStatus
+        binding:
+          strength: required
+          valueSet: '#vs-marital2'
+- desc: graham/cw-fixed-value-valid
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=None, supporting=[''compliesWith/fixed-value-valid-base.json''],
+    version=5.0, dataFile=''compliesWith/fixed-value-valid.json'' (see DESIGN §15)'
+  schemas: []
+  data:
+    resourceType: StructureDefinition
+    id: complies-with-fixed-value-valid
+    url: http://hl7.org/fhir/test/StructureDefinition/complies-with-fixed-value-valid
+    name: Complieswithfixedvaluevalid
+    title: complies-with-fixed-value-valid
+    status: active
+    kind: resource
+    abstract: false
+    type: Patient
+    baseDefinition: http://hl7.org/fhir/StructureDefinition/Patient
+    derivation: constraint
+    extension:
+    - url: http://hl7.org/fhir/StructureDefinition/structuredefinition-compliesWithProfile
+      valueCanonical: http://hl7.org/fhir/test/StructureDefinition/complies-with-fixed-value-valid-base
+    differential:
+      element:
+      - id: Patient
+        path: Patient
+      - id: Patient.gender
+        path: Patient.gender
+        min: 1
+        fixedCode: male
+- desc: graham/cw-fixed-matches-pattern
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=None, supporting=[''compliesWith/fixed-matches-pattern-base.json''],
+    version=5.0, dataFile=''compliesWith/fixed-matches-pattern.json'' (see DESIGN §15)'
+  schemas: []
+  data:
+    resourceType: StructureDefinition
+    id: complies-with-fixed-matches-pattern
+    url: http://hl7.org/fhir/test/StructureDefinition/complies-with-fixed-matches-pattern
+    name: Complieswithfixedmatchespattern
+    title: complies-with-fixed-matches-pattern
+    status: active
+    kind: resource
+    abstract: false
+    type: Patient
+    baseDefinition: http://hl7.org/fhir/StructureDefinition/Patient
+    derivation: constraint
+    extension:
+    - url: http://hl7.org/fhir/StructureDefinition/structuredefinition-compliesWithProfile
+      valueCanonical: http://hl7.org/fhir/test/StructureDefinition/complies-with-fixed-matches-pattern-base
+    differential:
+      element:
+      - id: Patient
+        path: Patient
+      - id: Patient.maritalStatus
+        path: Patient.maritalStatus
+        fixedCodeableConcept:
+          coding:
+          - system: http://terminology.hl7.org/CodeSystem/v3-MaritalStatus
+            code: M
+- desc: graham/cw-fixed-conflicts-pattern
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=None, supporting=[''compliesWith/fixed-conflicts-pattern-base.json''],
+    version=5.0, dataFile=''compliesWith/fixed-conflicts-pattern.json'' (see DESIGN §15)'
+  schemas: []
+  data:
+    resourceType: StructureDefinition
+    id: complies-with-fixed-conflicts-pattern
+    url: http://hl7.org/fhir/test/StructureDefinition/complies-with-fixed-conflicts-pattern
+    name: Complieswithfixedconflictspattern
+    title: complies-with-fixed-conflicts-pattern
+    status: active
+    kind: resource
+    abstract: false
+    type: Patient
+    baseDefinition: http://hl7.org/fhir/StructureDefinition/Patient
+    derivation: constraint
+    extension:
+    - url: http://hl7.org/fhir/StructureDefinition/structuredefinition-compliesWithProfile
+      valueCanonical: http://hl7.org/fhir/test/StructureDefinition/complies-with-fixed-conflicts-pattern-base
+    differential:
+      element:
+      - id: Patient
+        path: Patient
+      - id: Patient.maritalStatus
+        path: Patient.maritalStatus
+        fixedCodeableConcept:
+          coding:
+          - system: http://terminology.hl7.org/CodeSystem/v3-MaritalStatus
+            code: S
+- desc: graham/cw-pattern-narrower
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=None, supporting=[''compliesWith/pattern-narrower-base.json''],
+    version=5.0, dataFile=''compliesWith/pattern-narrower.json'' (see DESIGN §15)'
+  schemas: []
+  data:
+    resourceType: StructureDefinition
+    id: complies-with-pattern-narrower
+    url: http://hl7.org/fhir/test/StructureDefinition/complies-with-pattern-narrower
+    name: Complieswithpatternnarrower
+    title: complies-with-pattern-narrower
+    status: active
+    kind: resource
+    abstract: false
+    type: Patient
+    baseDefinition: http://hl7.org/fhir/StructureDefinition/Patient
+    derivation: constraint
+    extension:
+    - url: http://hl7.org/fhir/StructureDefinition/structuredefinition-compliesWithProfile
+      valueCanonical: http://hl7.org/fhir/test/StructureDefinition/complies-with-pattern-narrower-base
+    differential:
+      element:
+      - id: Patient
+        path: Patient
+      - id: Patient.maritalStatus
+        path: Patient.maritalStatus
+        patternCodeableConcept:
+          coding:
+          - system: http://terminology.hl7.org/CodeSystem/v3-MaritalStatus
+            code: M
+- desc: graham/cw-pattern-broader
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=None, supporting=[''compliesWith/pattern-broader-base.json''],
+    version=5.0, dataFile=''compliesWith/pattern-broader.json'' (see DESIGN §15)'
+  schemas: []
+  data:
+    resourceType: StructureDefinition
+    id: complies-with-pattern-broader
+    url: http://hl7.org/fhir/test/StructureDefinition/complies-with-pattern-broader
+    name: Complieswithpatternbroader
+    title: complies-with-pattern-broader
+    status: active
+    kind: resource
+    abstract: false
+    type: Patient
+    baseDefinition: http://hl7.org/fhir/StructureDefinition/Patient
+    derivation: constraint
+    extension:
+    - url: http://hl7.org/fhir/StructureDefinition/structuredefinition-compliesWithProfile
+      valueCanonical: http://hl7.org/fhir/test/StructureDefinition/complies-with-pattern-broader-base
+    differential:
+      element:
+      - id: Patient
+        path: Patient
+      - id: Patient.maritalStatus
+        path: Patient.maritalStatus
+        patternCodeableConcept:
+          coding:
+          - system: http://terminology.hl7.org/CodeSystem/v3-MaritalStatus
+            code: M
+- desc: graham/cw-slice-adds
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=None, supporting=[''compliesWith/slice-adds-base.json''],
+    version=5.0, dataFile=''compliesWith/slice-adds.json'' (see DESIGN §15)'
+  schemas: []
+  data:
+    resourceType: StructureDefinition
+    id: complies-with-slice-adds
+    url: http://hl7.org/fhir/test/StructureDefinition/complies-with-slice-adds
+    name: Complieswithsliceadds
+    title: complies-with-slice-adds
+    status: active
+    kind: resource
+    abstract: false
+    type: Patient
+    baseDefinition: http://hl7.org/fhir/StructureDefinition/Patient
+    derivation: constraint
+    extension:
+    - url: http://hl7.org/fhir/StructureDefinition/structuredefinition-compliesWithProfile
+      valueCanonical: http://hl7.org/fhir/test/StructureDefinition/complies-with-slice-adds-base
+    differential:
+      element:
+      - id: Patient
+        path: Patient
+      - id: Patient.identifier
+        path: Patient.identifier
+        min: 1
+        slicing:
+          discriminator:
+          - type: value
+            path: system
+          rules: open
+      - id: Patient.identifier:mrn
+        path: Patient.identifier
+        sliceName: mrn
+        min: 1
+        max: '1'
+        patternIdentifier:
+          system: http://hospital.example.org/mrn
+- desc: graham/cw-slice-open-vs-closed
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=None, supporting=[''compliesWith/slice-open-vs-closed-base.json''],
+    version=5.0, dataFile=''compliesWith/slice-open-vs-closed.json'' (see DESIGN §15)'
+  schemas: []
+  data:
+    resourceType: StructureDefinition
+    id: complies-with-slice-open-vs-closed
+    url: http://hl7.org/fhir/test/StructureDefinition/complies-with-slice-open-vs-closed
+    name: Complieswithsliceopenvsclosed
+    title: complies-with-slice-open-vs-closed
+    status: active
+    kind: resource
+    abstract: false
+    type: Patient
+    baseDefinition: http://hl7.org/fhir/StructureDefinition/Patient
+    derivation: constraint
+    extension:
+    - url: http://hl7.org/fhir/StructureDefinition/structuredefinition-compliesWithProfile
+      valueCanonical: http://hl7.org/fhir/test/StructureDefinition/complies-with-slice-open-vs-closed-base
+    differential:
+      element:
+      - id: Patient
+        path: Patient
+      - id: Patient.identifier
+        path: Patient.identifier
+        min: 1
+        slicing:
+          discriminator:
+          - type: value
+            path: system
+          rules: open
+      - id: Patient.identifier:mrn
+        path: Patient.identifier
+        sliceName: mrn
+        min: 1
+        max: '1'
+        patternIdentifier:
+          system: http://hospital.example.org/mrn
+- desc: graham/cw-slice-missing-required
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=None, supporting=[''compliesWith/slice-missing-required-base.json''],
+    version=5.0, dataFile=''compliesWith/slice-missing-required.json'' (see DESIGN §15)'
+  schemas: []
+  data:
+    resourceType: StructureDefinition
+    id: complies-with-slice-missing-required
+    url: http://hl7.org/fhir/test/StructureDefinition/complies-with-slice-missing-required
+    name: Complieswithslicemissingrequired
+    title: complies-with-slice-missing-required
+    status: active
+    kind: resource
+    abstract: false
+    type: Patient
+    baseDefinition: http://hl7.org/fhir/StructureDefinition/Patient
+    derivation: constraint
+    extension:
+    - url: http://hl7.org/fhir/StructureDefinition/structuredefinition-compliesWithProfile
+      valueCanonical: http://hl7.org/fhir/test/StructureDefinition/complies-with-slice-missing-required-base
+    differential:
+      element:
+      - id: Patient
+        path: Patient
+      - id: Patient.identifier
+        path: Patient.identifier
+        min: 1
+        slicing:
+          discriminator:
+          - type: value
+            path: system
+          rules: open
+      - id: Patient.identifier:ssn
+        path: Patient.identifier
+        sliceName: ssn
+        min: 1
+        max: '1'
+      - id: Patient.identifier:ssn.system
+        path: Patient.identifier.system
+        patternUri: http://hl7.org/fhir/sid/us-ssn
+- desc: graham/cw-slice-compatible
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=None, supporting=[''compliesWith/slice-compatible-base.json''],
+    version=5.0, dataFile=''compliesWith/slice-compatible.json'' (see DESIGN §15)'
+  schemas: []
+  data:
+    resourceType: StructureDefinition
+    id: complies-with-slice-compatible
+    url: http://hl7.org/fhir/test/StructureDefinition/complies-with-slice-compatible
+    name: Complieswithslicecompatible
+    title: complies-with-slice-compatible
+    status: active
+    kind: resource
+    abstract: false
+    type: Patient
+    baseDefinition: http://hl7.org/fhir/StructureDefinition/Patient
+    derivation: constraint
+    extension:
+    - url: http://hl7.org/fhir/StructureDefinition/structuredefinition-compliesWithProfile
+      valueCanonical: http://hl7.org/fhir/test/StructureDefinition/complies-with-slice-compatible-base
+    differential:
+      element:
+      - id: Patient
+        path: Patient
+      - id: Patient.identifier
+        path: Patient.identifier
+        min: 2
+        slicing:
+          discriminator:
+          - type: value
+            path: system
+          rules: open
+      - id: Patient.identifier:mrn
+        path: Patient.identifier
+        sliceName: mrn
+        min: 1
+        max: '1'
+      - id: Patient.identifier:mrn.system
+        path: Patient.identifier.system
+        patternUri: http://hospital.example.org/mrn
+      - id: Patient.identifier:ssn
+        path: Patient.identifier
+        sliceName: ssn
+        min: 1
+        max: '1'
+      - id: Patient.identifier:ssn.system
+        path: Patient.identifier.system
+        patternUri: http://hl7.org/fhir/sid/us-ssn
+- desc: graham/cw-slice-closed-valid
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=None, supporting=[''compliesWith/slice-closed-valid-base.json''],
+    version=5.0, dataFile=''compliesWith/slice-closed-valid.json'' (see DESIGN §15)'
+  schemas: []
+  data:
+    resourceType: StructureDefinition
+    id: complies-with-slice-closed-valid
+    url: http://hl7.org/fhir/test/StructureDefinition/complies-with-slice-closed-valid
+    name: Complieswithsliceclosedvalid
+    title: complies-with-slice-closed-valid
+    status: active
+    kind: resource
+    abstract: false
+    type: Patient
+    baseDefinition: http://hl7.org/fhir/StructureDefinition/Patient
+    derivation: constraint
+    extension:
+    - url: http://hl7.org/fhir/StructureDefinition/structuredefinition-compliesWithProfile
+      valueCanonical: http://hl7.org/fhir/test/StructureDefinition/complies-with-slice-closed-valid-base
+    differential:
+      element:
+      - id: Patient
+        path: Patient
+      - id: Patient.identifier
+        path: Patient.identifier
+        slicing:
+          discriminator:
+          - type: value
+            path: system
+          rules: closed
+        min: 1
+      - id: Patient.identifier:mrn
+        path: Patient.identifier
+        sliceName: mrn
+        min: 1
+        max: '1'
+      - id: Patient.identifier:mrn.system
+        path: Patient.identifier.system
+        patternUri: http://hospital.example.org/mrn
+- desc: graham/cw-slice-extra-in-closed
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=None, supporting=[''compliesWith/slice-extra-in-closed-base.json''],
+    version=5.0, dataFile=''compliesWith/slice-extra-in-closed.json'' (see DESIGN §15)'
+  schemas: []
+  data:
+    resourceType: StructureDefinition
+    id: complies-with-slice-extra-in-closed
+    url: http://hl7.org/fhir/test/StructureDefinition/complies-with-slice-extra-in-closed
+    name: Complieswithsliceextrainclosed
+    title: complies-with-slice-extra-in-closed
+    status: active
+    kind: resource
+    abstract: false
+    type: Patient
+    baseDefinition: http://hl7.org/fhir/StructureDefinition/Patient
+    derivation: constraint
+    extension:
+    - url: http://hl7.org/fhir/StructureDefinition/structuredefinition-compliesWithProfile
+      valueCanonical: http://hl7.org/fhir/test/StructureDefinition/complies-with-slice-extra-in-closed-base
+    differential:
+      element:
+      - id: Patient
+        path: Patient
+      - id: Patient.identifier
+        path: Patient.identifier
+        slicing:
+          discriminator:
+          - type: value
+            path: system
+          rules: closed
+      - id: Patient.identifier:mrn
+        path: Patient.identifier
+        sliceName: mrn
+        min: 0
+        max: '1'
+      - id: Patient.identifier:mrn.system
+        path: Patient.identifier.system
+        patternUri: http://hospital.example.org/mrn
+      - id: Patient.identifier:drivers
+        path: Patient.identifier
+        sliceName: drivers
+        min: 0
+        max: '1'
+      - id: Patient.identifier:drivers.system
+        path: Patient.identifier.system
+        patternUri: http://example.org/drivers-license
+- desc: graham/cw-slice-tighten-card
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=None, supporting=[''compliesWith/slice-tighten-card-base.json''],
+    version=5.0, dataFile=''compliesWith/slice-tighten-card.json'' (see DESIGN §15)'
+  schemas: []
+  data:
+    resourceType: StructureDefinition
+    id: complies-with-slice-tighten-card
+    url: http://hl7.org/fhir/test/StructureDefinition/complies-with-slice-tighten-card
+    name: Complieswithslicetightencard
+    title: complies-with-slice-tighten-card
+    status: active
+    kind: resource
+    abstract: false
+    type: Patient
+    baseDefinition: http://hl7.org/fhir/StructureDefinition/Patient
+    derivation: constraint
+    extension:
+    - url: http://hl7.org/fhir/StructureDefinition/structuredefinition-compliesWithProfile
+      valueCanonical: http://hl7.org/fhir/test/StructureDefinition/complies-with-slice-tighten-card-base
+    differential:
+      element:
+      - id: Patient
+        path: Patient
+      - id: Patient.identifier
+        path: Patient.identifier
+        slicing:
+          discriminator:
+          - type: value
+            path: system
+          rules: open
+        min: 1
+      - id: Patient.identifier:mrn
+        path: Patient.identifier
+        sliceName: mrn
+        min: 1
+        max: '1'
+      - id: Patient.identifier:mrn.system
+        path: Patient.identifier.system
+        patternUri: http://hospital.example.org/mrn
+- desc: graham/cw-slice-loosen-card
+  skip: true
+  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=None, supporting=[''compliesWith/slice-loosen-card-base.json''],
+    version=5.0, dataFile=''compliesWith/slice-loosen-card.json'' (see DESIGN §15)'
+  schemas: []
+  data:
+    resourceType: StructureDefinition
+    id: complies-with-slice-loosen-card
+    url: http://hl7.org/fhir/test/StructureDefinition/complies-with-slice-loosen-card
+    name: Complieswithsliceloosencard
+    title: complies-with-slice-loosen-card
+    status: active
+    kind: resource
+    abstract: false
+    type: Patient
+    baseDefinition: http://hl7.org/fhir/StructureDefinition/Patient
+    derivation: constraint
+    extension:
+    - url: http://hl7.org/fhir/StructureDefinition/structuredefinition-compliesWithProfile
+      valueCanonical: http://hl7.org/fhir/test/StructureDefinition/complies-with-slice-loosen-card-base
+    differential:
+      element:
+      - id: Patient
+        path: Patient
+      - id: Patient.identifier
+        path: Patient.identifier
+        slicing:
+          discriminator:
+          - type: value
+            path: system
+          rules: open
+      - id: Patient.identifier:mrn
+        path: Patient.identifier
+        sliceName: mrn
+        min: 0
+        max: '3'
+      - id: Patient.identifier:mrn.system
+        path: Patient.identifier.system
+        patternUri: http://hospital.example.org/mrn

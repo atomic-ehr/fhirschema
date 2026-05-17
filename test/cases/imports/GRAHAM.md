@@ -166,13 +166,23 @@ without code changes.
 
 ## Roll-up
 
-- Imported: 45 (14 hand-curated + 26 bulk good + 5 bulk bad)
-- Skipped by design (Java permissive divergence): 1
-- Importable today, not yet imported: ~50–100 (mostly cases needing
-  profile resolution or bundle inner-resource walks that we have but
-  haven't wired to specific cases)
-- Need feature work: ~800 (terminology display checks, FHIRPath
-  invariants in profiles, reference resolution, xhtml validation, etc.)
+- **Active (passing)**: 49 hand-curated + bulk candidates
+- **Skip-imported (documented)**: 260 — each carries `_skipReason` linking
+  to a DESIGN §15 entry. Buckets:
+  - 12 known-divergence candidates (refers-meta-type, fhir_comments,
+    Java permissive shape, R4 translator gap, FHIRPath-context narrowing)
+  - 222 profile-loading (need profile pre-translation + ctx registration)
+    in [graham-profile-r4.yaml](../validator/graham-profile-r4.yaml) and
+    [graham-profile-r5.yaml](../validator/graham-profile-r5.yaml)
+  - 26 IG-package (need package fetched + translated) in
+    [graham-ig-r4.yaml](../validator/graham-ig-r4.yaml)
+- **Feature-gap (not imported)**: ~660 across xhtml/cdshooks/cda/v2/logical/
+  shc/xver/package-versioning/measure/matchetype/questionnaire/tx and
+  beyond.
+
+Each skipped test retains its raw data + the manifest's profile/package
+metadata via `_skipReason`, so re-enabling them is mechanical once the
+relevant infrastructure lands.
 
 ## Format-mapping table
 

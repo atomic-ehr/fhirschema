@@ -1,97 +1,208 @@
-suite: 'Graham fhir-test-cases — R4 bad cases'
-# Cases from fhir-test-cases manifest with clear fsNNN mapping that match
-# FHIR JSON spec violations. Sourced from outcomes/java/*.json.
-
+suite: Graham fhir-test-cases — R4 bad cases
 defaults:
   useR4: true
-
 tests:
-  - desc: 'graham/attachment-with-invalid-binary: Media.content.data not base64 → fs104'
-    # Java: "The value '%%%2@()()' is not a valid Base64 value"
-    schemas: []
-    data:
-      resourceType: Media
-      status: not-done
-      content:
-        contentType: application/octet-stream
-        data: '%%%2@()()'
-        title: 'bbbb syst'
-    issues:
-      - { code: fs104, path: [content, data] }
-
-  - desc: 'graham/empty-array: DocumentReference.category[0].coding=[] → fs303'
-    # Java: "Array cannot be empty - the property should not be present if it has no values"
-    schemas: []
-    data:
-      resourceType: DocumentReference
-      status: current
-      category:
-        - coding: []
-      content:
-        - attachment: { contentType: text/plain, data: Zm9v }
-    issues:
-      - { code: fs303, path: [category, 0, coding] }
-
-  # graham/resource-invalid-id-3 NOT IMPORTED: R4's Resource.id is typed
-  # `string` in the snapshot (typeCode extension carries the actual `id`
-  # constraint, which our translator doesn't lift). R5 normalized this so
-  # patient-id-bad-1/2/3 work there. Translator follow-up.
-
-  - desc: 'graham/ai3: Patient with extra property `unknownElement` → fs201'
-    schemas: []
-    data:
-      resourceType: Patient
-      id: example
-      identifier:
-        - { system: 'http://example.org/patient-identifier', value: '123456' }
-      name:
-        - { family: Smith, given: [John, 'A.'] }
-      gender: male
-      birthDate: '1980-01-01'
-      unknownElement: foo
-    issues:
-      - { code: fs201, path: [unknownElement] }
-
-  - desc: 'graham/ai4: Patient.birthDate = "not a date" → fs107'
-    schemas: []
-    data:
-      resourceType: Patient
-      id: example
-      gender: male
-      birthDate: 'not a date'
-    issues:
-      - { code: fs107, path: [birthDate] }
-
-  - desc: 'graham/allergy: _category extension-only with required binding → fs501'
-    # Source: ../fhir-test-cases/validator/allergy.json + outcomes/java/R4.allergy-base.json
-    # Java emits "No code provided, and a code is required from the value set"
-    # at AllergyIntolerance.category[0]. AllergyIntolerance.category is
-    # `code` with required binding to AllergyIntoleranceCategory.
-    schemas: []
-    data:
-      resourceType: AllergyIntolerance
-      clinicalStatus:
-        coding:
-          - system: http://terminology.hl7.org/CodeSystem/allergyintolerance-clinical
-            code: active
-      type: allergy
-      _category:
-        - extension:
-            - url: http://hl7.org/fhir/StructureDefinition/data-absent-reason
-              valueCode: unknown
-      patient: { reference: 'Patient/abc' }
-    issues:
-      - { code: fs501, path: [category] }
-
-  - desc: 'graham/attachment-tx: data field not valid base64 → fs104'
-    # Java: "The base64 content in the data element is not valid base64"
-    schemas: []
-    data:
-      resourceType: Parameters
-      parameter:
-        - name: input
-          valueAttachment:
-            contentType: 'image/jpeg'
-            data: 'not.base64!'
-    issues:
-      - { code: fs104, path: [parameter, 0, valueAttachment, data] }
+- desc: 'graham/attachment-with-invalid-binary: Media.content.data not base64 → fs104'
+  schemas: []
+  data:
+    resourceType: Media
+    status: not-done
+    content:
+      contentType: application/octet-stream
+      data: '%%%2@()()'
+      title: bbbb syst
+  issues:
+  - code: fs104
+    path:
+    - content
+    - data
+- desc: 'graham/empty-array: DocumentReference.category[0].coding=[] → fs303'
+  schemas: []
+  data:
+    resourceType: DocumentReference
+    status: current
+    category:
+    - coding: []
+    content:
+    - attachment:
+        contentType: text/plain
+        data: Zm9v
+  issues:
+  - code: fs303
+    path:
+    - category
+    - 0
+    - coding
+- desc: 'graham/ai3: Patient with extra property `unknownElement` → fs201'
+  schemas: []
+  data:
+    resourceType: Patient
+    id: example
+    identifier:
+    - system: http://example.org/patient-identifier
+      value: '123456'
+    name:
+    - family: Smith
+      given:
+      - John
+      - A.
+    gender: male
+    birthDate: '1980-01-01'
+    unknownElement: foo
+  issues:
+  - code: fs201
+    path:
+    - unknownElement
+- desc: 'graham/ai4: Patient.birthDate = "not a date" → fs107'
+  schemas: []
+  data:
+    resourceType: Patient
+    id: example
+    gender: male
+    birthDate: not a date
+  issues:
+  - code: fs107
+    path:
+    - birthDate
+- desc: 'graham/allergy: _category extension-only with required binding → fs501'
+  schemas: []
+  data:
+    resourceType: AllergyIntolerance
+    clinicalStatus:
+      coding:
+      - system: http://terminology.hl7.org/CodeSystem/allergyintolerance-clinical
+        code: active
+    type: allergy
+    _category:
+    - extension:
+      - url: http://hl7.org/fhir/StructureDefinition/data-absent-reason
+        valueCode: unknown
+    patient:
+      reference: Patient/abc
+  issues:
+  - code: fs501
+    path:
+    - category
+- desc: 'graham/attachment-tx: data field not valid base64 → fs104'
+  schemas: []
+  data:
+    resourceType: Parameters
+    parameter:
+    - name: input
+      valueAttachment:
+        contentType: image/jpeg
+        data: not.base64!
+  issues:
+  - code: fs104
+    path:
+    - parameter
+    - 0
+    - valueAttachment
+    - data
+- desc: graham/bundle-duplicate-id
+  schemas: []
+  data:
+    resourceType: Bundle
+    id: bundle-duplicate-id
+    type: collection
+    entry:
+    - fullUrl: Patient/1
+      resource:
+        resourceType: Patient
+        id: '1'
+    - fullUrl: RelatedPerson/1
+      resource:
+        resourceType: RelatedPerson
+        id: '1'
+        patient:
+          reference: Patient/1
+  issues:
+  - code: fs1003
+  - code: fs1003
+- desc: graham/resource-invalid-id-3
+  schemas: []
+  data:
+    resourceType: Location
+    id: foobar
+    name: A Location
+    managingOrganization:
+      reference: '#org_1'
+    contained:
+    - resourceType: Organization
+      id: org_1
+      name: Test
+  issues:
+  - code: fs110
+  skip: true
+  _skipReason: 'R4 translator gap: Resource.id typed `string` (typeCode extension not lifted); R5 normalized — equivalent R5 cases work. (DESIGN
+    §15 → "R4 Resource.id typing")'
+- desc: graham/comments-4
+  schemas: []
+  data:
+    resourceType: Patient
+    id: example
+    fhir_comments:
+    - ' This comment should be valid in DSTU2 '
+    - true
+  issues:
+  - code: fs201
+  skip: true
+  _skipReason: fhir_comments uniformly tolerated (matches Java default); Java strict-mode fs201 on non-string entries is not implemented. (DESIGN
+    §15 → "fhir_comments non-string entries")
+- desc: graham/ai6
+  schemas: []
+  data:
+    resourceType: Patient
+    id: example
+    meta:
+      profile:
+      - http://example.org/patient-profile
+      - http://example.org/other-patient-profile
+    name:
+    - family: Smith
+      given:
+      - John
+      - A.
+    gender: male
+    birthDate: '1980-01-01'
+  issues:
+  - code: fs301
+  skip: true
+  _skipReason: 'Profile-loading case mis-classified into candidate bucket: references unloaded `http://example.org/other-patient-profile` via
+    meta.profile. Belongs in profile-loading import. (see test/cases/imports/GRAHAM.md "Importable today")'
+- desc: graham/ai7
+  schemas: []
+  data:
+    resourceType: StructureDefinition
+    url: http://example.org/patient-profile
+    type: Patient
+    baseDefinition: http://hl7.org/fhir/StructureDefinition/Patient
+    derivation: constraint
+    kind: resource
+    differential:
+      element:
+      - id: Patient.identifier
+        path: Patient.identifier
+        short: Patient identifier
+        definition: An identifier for the patient that includes a system and a value.
+        max: '0'
+      - id: Patient.name
+        path: Patient.name
+        short: Patient name
+        definition: The name of the patient, including a given name and a family name.
+        min: 1
+        max: '1'
+        type:
+        - code: HumanName
+      - id: Patient.birthDate
+        path: Patient.birthDate
+        short: Patient birth date
+        definition: The date of birth for the patient, represented as yyyy-MM-dd.
+        min: 1
+        max: '1'
+        type:
+        - code: date
+  issues:
+  - code: fs301
+  - code: fs301
+  - code: fs301

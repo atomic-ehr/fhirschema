@@ -1177,6 +1177,39 @@ priority order:
   (see [test/cases/imports/GRAHAM.md](test/cases/imports/GRAHAM.md) →
   "Java permissive defaults").
 
+- **`Reference.refers: ["Resource"]` is a meta-type (allow-any).** FHIR
+  uses `Resource` as the abstract base type meaning "any resource".
+  When the `refers` list contains `Resource`, the reference target check
+  (`fs1001`) should accept any concrete resource type, not require a
+  literal `Resource` segment in the URL. We currently do strict equality
+  on `parseReferenceType(ref) ∈ allowed`, so `refers: ["Resource"]` +
+  `reference: "Patient/1"` fires `fs1001` while Java accepts it.
+  Affected Graham cases: `ref-policy-default-r4`, `ref-policy-default-r5`,
+  `bundle-document-versioned-references-good`. Fix: special-case `Resource`
+  (and `DomainResource`) in `checkReferenceTarget` as allow-any.
+
+- **`fhir_comments` non-string entries.** We tolerate `fhir_comments` as
+  a meta-key everywhere (matches Java's default behavior). But Java has
+  a strict mode that fires `fs201` when `fhir_comments` contains
+  non-string entries (e.g. `[true]`) or appears as an extension URL value.
+  We are uniformly permissive — Graham bad-cases `list-extension1`,
+  `list-extension2`, `comments-4` end up silent here.
+
+- **Reference resolution semantics (refers vs FHIRPath %context).** Some
+  Graham tests (`fhirpath-good`) expect a Reference to be valid because
+  the field profile narrows via FHIRPath `%context` constraints, while
+  the literal `refers: [...]` list disallows the actual target type. We
+  only honor the literal `refers` list; profile-via-FHIRPath narrowing
+  isn't supported.
+
+- **R4 `Resource.id` typing.** In R4 SDs, `Resource.id` is typed as
+  `string` plus a `typeCode` extension carrying the actual `id`
+  constraint. Our translator doesn't lift the typeCode extension, so
+  R4-loaded id fields validate as plain strings (underscore, length>64,
+  etc. don't fire `fs110`). R5 normalized this so the equivalent R5
+  cases work. Affected: Graham `resource-invalid-id-3` (R4-only),
+  `patient-id-bad-*` R4 variants. Translator follow-up.
+
 - **Extension-only primitive with required binding.** A primitive field
   with `binding.strength: required` cannot be satisfied by `_field`
   alone (data-absent-reason pattern) — the code MUST be present. Per

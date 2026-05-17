@@ -1,0 +1,40 @@
+suite: Graham fhir-test-cases — R5 bad cases
+defaults:
+  usePackages:
+  - hl7.fhir.r5.core
+tests:
+- desc: graham/group-choice-bad2
+  schemas: []
+  data:
+    resourceType: Group
+    type: person
+    membership: definitional
+    characteristic:
+    - code:
+        text: test
+      valueInteger: 1
+      exclude: false
+  issues:
+  - code: fs201
+  - code: fs301
+- desc: graham/list-extension1
+  schemas: []
+  data:
+    resourceType: List
+    fhir_comments:
+    - ' this is all valid '
+    id: val1
+    _id:
+      fhir_comments:
+      - ' another comment '
+    status: current
+    _status:
+      extension:
+      - url: http://acme.com/some_url
+        valueCode: code
+    mode: changes
+  issues:
+  - code: fs201
+  - code: fs201
+  skip: true
+  _skipReason: 'Same as comments-4: fhir_comments tolerated by us, Java strict-mode fs201 missing. (DESIGN §15 → "fhir_comments non-string entries")'
