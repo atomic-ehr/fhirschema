@@ -72,6 +72,8 @@ export type ValidatorSuite = {
     useFhirpath?: boolean;
     /** Wire a test terminology evaluator (urn:vs:colors → red/green/blue). */
     useTerminology?: boolean;
+    /** Wire the live tx.health-samurai.io adapter (sync HTTP via curl). */
+    useTxServer?: boolean;
     /** Wire a test reference resolver (knows Patient/1, Patient/2, Organization/org1). */
     useReferenceResolver?: boolean;
   };

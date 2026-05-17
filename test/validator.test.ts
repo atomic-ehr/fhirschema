@@ -32,6 +32,7 @@ import {
   type ValidateContext,
   type ValidationIssue,
 } from '../src/validator/index.js';
+import { TxFhirOrgAdapter } from '../src/validator/tx-adapter.js';
 
 const fhirpathAdapter: FhirpathEvaluator = {
   evaluate: (expr, root) => fhirpath.evaluate(root, expr) as unknown[],
@@ -40,6 +41,10 @@ const fhirpathAdapter: FhirpathEvaluator = {
 const TEST_VALUESETS: Record<string, Set<string>> = {
   'urn:vs:colors': new Set(['red', 'green', 'blue']),
 };
+
+// Shared instance — re-used across all tx-tests so the in-process cache
+// hits between cases.
+const txAdapter = new TxFhirOrgAdapter();
 
 const terminologyAdapter: TerminologyEvaluator = {
   validateCode: (valueSet, value) => {
@@ -161,11 +166,13 @@ for (const file of files) {
           | {
               useFhirpath?: boolean;
               useTerminology?: boolean;
+              useTxServer?: boolean;
               useReferenceResolver?: boolean;
             }
           | undefined;
         if (d?.useFhirpath === true) suiteOpts.fhirpath = fhirpathAdapter;
         if (d?.useTerminology === true) suiteOpts.terminology = terminologyAdapter;
+        if (d?.useTxServer === true) suiteOpts.terminology = txAdapter;
         if (d?.useReferenceResolver === true)
           suiteOpts.referenceResolver = referenceResolverAdapter;
         const opts = { ...suiteOpts, ...(t.options ?? {}) };

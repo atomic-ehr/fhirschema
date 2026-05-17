@@ -1,0 +1,151 @@
+suite: 'terminology bindings via tx.health-samurai.io (live HTTP)'
+# This suite hits a real terminology server. Network failure = 'unknown'
+# (silent), so a fully offline run will not produce false errors — every
+# verdict-dependent assertion below requires the server to actually
+# answer. If you are running offline, expect these tests to fall back to
+# 'no-error' outcomes.
+#
+# We test only Coding / CodeableConcept bindings — plain `code`-typed
+# fields have no `system` in the data, so the adapter returns 'unknown'
+# for them by design (see tx-adapter.ts).
+
+defaults:
+  useR4: true
+  useTxServer: true
+  registry:
+    # Toy resource: a single Coding field with required binding to
+    # administrative-gender. Picked because (a) the VS is in every TX
+    # server's R4 baseline, (b) the bound type is Coding (real check),
+    # (c) it has only 4 valid codes so we can exercise positive + negative.
+    - url: http://example.com/test/tx/CodingResource
+      type: CodingResource
+      name: CodingResource
+      kind: resource
+      derivation: specialization
+      base: http://hl7.org/fhir/StructureDefinition/Resource
+      elements:
+        gender:
+          type: Coding
+          binding:
+            strength: required
+            valueSet: http://hl7.org/fhir/ValueSet/administrative-gender
+
+    - url: http://example.com/test/tx/CCResource
+      type: CCResource
+      name: CCResource
+      kind: resource
+      derivation: specialization
+      base: http://hl7.org/fhir/StructureDefinition/Resource
+      elements:
+        gender:
+          type: CodeableConcept
+          binding:
+            strength: required
+            valueSet: http://hl7.org/fhir/ValueSet/administrative-gender
+
+tests:
+  # ─── Coding ──────────────────────────────────────────────────────────
+  - desc: 'Coding with valid code → in → no fs501'
+    schemas:
+      - url: http://example.com/test/tx/CodingResource
+        type: CodingResource
+        elements:
+          gender:
+            type: Coding
+            binding:
+              strength: required
+              valueSet: http://hl7.org/fhir/ValueSet/administrative-gender
+    data:
+      gender:
+        system: http://hl7.org/fhir/administrative-gender
+        code: male
+    valid: true
+
+  - desc: 'Coding with invalid code → not-in → fs501'
+    schemas:
+      - url: http://example.com/test/tx/CodingResource
+        type: CodingResource
+        elements:
+          gender:
+            type: Coding
+            binding:
+              strength: required
+              valueSet: http://hl7.org/fhir/ValueSet/administrative-gender
+    data:
+      gender:
+        system: http://hl7.org/fhir/administrative-gender
+        code: xxx-not-a-real-code
+    issues:
+      - { code: fs501, path: [gender] }
+
+  - desc: 'Coding with no system → unknown → silent (no error)'
+    schemas:
+      - url: http://example.com/test/tx/CodingResource
+        type: CodingResource
+        elements:
+          gender:
+            type: Coding
+            binding:
+              strength: required
+              valueSet: http://hl7.org/fhir/ValueSet/administrative-gender
+    data:
+      gender:
+        code: male
+    valid: true
+
+  # ─── CodeableConcept ─────────────────────────────────────────────────
+  - desc: 'CC with one valid coding → in'
+    schemas:
+      - url: http://example.com/test/tx/CCResource
+        type: CCResource
+        elements:
+          gender:
+            type: CodeableConcept
+            binding:
+              strength: required
+              valueSet: http://hl7.org/fhir/ValueSet/administrative-gender
+    data:
+      gender:
+        coding:
+          - system: http://hl7.org/fhir/administrative-gender
+            code: female
+    valid: true
+
+  - desc: 'CC where one of two codings is valid → in (any-wins)'
+    schemas:
+      - url: http://example.com/test/tx/CCResource
+        type: CCResource
+        elements:
+          gender:
+            type: CodeableConcept
+            binding:
+              strength: required
+              valueSet: http://hl7.org/fhir/ValueSet/administrative-gender
+    data:
+      gender:
+        coding:
+          - system: http://hl7.org/fhir/administrative-gender
+            code: xxx-bad
+          - system: http://hl7.org/fhir/administrative-gender
+            code: other
+    valid: true
+
+  - desc: 'CC where all codings are invalid → not-in → fs501'
+    schemas:
+      - url: http://example.com/test/tx/CCResource
+        type: CCResource
+        elements:
+          gender:
+            type: CodeableConcept
+            binding:
+              strength: required
+              valueSet: http://hl7.org/fhir/ValueSet/administrative-gender
+    data:
+      gender:
+        coding:
+          - system: http://hl7.org/fhir/administrative-gender
+            code: xxx-bad
+          - system: http://hl7.org/fhir/administrative-gender
+            code: yyy-bad
+    issues:
+      - { code: fs501, path: [gender] }
