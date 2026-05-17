@@ -135,7 +135,8 @@ function isPlainObject(v: unknown): v is Record<string, unknown> {
 
 // ─── FHIR package fixtures ───────────────────────────────────────────────
 
-import type { FHIRSchema } from '../src/converter/types.js';
+import type { FHIRSchema, StructureDefinition } from '../src/converter/types.js';
+import { translate } from '../src/converter/index.js';
 
 const FIXTURES_ROOT = join(import.meta.dir, 'fixtures');
 
@@ -149,6 +150,7 @@ let _r4Cache: FHIRSchema[] | undefined;
 export function loadPackageFixtures(pkgId: string): FHIRSchema[] {
   if (pkgId === 'hl7.fhir.r4.core' && _r4Cache) return _r4Cache;
 
+  // Accept both bare id (core packages) and `id@version` (others).
   const dir = join(FIXTURES_ROOT, pkgId);
   let entries: string[];
   try {
@@ -165,6 +167,30 @@ export function loadPackageFixtures(pkgId: string): FHIRSchema[] {
   }
   if (pkgId === 'hl7.fhir.r4.core') _r4Cache = out;
   return out;
+}
+
+/**
+ * Load a FHIR StructureDefinition file (relative to fhir-test-cases/validator)
+ * and translate it on-the-fly to a FHIRSchema. Used by Graham profile-loading
+ * cases that ship custom SDs alongside test data.
+ */
+const FHIR_TEST_CASES_ROOT = join(import.meta.dir, '..', '..', 'fhir-test-cases', 'validator');
+const _profileCache = new Map<string, FHIRSchema>();
+
+export function loadProfileSchema(relPath: string): FHIRSchema {
+  const cached = _profileCache.get(relPath);
+  if (cached) return cached;
+  const full = join(FHIR_TEST_CASES_ROOT, relPath);
+  let raw: string;
+  try {
+    raw = readFileSync(full, 'utf8');
+  } catch {
+    throw new Error(`profile file not found: ${full}`);
+  }
+  const sd = JSON.parse(raw) as StructureDefinition;
+  const schema = translate(sd);
+  _profileCache.set(relPath, schema);
+  return schema;
 }
 
 /**

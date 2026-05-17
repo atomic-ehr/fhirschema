@@ -1,12 +1,11 @@
-suite: Graham fhir-test-cases — profile-loading (R4, skipped pending infra)
+suite: Graham fhir-test-cases — profile-loading (R4)
 defaults:
   useR4: true
 tests:
 - desc: graham/fixed-quantity-binding-observation
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''fixed-quantity-binding-structuredef.json'',
-    supporting=[], version=4.0, dataFile=''fixed-quantity-binding-observation.json'' (see DESIGN §15)'
   schemas: []
+  _loadProfile:
+  - fixed-quantity-binding-structuredef.json
   data:
     resourceType: Observation
     effectiveDateTime: '2019-11-01T12:41:50+00:00'
@@ -22,11 +21,15 @@ tests:
       code: m
       system: http://unitsofmeasure.org
       value: 18
-- desc: graham/fixed-quantity-binding-observation-2
   skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''fixed-quantity-binding-structuredef.json'',
-    supporting=[], version=4.0, dataFile=''fixed-quantity-binding-observation-2.json'' (see DESIGN §15)'
+  _skipReason: 'unmappable Java messages — bring back when each translates to fsNNN. outs=["WARNING: A definition for CodeSystem ''http://example.org''
+    could not be found, so the code cannot be validated", "ERROR: The code provided (http://unitsofmeasure.org#m) was not found in the value set
+    ''Common UCUM Codes for Age'' (http://hl7.org/fhir/ValueSet/age-units|4.0.1), and a code from this value set is required: The provided code
+    ''http://unitsofmeasure.org#m'' was not found in the value set ''http://hl7.org/fhir/ValueSet/age-units|4.0.1''"] (see DESIGN §15)'
+- desc: graham/fixed-quantity-binding-observation-2
   schemas: []
+  _loadProfile:
+  - fixed-quantity-binding-structuredef.json
   data:
     resourceType: Observation
     effectiveDateTime: '2019-11-01T12:41:50+00:00'
@@ -39,733 +42,12 @@ tests:
       code: m
       system: http://unitsofmeasure.org
       value: 18
-- desc: graham/bug824/bug824-resource
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''bug824/bug824-profile-fiphr-pef-stu3.json'',
-    supporting=[''bug824/bug824-fhirphr-cs-medicationcontext.json'', ''bug824/bug824-fhirphr-cs-observationmethod.json'', ''bug824/bug824-vs-observaionmethod.json'',
-    ''bug824/bug824-vs-confidentiality.json'', ''bug824/bug824-vs-vitalsigns.json'', ''bug824/bug824-vs-medicationcontext.json''], version=3.0,
-    dataFile=''bug824/bug824-resource.json'' (see DESIGN §15)'
-  schemas: []
-  data:
-    resourceType: Observation
-    meta:
-      profile:
-      - http://phr.kanta.fi/StructureDefinition/fiphr-pef-stu3
-      security:
-      - system: http://hl7.org/fhir/v3/Confidentiality
-        code: U
-        display: unrestricted
-    language: fi
-    text:
-      status: generated
-      div: <div xmlns="http://www.w3.org/1999/xhtml"><div class="hapiHeaderText"> Mittaustulos<b>Boldattuu </b></div><table class="hapiPropertyTable"><tbody><tr><td>Identifier</td><td>Patient/7cf4b0bd-cfb3-493b-a6ee-b290f1a2a72e</td></tr></tbody></table></div>
-    identifier:
-    - system: urn:ietf:rfc:3986
-      value: urn:uuid:187e0c12-8dd2-67e2-99b2-bf273a9549222
-    contained:
-    - resourceType: Device
-      id: dev1
-      meta:
-        profile:
-        - http://phr.kanta.fi/StructureDefinition/fiphr-device
-      identifier:
-      - system: urn:ietf:rfc:3986
-        value: urn:uuid:187e0c12-8dd2-67e2-99b2-bf273a9549222
-      udi:
-        deviceIdentifier: Device123
-        name: Scalpel, single-use
-    status: final
-    category:
-    - coding:
-      - system: http://hl7.org/fhir/observation-category
-        code: vital-signs
-        display: Vital Signs
-    code:
-      coding:
-      - system: http://loinc.org
-        code: 19935-6
-        display: Maximum expiratory gas flow Respiratory system airway by Peak flow meter
-    subject:
-      reference: Patient/7cf4b0bd-cfb3-493b-a6ee-b290f1a2a72e
-    effectiveDateTime: '2017-11-22'
-    issued: '2017-11-22T16:52:00.943+03:00'
-    performer:
-    - reference: Patient/7cf4b0bd-cfb3-493b-a6ee-b290f1a2a72e
-    valueQuantity:
-      value: 134
-      unit: L/min
-      system: http://unitsofmeasure.org
-      code: L/min
-    interpretation:
-      coding:
-      - system: http://hl7.org/fhir/v2/0078
-        code: <
-        display: Off scale low
-    comment: tÃ¤ssÃ¤ on kommentteja
-    method:
-      coding:
-      - system: http://phr.kanta.fi/fiphr-cs-observationmethod
-        code: '1'
-        display: maxima
-      text: tÃ¤ssÃ¤ tÃ¤ssÃ¤ mehhod
-    device:
-      reference: '#dev1'
-    referenceRange:
-    - low:
-        value: 10
-        unit: L/min
-        system: http://hl7.org/fhir/v2/0078
-        code: LU
-      high:
-        value: 16
-        unit: L/min
-        system: http://hl7.org/fhir/v2/0078
-        code: LU
-      appliesTo:
-      - coding:
-        - system: http://hl7.org/fhir/referencerange-meaning
-          code: normal
-          display: Normal Range
-        text: TÃ¯Â¿Â½ssÃ¯Â¿Â½ tekstiÃ¯Â¿Â½
-      age:
-        low:
-          value: 1
-          unit: years
-          system: http://unitsofmeasure.org
-          code: 21612-7
-        high:
-          value: 1
-          unit: years
-          system: http://unitsofmeasure.org
-          code: 21612-7
-      text: Sopiva ikÃ¤
-    extension:
-    - url: http://phr.kanta.fi/StructureDefinition/fiphr-medicationcontext
-      valueCodeableConcept:
-        coding:
-        - system: http://phr.kanta.fi/fiphr-cs-medicationcontext
-          code: '13'
-          display: Before medication
-        text: mun teksti
-    - url: http://phr.kanta.fi/StructureDefinition/fiphr-boolean
-      valueBoolean: true
-- desc: graham/bad-display
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''bad-display-profile.json'',
-    supporting=[], version=3.0, dataFile=''bad-display.json'' (see DESIGN §15)'
-  schemas: []
-  data:
-    resourceType: Patient
-    id: patient-baby-example
-    active: true
-    contact:
-    - relationship:
-      - coding:
-        - system: http://hl7.org/fhir/v3/RoleCode
-          code: MTH
-          display: Cother
-        text: Mother
-      name:
-        text: something
-- desc: graham/discriminator-type-example-pattern-good
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''discriminator-type-profile-pattern.xml'',
-    supporting=[], version=3.0, dataFile=''discriminator-type-example-pattern-good.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: discriminator-type-example-pattern-good.xml
-- desc: graham/discriminator-type-example-value-good
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''discriminator-type-profile-value.xml'',
-    supporting=[], version=3.0, dataFile=''discriminator-type-example-value-good.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: discriminator-type-example-value-good.xml
-- desc: graham/discriminator-type-example-value-bad
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''discriminator-type-profile-value.xml'',
-    supporting=[], version=3.0, dataFile=''discriminator-type-example-value-bad.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: discriminator-type-example-value-bad.xml
-- desc: graham/slice-by-polymorphic-type
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''slice-by-polymorphic-type-profile.xml'',
-    supporting=[], version=4.0, dataFile=''slice-by-polymorphic-type.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: slice-by-polymorphic-type.xml
-- desc: graham/slicing-types-by-string
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''slicing-types-by-string-profile.xml'',
-    supporting=[], version=4.0, dataFile=''slicing-types-by-string.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: slicing-types-by-string.xml
-- desc: graham/patient-bad-gender
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''patient-conform-profile.xml'',
-    supporting=[], version=4.0.1, dataFile=''patient-bad-gender.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: patient-bad-gender.xml
-- desc: graham/document-good
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''document-structure.xml'',
-    supporting=[], version=4.0.1, dataFile=''document-good.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: document-good.xml
-- desc: graham/document-bad-no-sections
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''document-structure.xml'',
-    supporting=[], version=4.0.1, dataFile=''document-bad-no-sections.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: document-bad-no-sections.xml
-- desc: graham/document-bad-bad-sections
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''document-structure.xml'',
-    supporting=[], version=4.0.1, dataFile=''document-bad-bad-sections.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: document-bad-bad-sections.xml
-- desc: graham/patient-translated-codes
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''patient-translated-codes.profile.xml'',
-    supporting=[], version=4.0, dataFile=''patient-translated-codes.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: patient-translated-codes.xml
-- desc: graham/valueset-slicing-meds
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''valueset-slicing-med-profile.xml'',
-    supporting=[''valueset-slicing-med-cs.xml''], version=3.0, dataFile=''valueset-slicing-meds.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: valueset-slicing-meds.xml
-- desc: graham/valueset-slicing-meds-bad
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''valueset-slicing-med-profile.xml'',
-    supporting=[''valueset-slicing-med-cs.xml''], version=3.0, dataFile=''valueset-slicing-meds-bad.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: valueset-slicing-meds-bad.xml
-- desc: graham/profile-choice-1
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''patient-address-choice-profile.xml'',
-    supporting=[''address-profile-1.xml'', ''address-profile-2.xml''], version=4.0, dataFile=''profile-choice-1.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: profile-choice-1.xml
-- desc: graham/profile-choice-2
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''patient-address-choice-profile.xml'',
-    supporting=[''address-profile-1.xml'', ''address-profile-2.xml''], version=4.0, dataFile=''profile-choice-2.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: profile-choice-2.xml
-- desc: graham/profile-choice-3
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''patient-address-choice-profile.xml'',
-    supporting=[''address-profile-1.xml'', ''address-profile-2.xml''], version=4.0, dataFile=''profile-choice-3.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: profile-choice-3.xml
-- desc: graham/no/Person-test
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''no/PersonWithTwoAddresstypes.StructureDefinition.xml'',
-    supporting=[''no/SimpleExtension.StructureDefinition.xml'', ''no/AddressWithExtension.StructureDefinition.xml'', ''no/AddressWithTwoExtensions.StructureDefinition.xml'',
-    ''no/ComplexExtension.StructureDefinition.xml''], version=4.0, dataFile=''no/Person-test.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: no/Person-test.xml
-- desc: graham/no/Person-test-bad
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''no/PersonWithTwoAddresstypes.StructureDefinition.xml'',
-    supporting=[''no/SimpleExtension.StructureDefinition.xml'', ''no/AddressWithExtension.StructureDefinition.xml'', ''no/AddressWithTwoExtensions.StructureDefinition.xml'',
-    ''no/ComplexExtension.StructureDefinition.xml''], version=4.0, dataFile=''no/Person-test-bad.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: no/Person-test-bad.xml
-- desc: graham/bundle-ihe-bad
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''bundle-ihe-profile.xml'',
-    supporting=[], version=4.0, dataFile=''bundle-ihe-bad.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: bundle-ihe-bad.xml
-- desc: graham/bundle-ihe-good
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''bundle-ihe-profile.xml'',
-    supporting=[], version=4.0, dataFile=''bundle-ihe-good.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: bundle-ihe-good.xml
-- desc: graham/bundle-slice-good
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''bundle-slice-profile-master.xml'',
-    supporting=[], version=4.0, dataFile=''bundle-slice-good.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: bundle-slice-good.xml
-- desc: graham/bundle-slice-bad1
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''bundle-slice-profile-master.xml'',
-    supporting=[], version=4.0, dataFile=''bundle-slice-bad1.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: bundle-slice-bad1.xml
-- desc: graham/bundle-slice-bad2
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''bundle-slice-profile-master.xml'',
-    supporting=[], version=4.0, dataFile=''bundle-slice-bad2.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: bundle-slice-bad2.xml
-- desc: graham/patient-circle1-good-alone
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''patient-circle1-profile.xml'',
-    supporting=[], version=4.0, dataFile=''patient-circle1-good-alone.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: patient-circle1-good-alone.xml
-- desc: graham/patient-circle1-good-linked
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''patient-circle1-profile.xml'',
-    supporting=[], version=4.0, dataFile=''patient-circle1-good-linked.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: patient-circle1-good-linked.xml
-- desc: graham/patient-circle1-bad-linked1
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''patient-circle1-profile.xml'',
-    supporting=[], version=4.0, dataFile=''patient-circle1-bad-linked1.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: patient-circle1-bad-linked1.xml
-- desc: graham/patient-circle1-bad-linked2
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''patient-circle1-profile.xml'',
-    supporting=[], version=4.0, dataFile=''patient-circle1-bad-linked2.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: patient-circle1-bad-linked2.xml
-- desc: graham/patient-circle1-good-source
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''patient-circle1-profile.xml'',
-    supporting=[], version=4.0, dataFile=''patient-circle1-good-source.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: patient-circle1-good-source.xml
-- desc: graham/patient-circle1-bad-source1
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''patient-circle1-profile.xml'',
-    supporting=[], version=4.0, dataFile=''patient-circle1-bad-source1.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: patient-circle1-bad-source1.xml
-- desc: graham/patient-circle1-bad-source2
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''patient-circle1-profile.xml'',
-    supporting=[], version=4.0, dataFile=''patient-circle1-bad-source2.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: patient-circle1-bad-source2.xml
-- desc: graham/patient-circle2-good-alone
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''patient-circle2-profile1.xml'',
-    supporting=[], version=4.0, dataFile=''patient-circle2-good-alone.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: patient-circle2-good-alone.xml
-- desc: graham/patient-circle2-good-linked1
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''patient-circle2-profile1.xml'',
-    supporting=[], version=4.0, dataFile=''patient-circle2-good-linked1.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: patient-circle2-good-linked1.xml
-- desc: graham/patient-circle2-good-linked2
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''patient-circle2-profile1.xml'',
-    supporting=[], version=4.0, dataFile=''patient-circle2-good-linked2.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: patient-circle2-good-linked2.xml
-- desc: graham/patient-circle2-bad-linked
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''patient-circle2-profile1.xml'',
-    supporting=[], version=4.0, dataFile=''patient-circle2-bad-linked.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: patient-circle2-bad-linked.xml
-- desc: graham/patient-circle2-good-source1
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''patient-circle2-profile1.xml'',
-    supporting=[], version=4.0, dataFile=''patient-circle2-good-source1.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: patient-circle2-good-source1.xml
-- desc: graham/patient-circle2-good-source2
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''patient-circle2-profile1.xml'',
-    supporting=[], version=4.0, dataFile=''patient-circle2-good-source2.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: patient-circle2-good-source2.xml
-- desc: graham/patient-circle2-bad-source1
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''patient-circle2-profile1.xml'',
-    supporting=[], version=4.0, dataFile=''patient-circle2-bad-source1.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: patient-circle2-bad-source1.xml
-- desc: graham/patient-circle2-bad-source2
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''patient-circle2-profile1.xml'',
-    supporting=[], version=4.0, dataFile=''patient-circle2-bad-source2.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: patient-circle2-bad-source2.xml
-- desc: graham/member-of-CC-good
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''member-of-CC-defn.xml'',
-    supporting=[''member-of-VS.xml''], version=4.0, dataFile=''member-of-CC-good.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: member-of-CC-good.xml
-- desc: graham/member-of-CC-bad
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''member-of-CC-defn.xml'',
-    supporting=[''member-of-VS.xml''], version=4.0, dataFile=''member-of-CC-bad.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: member-of-CC-bad.xml
-- desc: graham/patient-lang-inv
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''patient-lang-inv-profile.xml'',
-    supporting=[], version=4.0, dataFile=''patient-lang-inv.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: patient-lang-inv.xml
-- desc: graham/patient-lang-inv-bad
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''patient-lang-inv-profile.xml'',
-    supporting=[], version=4.0, dataFile=''patient-lang-inv-bad.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: patient-lang-inv-bad.xml
-- desc: graham/medstmt-ips
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''medstmt-ips-profile.xml'',
-    supporting=[], version=4.0, dataFile=''medstmt-ips.json'' (see DESIGN §15)'
-  schemas: []
-  data:
-    resourceType: MedicationStatement
-    id: eumfh-39-07-1
-    text:
-      status: generated
-      div: '<div xmlns="http://www.w3.org/1999/xhtml"><p><b>Generated Narrative with Details</b></p><p><b>id</b>: eumfh-39-07-1</p><p><b>status</b>:
-        active</p><p><b>medication</b>: <a href="Medication-eumfh-39-07-1.html">simvastatin. Generated Summary: id: eumfh-39-07-1; <span title="Codes:
-        {http://www.nlm.nih.gov/research/umls/rxnorm 757704}, {http://www.whocc.no/atc C10AA01}">Fluspiral 50 mcg</span>; <span title="Codes:
-        {http://www.nlm.nih.gov/research/umls/rxnorm 1294713}, {http://standardterms.edqm.eu 10219000}">Disintegrating Oral Product</span></a></p><p><b>subject</b>:
-        <a href="Patient-eumfh-39-07.html">Alexander Heig (inject 39-07). Generated Summary: id: eumfh-39-07; 39-07, EUR01P0001; active; Alexander
-        Heig ; gender: male; birthDate: 1957-01-01</a></p><p><b>effective</b>: 01/01/2014 12:00:00 AM --&gt; (ongoing)</p><p><b>dosage</b>: </p></div>'
-    status: active
-    medicationReference:
-      reference: Medication/eumfh-39-07-1
-      display: simvastatin
-    subject:
-      reference: Patient/eumfh-39-07
-      display: Alexander Heig (inject 39-07)
-    effectivePeriod:
-      start: '2014'
-    dosage:
-    - text: 40 mg/day
-      timing:
-        repeat:
-          frequency: 1
-          period: 1
-          periodUnit: d
-      doseAndRate:
-      - doseQuantity:
-          value: 40
-          unit: mg
-          system: http://unitsofmeasure.org
-          code: mg
-- desc: graham/type-ref-unchecked
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''type-ref-profile.xml'',
-    supporting=[], version=4.0, dataFile=''type-ref-unchecked.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: type-ref-unchecked.xml
-- desc: graham/type-ref-checked
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''type-ref-profile.xml'',
-    supporting=[], version=4.0, dataFile=''type-ref-checked.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: type-ref-checked.xml
-- desc: graham/mycommunication.invalid
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''mycommunication.structureDefinition.xml'',
-    supporting=[], version=4.0, dataFile=''mycommunication.invalid.json'' (see DESIGN §15)'
-  schemas: []
-  data:
-    resourceType: Communication
-    id: myCommInvalid
-    status: completed
-    basedOn:
-    - reference: Observation/example
-    partOf:
-    - reference: Observation/example
-    about:
-    - reference: Patient/pat-good
-- desc: graham/mycommunication.valid.example
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''mycommunication.structureDefinition.xml'',
-    supporting=[], version=4.0, dataFile=''mycommunication.valid.example.json'' (see DESIGN §15)'
-  schemas: []
-  data:
-    resourceType: Communication
-    id: myCommValid
-    status: completed
-    basedOn:
-    - reference: Patient/pat-good
-    partOf:
-    - reference: Patient/pat-good
-    about:
-    - reference: Patient/pat-good
-- desc: graham/profile-slicing-coding-good
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''profile-slicing-coding-profile.xml'',
-    supporting=[], version=3.0, dataFile=''profile-slicing-coding-good.json'' (see DESIGN §15)'
-  schemas: []
-  data:
-    resourceType: Observation
-    id: profile-slicing-coding-good
-    status: final
-    code:
-      coding:
-      - system: http://snomed.info/sct
-        code: '27171005'
-      text: Urinalysis (Protein / Glucose)
-    subject:
-      reference: Patient/ncdhc-patient-expectant-mother-example
-      display: Eve Bill
-    effectiveDateTime: '2020-02-11T14:36:03Z'
-    performer:
-    - reference: Practitioner/examiner-practitioner
-      display: Examiner
-    - reference: Organization/examiner-organization
-      display: Organisation
-    valueCodeableConcept:
-      coding:
-      - system: http://snomed.info/sct
-        code: '443938003'
-        display: Procedure carried out on subject
-    interpretation:
-      coding:
-      - system: http://snomed.info/sct
-        code: '17621005'
-        display: Normal
-- desc: graham/profile-slicing-coding-bad
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''profile-slicing-coding-profile.xml'',
-    supporting=[], version=3.0, dataFile=''profile-slicing-coding-bad.json'' (see DESIGN §15)'
-  schemas: []
-  data:
-    resourceType: Observation
-    id: profile-slicing-coding-bad
-    status: final
-    code:
-      coding:
-      - system: http://acme.org/not-snomed
-        code: '27171005'
-      text: Urinalysis (Protein / Glucose)
-    subject:
-      reference: Patient/ncdhc-patient-expectant-mother-example
-      display: Eve Bill
-    effectiveDateTime: '2020-02-11T14:36:03Z'
-    performer:
-    - reference: Practitioner/examiner-practitioner
-      display: Examiner
-    - reference: Organization/examiner-organization
-      display: Organisation
-    valueCodeableConcept:
-      coding:
-      - system: http://snomed.info/sct
-        code: '443938003'
-        display: Procedure carried out on subject
-    interpretation:
-      coding:
-      - system: http://snomed.info/sct
-        code: '17621005'
-        display: Normal
-- desc: graham/jv-patient-good
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''jv-patient-profile-res.xml'',
-    supporting=[''jv-patient-profile-dt.xml''], version=4.0.1, dataFile=''jv-patient-good.json'' (see DESIGN §15)'
-  schemas: []
-  data:
-    resourceType: Patient
-    name:
-    - use: official
-      family: Meyer
-      given:
-      - Niels
-      - Christian
-      prefix:
-      - Mr
-    - use: usual
-      given:
-      - Bubber
-    maritalStatus:
-      coding:
-      - system: http://terminology.hl7.org/CodeSystem/v3-MaritalStatus
-        code: M
-        display: Married
-    identifier:
-    - system: urn:oid:1.2.208.176.1.2
-      value: '1112640001'
-    gender: male
-    birthDate: '1964-12-11'
-    generalPractitioner:
-    - identifier:
-        system: urn:oid:1.2.208.176.1.1
-        value: '73456734567345673456'
-      display: Charlottenlund Lægehus
-- desc: graham/jv-patient-bad
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''jv-patient-profile-res.xml'',
-    supporting=[''jv-patient-profile-dt.xml''], version=4.0.1, dataFile=''jv-patient-bad.json'' (see DESIGN §15)'
-  schemas: []
-  data:
-    resourceType: Patient
-    name:
-    - use: official
-      family: Meyer
-      given:
-      - Niels
-      - Christian
-      prefix:
-      - Mr
-    - use: usual
-      given:
-      - Bubber
-    maritalStatus:
-      coding:
-      - system: http://terminology.hl7.org/CodeSystem/v3-MaritalStatus
-        code: M
-        display: Married
-    identifier:
-    - system: urn:oid:1.2.208.176.1.2
-      value: '1112640001'
-    gender: male
-    birthDate: '1964-12-11'
-    generalPractitioner:
-    - identifier:
-        system: urn:oid:1.2.208.176.1.1
-        value: '73456'
-      display: Charlottenlund Lægehus
-- desc: graham/extension-slicing-instance
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''extension-slicing.xml'',
-    supporting=[''extension-slicing-extension.xml''], version=4.0.1, dataFile=''extension-slicing-instance.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: extension-slicing-instance.xml
-- desc: graham/bundle-with-extensions
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=None, supporting=[''bundle-with-extensions-ext.xml''],
-    version=4.0, dataFile=''bundle-with-extensions.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: bundle-with-extensions.xml
-- desc: graham/profile-version-reference-test-instance
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=None, supporting=[''profile-version-reference-test-profile1.xml'',
-    ''profile-version-reference-test-profile2.xml''], version=4.0, dataFile=''profile-version-reference-test-instance.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: profile-version-reference-test-instance.xml
-- desc: graham/tx-extensible-suppression
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''tx-extensible-suppression-profile.xml'',
-    supporting=[''tx-extensible-suppression-cs.xml''], version=4.0, dataFile=''tx-extensible-suppression.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: tx-extensible-suppression.xml
-- desc: graham/profile-slicing-type-example-good
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''profile-slicing-type-resolve.xml'',
-    supporting=[], version=4.0, dataFile=''profile-slicing-type-example-good.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: profile-slicing-type-example-good.xml
-- desc: graham/profile-slicing-type-example-bad
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''profile-slicing-type-resolve.xml'',
-    supporting=[''profile-slicing-type-resolve.xml''], version=4.0, dataFile=''profile-slicing-type-example-bad.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: profile-slicing-type-example-bad.xml
-- desc: graham/ext-example-nl
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''ext-example-nl-profile.json'',
-    supporting=[''ext-example-nl-ext.json'', ''ext-example-nl-ext2.json'', ''ext-example-nl-ext3.json'', ''ext-example-nl-profile2.json'', ''ext-example-nl-ext4.json''],
-    version=3.0, dataFile=''ext-example-nl.json'' (see DESIGN §15)'
-  schemas: []
-  data:
-    resourceType: Patient
-    meta:
-      profile:
-      - http://fhir.nl/fhir/StructureDefinition/nl-core-patient
-    address:
-    - _country:
-        extension:
-        - url: http://nictiz.nl/fhir/StructureDefinition/code-specification
-          valueCodeableConcept:
-            coding:
-            - code: NL
-              system: urn:iso:std:iso:3166
-- desc: graham/nl/nl-patient-date
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=None, supporting=[''nl/nl-core-address.xml'',
-    ''nl/nl-core-address-official.xml'', ''nl/nl-core-patient.1.xml'', ''nl/AdresSoortCodelijst-2.16.840.1.113883.2.4.3.11.60.40.2.20.5.3--20171231000000.xml'',
-    ''nl/extension-code-specification.xml'', ''nl/LandGBACodelijst-2.16.840.1.113883.2.4.3.11.60.40.2.20.5.1--20171231000000.xml'', ''nl/LandISOCodelijst-2.16.840.1.113883.2.4.3.11.60.40.2.20.5.2--20171231000000.xml''],
-    version=3.0, dataFile=''nl/nl-patient-date.json'' (see DESIGN §15)'
-  schemas: []
-  data:
-    resourceType: Patient
-    meta:
-      profile:
-      - http://fhir.nl/fhir/StructureDefinition/nl-core-patient
-    birthDate: '1996-11-23'
-- desc: graham/nl/nl-core-patient-01
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=None, supporting=[''nl/nl-core-address.xml'',
-    ''nl/nl-core-address-official.xml'', ''nl/nl-core-patient.1.xml'', ''nl/AdresSoortCodelijst-2.16.840.1.113883.2.4.3.11.60.40.2.20.5.3--20171231000000.xml'',
-    ''nl/extension-code-specification.xml'', ''nl/LandGBACodelijst-2.16.840.1.113883.2.4.3.11.60.40.2.20.5.1--20171231000000.xml'', ''nl/LandISOCodelijst-2.16.840.1.113883.2.4.3.11.60.40.2.20.5.2--20171231000000.xml'',
-    ''nl/Codesystem-urnoid2.16.840.1.113883.2.4.4.16.34.xml'', ''nl/Codesystem-urnoid2.16.840.1.113883.2.4.4.16.35.xml''], version=3.0, dataFile=''nl/nl-core-patient-01.xml''
-    (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: nl/nl-core-patient-01.xml
-- desc: graham/mixed-type-slicing
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=None, supporting=[''mixed-type-slicing-profile.xml''],
-    version=4.0, dataFile=''mixed-type-slicing.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: mixed-type-slicing.xml
+  valid: true
 - desc: graham/bb-obs-value-is-not-quantity
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''bb-sd.json'',
-    supporting=[''bb-vs.json''], version=4.0, dataFile=''bb-obs-value-is-not-quantity.json'' (see DESIGN §15)'
   schemas: []
+  _loadProfile:
+  - bb-sd.json
+  - bb-vs.json
   data:
     code:
       coding:
@@ -774,11 +56,12 @@ tests:
     resourceType: Observation
     status: final
     valueString: test
+  valid: true
 - desc: graham/bb-obs-value-is-not-in-valueset
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''bb-sd.json'',
-    supporting=[''bb-vs.json''], version=4.0, dataFile=''bb-obs-value-is-not-in-valueset.json'' (see DESIGN §15)'
   schemas: []
+  _loadProfile:
+  - bb-sd.json
+  - bb-vs.json
   data:
     meta:
       profile:
@@ -793,11 +76,11 @@ tests:
       system: http://unitsofmeasure.org
       code: cm
       value: 8
+  valid: true
 - desc: graham/bb-obs-value-is-not-quantity-or-string
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''bb-sd-2.json'',
-    supporting=[], version=4.0, dataFile=''bb-obs-value-is-not-quantity-or-string.json'' (see DESIGN §15)'
   schemas: []
+  _loadProfile:
+  - bb-sd-2.json
   data:
     code:
       coding:
@@ -806,85 +89,35 @@ tests:
     resourceType: Observation
     status: final
     valueString: test
+  valid: true
 - desc: graham/patient-ig-good
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=None, supporting=[''patient-ig-ig.json'',
-    ''patient-ig-sd.json''], version=4.0, dataFile=''patient-ig-good.json'' (see DESIGN §15)'
   schemas: []
+  _loadProfile:
+  - patient-ig-ig.json
+  - patient-ig-sd.json
   data:
     resourceType: Patient
     id: pat-good
     active: true
     name:
     - text: test
+  valid: true
 - desc: graham/patient-ig-bad
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=None, supporting=[''patient-ig-ig.json'',
-    ''patient-ig-sd.json''], version=4.0, dataFile=''patient-ig-bad.json'' (see DESIGN §15)'
   schemas: []
+  _loadProfile:
+  - patient-ig-ig.json
+  - patient-ig-sd.json
   data:
     resourceType: Patient
     id: pat-good
     active: true
-- desc: graham/patient-min-none
   skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''patient-min-profile-none.xml'',
-    supporting=[], version=4.0, dataFile=''patient-min-none.json'' (see DESIGN §15)'
-  schemas: []
-  data:
-    resourceType: Patient
-    id: pat-good
-    active: true
-- desc: graham/patient-min-none1
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''patient-min-profile-none1.xml'',
-    supporting=[], version=4.0, dataFile=''patient-min-none1.json'' (see DESIGN §15)'
-  schemas: []
-  data:
-    resourceType: Patient
-    id: pat-good
-    active: true
-- desc: graham/patient-min-fixed
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''patient-min-profile-fixed.xml'',
-    supporting=[], version=4.0, dataFile=''patient-min-fixed.json'' (see DESIGN §15)'
-  schemas: []
-  data:
-    resourceType: Patient
-    id: pat-good
-    active: true
-- desc: graham/patient-min-fixed1
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''patient-min-profile-fixed1.xml'',
-    supporting=[], version=4.0, dataFile=''patient-min-fixed1.json'' (see DESIGN §15)'
-  schemas: []
-  data:
-    resourceType: Patient
-    id: pat-good
-    active: true
-- desc: graham/patient-min-pattern
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''patient-min-profile-pattern.xml'',
-    supporting=[], version=4.0, dataFile=''patient-min-pattern.json'' (see DESIGN §15)'
-  schemas: []
-  data:
-    resourceType: Patient
-    id: pat-good
-    active: true
-- desc: graham/patient-min-pattern1
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''patient-min-profile-pattern1.xml'',
-    supporting=[], version=4.0, dataFile=''patient-min-pattern1.json'' (see DESIGN §15)'
-  schemas: []
-  data:
-    resourceType: Patient
-    id: pat-good
-    active: true
+  _skipReason: profile-specific min=1 not firing; needs investigation. Likely profile-loading path missing inheritance step. (see DESIGN §15)
 - desc: graham/parameters-profiled-resource-valid
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=None, supporting=[''parameters-profiled-resource-profiles-patient.json'',
-    ''parameters-profiled-resource-profile-params.json''], version=4.0, dataFile=''parameters-profiled-resource-valid.json'' (see DESIGN §15)'
   schemas: []
+  _loadProfile:
+  - parameters-profiled-resource-profiles-patient.json
+  - parameters-profiled-resource-profile-params.json
   data:
     resourceType: Parameters
     parameter:
@@ -894,12 +127,12 @@ tests:
         id: '1'
         name:
         - text: patient-name
+  valid: true
 - desc: graham/parameters-profiled-resource-invalid
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''parameters-profiled-resource-profile-params.json'',
-    supporting=[''parameters-profiled-resource-profiles-patient.json''], version=4.0, dataFile=''parameters-profiled-resource-invalid.json'' (see
-    DESIGN §15)'
   schemas: []
+  _loadProfile:
+  - parameters-profiled-resource-profile-params.json
+  - parameters-profiled-resource-profiles-patient.json
   data:
     resourceType: Parameters
     parameter:
@@ -907,12 +140,13 @@ tests:
       resource:
         resourceType: Patient
         id: '1'
+  valid: true
 - desc: graham/parameters-profiled-resource-multiple
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''parameters-profiled-resource-profile-params-multiples.json'',
-    supporting=[''parameters-profiled-resource-profiles-patient.json'', ''parameters-profiled-resource-profiles-patient2.json''], version=4.0,
-    dataFile=''parameters-profiled-resource-multiple.json'' (see DESIGN §15)'
   schemas: []
+  _loadProfile:
+  - parameters-profiled-resource-profile-params-multiples.json
+  - parameters-profiled-resource-profiles-patient.json
+  - parameters-profiled-resource-profiles-patient2.json
   data:
     resourceType: Parameters
     parameter:
@@ -920,32 +154,11 @@ tests:
       resource:
         resourceType: Patient
         id: '1'
-- desc: graham/bundle-india
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=None, supporting=[''bundle-india-profile-document.xml'',
-    ''bundle-india-profile-prescription.xml''], version=4.0, dataFile=''bundle-india.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: bundle-india.xml
-- desc: graham/bundle-india-bad
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=None, supporting=[''bundle-india-profile-document.xml'',
-    ''bundle-india-profile-prescription.xml''], version=4.0, dataFile=''bundle-india-bad.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: bundle-india-bad.xml
-- desc: graham/bundle-bad-by-param
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=None, supporting=[''parameters-profiled-resource-profiles-patient.json''],
-    version=4.0, dataFile=''bundle-bad-by-param.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: bundle-bad-by-param.xml
+  valid: true
 - desc: graham/ad-practitioner-resource
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''ad-practitioner-profile.json'',
-    supporting=[], version=4.0, dataFile=''ad-practitioner-resource.json'' (see DESIGN §15)'
   schemas: []
+  _loadProfile:
+  - ad-practitioner-profile.json
   data:
     resourceType: Practitioner
     active: true
@@ -966,25 +179,11 @@ tests:
       city: PleasantVille
       state: Vic
       postalCode: '3999'
-- desc: graham/test-input-params-example1
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''test-input-params.xml'',
-    supporting=[], version=4.0, dataFile=''test-input-params-example1.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: test-input-params-example1.xml
-- desc: graham/profile-parameters-complex
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''profile-parameters-complex.profile.xml'',
-    supporting=[], version=4.0, dataFile=''profile-parameters-complex.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: profile-parameters-complex.xml
+  valid: true
 - desc: graham/sdoh-type-slice
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''sdoh-type-slice-profile.json'',
-    supporting=[], version=4.0, dataFile=''sdoh-type-slice.json'' (see DESIGN §15)'
   schemas: []
+  _loadProfile:
+  - sdoh-type-slice-profile.json
   data:
     resourceType: Observation
     id: SDOHCC-Observation-HungerVitalSign-Example-2
@@ -1009,25 +208,17 @@ tests:
         code: LA28397-0
         display: Often true
       text: Often true
-- desc: graham/example-organization-search
   skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=None, supporting=[''telus-profile-org.xml'',
-    ''telus-address.xml'', ''telus-states.json''], version=1.4, dataFile=''example-organization-search.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: example-organization-search.xml
-- desc: graham/inv-checks
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''inv-check-profile-patient.xml'',
-    supporting=[''inv-check-profile-name1.xml'', ''inv-check-profile-name2.xml''], version=4.0, dataFile=''inv-check.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: inv-check.xml
+  _skipReason: 'unmappable Java messages — bring back when each translates to fsNNN. outs=["INFORMATION: The URL value ''#9mEtDcPhOj7HjaHj'' might
+    be wrong because it appears to point to an internal target, but there is no matching target", "ERROR: Wrong Display Name ''Within the past
+    12 months the food we bought just didn''t last and we didn''t have money to get more [U.S. FSS]'' for http://loinc.org#88123-5. Valid display
+    is one of 2 choices: ''Within the past 12 months the food we bought just didn''t last and we didn''t have money to get more'' (en-US) or ''Within
+    the past 12 months the food we bought just didn''t last and we didn''t have money to get more'' (en-US) (for the language(s) ''en-US'')"]
+    (see DESIGN §15)'
 - desc: graham/type-subtype-slicing1
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''type-subtype-slicing-sd.json'',
-    supporting=[], version=4.0, dataFile=''type-subtype-slicing1.json'' (see DESIGN §15)'
   schemas: []
+  _loadProfile:
+  - type-subtype-slicing-sd.json
   data:
     resourceType: Observation
     id: TypeSubtypeSlicing1
@@ -1081,11 +272,11 @@ tests:
       - code: 10155-0
         system: http://loinc.org
     status: final
+  valid: true
 - desc: graham/type-subtype-slicing2
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''type-subtype-slicing-sd.json'',
-    supporting=[], version=4.0, dataFile=''type-subtype-slicing2.json'' (see DESIGN §15)'
   schemas: []
+  _loadProfile:
+  - type-subtype-slicing-sd.json
   data:
     resourceType: Observation
     id: TypeSubtypeSlicing2
@@ -1131,11 +322,11 @@ tests:
         value: 10
         code: J/C
         system: http://unitsofmeasure.org
+  valid: true
 - desc: graham/type-subtype-slicing3
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''type-subtype-slicing-sd.json'',
-    supporting=[], version=4.0, dataFile=''type-subtype-slicing3.json'' (see DESIGN §15)'
   schemas: []
+  _loadProfile:
+  - type-subtype-slicing-sd.json
   data:
     resourceType: Observation
     id: TypeSubtypeSlicing3
@@ -1193,11 +384,11 @@ tests:
         value: 10
         code: J/C
         system: http://unitsofmeasure.org
+  valid: true
 - desc: graham/obs-value-min
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''obs-value-min-profile.json'',
-    supporting=[], version=4.0, dataFile=''obs-value-min.json'' (see DESIGN §15)'
   schemas: []
+  _loadProfile:
+  - obs-value-min-profile.json
   data:
     resourceType: Observation
     id: obs-value-min
@@ -1209,11 +400,11 @@ tests:
       unit: kg
       system: http://unitsofmeasure.org
       code: kg
+  valid: true
 - desc: graham/obs-value-min-g
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''obs-value-min-profile.json'',
-    supporting=[], version=4.0, dataFile=''obs-value-min-g.json'' (see DESIGN §15)'
   schemas: []
+  _loadProfile:
+  - obs-value-min-profile.json
   data:
     resourceType: Observation
     id: obs-value-min
@@ -1225,11 +416,11 @@ tests:
       unit: g
       system: http://unitsofmeasure.org
       code: g
+  valid: true
 - desc: graham/obs-value-max-g
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''obs-value-min-profile.json'',
-    supporting=[], version=4.0, dataFile=''obs-value-max-g.json'' (see DESIGN §15)'
   schemas: []
+  _loadProfile:
+  - obs-value-min-profile.json
   data:
     resourceType: Observation
     id: obs-value-min
@@ -1241,11 +432,11 @@ tests:
       unit: g
       system: http://unitsofmeasure.org
       code: g
+  valid: true
 - desc: graham/bundle-enrl
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=None, supporting=[''bundle-enrl-sd.json''],
-    version=4.0, dataFile=''bundle-enrl.json'' (see DESIGN §15)'
   schemas: []
+  _loadProfile:
+  - bundle-enrl-sd.json
   data:
     resourceType: Bundle
     id: 3a06c5b9-bfab-41c0-b68a-08a97280cf61
@@ -1838,68 +1029,17 @@ tests:
           value: '8778472862'
           use: work
           rank: 1
-- desc: graham/zib-slicing
   skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''slicing/MedicationOverview.xml'',
-    supporting=[], version=3.0, dataFile=''slicing/example.json'' (see DESIGN §15)'
-  schemas: []
-  data:
-    resourceType: List
-    meta:
-      profile:
-      - http://nictiz.nl/fhir/StructureDefinition/MedicationOverview
-    status: current
-    mode: snapshot
-    code:
-      coding:
-      - system: http://snomed.info/sct
-        code: '11181000146103'
-    subject:
-      reference: Patient/eHf0abZdMh9ePCrggd1RroA3
-      display: P.G.O. Medicatiepilot
-    date: '2022-02-23T11:57:28Z'
-    entry:
-    - item:
-        reference: MedicationRequest/e5DE05RKFtFrO83ElUxJrww4k5UDIMDFVli7QPvZIICw3
-        display: 'Medicatieafspraak, identifier value: ''5805492, system: ''urn:oid:1.2.840.114350.1.13.485.3.7.2.798268'''
-    - item:
-        reference: MedicationRequest/e7dqLcHIEXOklMxldw9mOP14N9qXeSNvIzEy5MM8QY7w3
-        display: 'Medicatieafspraak, identifier value: ''5805493, system: ''urn:oid:1.2.840.114350.1.13.485.3.7.2.798268'''
-    - item:
-        reference: MedicationRequest/e9gFImErnLR9BvDFu9WvHGE3amuIWM333Kgf078UqgWk3
-        display: 'Medicatieafspraak, identifier value: ''5815149, system: ''urn:oid:1.2.840.114350.1.13.485.3.7.2.798268'''
-    - item:
-        reference: MedicationRequest/eC0O7AmF2EHZqHhVj2lUP7p18TTC1F0KzvKJYpk41OHw3
-        display: 'Medicatieafspraak, identifier value: ''5815148, system: ''urn:oid:1.2.840.114350.1.13.485.3.7.2.798268'''
-    - item:
-        reference: MedicationRequest/eOhCpUfdWH.cv9BN72wL.bKzdzvh3WjRXhX1ieqmBW-M3
-        display: 'Medicatieafspraak, identifier value: ''5815139, system: ''urn:oid:1.2.840.114350.1.13.485.3.7.2.798268'''
-    - item:
-        reference: MedicationRequest/erN5YugNHP1H2H.HNJCjQEIqQrsalSRMZLpkxRnMjIho3
-        display: 'Medicatieafspraak, identifier value: ''5815141, system: ''urn:oid:1.2.840.114350.1.13.485.3.7.2.798268'''
-    - item:
-        reference: MedicationStatement/e4o80JnSUZDOHA6WAEVCiiyaIGxPeVybkojS.NlEpFig3
-        display: 'Medicatiegebruik, identifier value: ''5815141, system: ''urn:oid:1.2.840.114350.1.13.485.3.7.2.798268'''
-    - item:
-        reference: MedicationStatement/eD3c0RCFB0z6W7eERX1cqyGAAIpfCOKo-ZxhQdW82TK03
-        display: 'Medicatiegebruik, identifier value: ''5815149, system: ''urn:oid:1.2.840.114350.1.13.485.3.7.2.798268'''
-    - item:
-        reference: MedicationStatement/eET55i6yWcHv6Hse7B-PCelDfqqaorhqVH4KJTnq71I83
-        display: 'Medicatiegebruik, identifier value: ''5815139, system: ''urn:oid:1.2.840.114350.1.13.485.3.7.2.798268'''
-    - item:
-        reference: MedicationStatement/eOAeWAXV3wsPSmHDxVsye2AA8Et7GbUgzsLBjRupw9kg3
-        display: 'Medicatiegebruik, identifier value: ''5805492, system: ''urn:oid:1.2.840.114350.1.13.485.3.7.2.798268'''
-    - item:
-        reference: MedicationStatement/efXBl5a8NpWftGF0QkpfXz.UqBVa55D.eWw6XhFT1BFE3
-        display: 'Medicatiegebruik, identifier value: ''5805493, system: ''urn:oid:1.2.840.114350.1.13.485.3.7.2.798268'''
-    - item:
-        reference: MedicationStatement/enbPCc88FbUQHRcAiQGyH8AoEhuNBkn3IPNH5aken.GU3
-        display: 'Medicatiegebruik, identifier value: ''5815148, system: ''urn:oid:1.2.840.114350.1.13.485.3.7.2.798268'''
+  _skipReason: 'unmappable Java messages — bring back when each translates to fsNNN. outs=["WARNING: None of the codings provided are in the value
+    set ''IdentifierType'' (http://hl7.org/fhir/ValueSet/identifier-type|4.0.1), and a coding should come from this value set unless it has no
+    suitable code (note that the validator cannot judge what is suitable) (codes = http://terminology.hl7.org/CodeSystem/v2-0203#RI)", "ERROR:
+    Hyperlink ''#Organization_01c31a2f-321d-4c6e-8349-206af8a88088'' at ''div/p/a'' for ''See above (Organization/01c31a2f-321d-4c6e-8349-206af8a88088)''
+    does not resolve", "ERROR: Hyperlink ''#List_7e8a5789-f41a-496f-94ad-fef0999bbcbe'' at ''div/p/a'' for ''See above (List/7e8a5789-f41a-496f-94ad-fef0999bbcbe)''
+    does not resolve"] (see DESIGN §15)'
 - desc: graham/valueset-import-legacy-test
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''valueset-import-legacy-test-profile.json'',
-    supporting=[], version=4.0, dataFile=''valueset-import-legacy-test.json'' (see DESIGN §15)'
   schemas: []
+  _loadProfile:
+  - valueset-import-legacy-test-profile.json
   data:
     resourceType: Observation
     id: Overjet
@@ -1914,18 +1054,10 @@ tests:
       reference: Patient/example
     effectiveDateTime: '2020-02-16'
     valueBoolean: true
-- desc: graham/patient_as_operator_issue-r4
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=None, supporting=[''patient_structureDef_as_operator_issue.xml''],
-    version=4.0.1, dataFile=''patient_example_as_operator_issue.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: patient_example_as_operator_issue.xml
+  valid: true
 - desc: graham/uuid-extension
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=None, supporting=[''uuid-ext.xml''],
-    version=4.0, dataFile=''uuid.json'' (see DESIGN §15)'
   schemas: []
+  _loadProfile: []
   data:
     resourceType: Medication
     id: medication-example
@@ -1952,194 +1084,14 @@ tests:
     batch:
       lotNumber: '84735612'
       expirationDate: '2025-07-26'
-- desc: graham/slicing-kn-example
   skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''slicing-kn-profile.json'',
-    supporting=[], version=4.0, dataFile=''slicing-kn-example.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: slicing-kn-example.xml
-- desc: graham/PulseOxBundle_25Oct2022
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''http://hl7.org/fhir/us/core/StructureDefinition/us-core-pulse-oximetry'',
-    supporting=[], version=4.0, dataFile=''PulseOxBundle_25Oct2022.json'' (see DESIGN §15)'
-  schemas: []
-  data:
-    resourceType: Bundle
-    id: d3ac3af5-38b9-4408-b7ed-b528a64b3708
-    meta:
-      lastUpdated: '2022-10-25T16:41:48.318+00:00'
-    type: searchset
-    total: 2
-    link:
-    - relation: self
-      url: https://infernotest.smilecdr.com/fhir-request/Observation?code=2708-6&patient=1763
-    entry:
-    - fullUrl: https://infernotest.smilecdr.com/fhir-request/Observation/1814
-      resource:
-        resourceType: Observation
-        id: '1814'
-        meta:
-          versionId: '1'
-          lastUpdated: '2022-10-25T16:32:52.209+00:00'
-        identifier:
-        - use: official
-          system: urn:oid:2.16.840.1.113883.3.7220
-          value: 7594d8fa-1220-41ba-b959-c77b1a18c250
-        status: final
-        category:
-        - coding:
-          - system: http://terminology.hl7.org/CodeSystem/observation-category
-            code: vital-signs
-            display: Vital Signs
-        code:
-          coding:
-          - system: http://loinc.org
-            code: 59408-5
-            display: O2 % BldC Oximetry
-          - system: http://loinc.org
-            code: 2708-6
-            display: Oxygen saturation in Arterial blood
-        subject:
-          reference: Patient/1763
-          display: ALICE JONES NEWMAN, Alicia Jones
-        effectivePeriod:
-          start: '2015-06-22'
-        issued: '2015-06-22T17:00:00+00:00'
-        performer:
-        - reference: Practitioner/1765
-        valueQuantity:
-          value: 95
-          unit: '%'
-          system: http://unitsofmeasure.org
-          code: '%'
-        interpretation:
-        - coding:
-          - system: http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation
-            code: N
-        component:
-        - code:
-            coding:
-            - system: http://loinc.org
-              code: 3150-0
-              display: Inhaled Oxygen Concentration
-          valueQuantity:
-            value: 36
-            unit: '%'
-            system: http://unitsofmeasure.org
-            code: '%'
-        - code:
-            coding:
-            - system: http://loinc.org
-              code: 3151-8
-              display: Flow Rate
-          valueQuantity:
-            value: 6
-            unit: L/min
-            system: http://unitsofmeasure.org
-            code: L/min
-      search:
-        mode: match
-    - fullUrl: https://infernotest.smilecdr.com/fhir-request/Observation/1825
-      resource:
-        resourceType: Observation
-        id: '1825'
-        meta:
-          versionId: '1'
-          lastUpdated: '2022-10-25T16:32:52.209+00:00'
-        identifier:
-        - use: official
-          system: urn:oid:2.16.840.1.113883.3.7220
-          value: 8a3179dc-78bf-4600-82e7-df5cfa0a6319
-        status: final
-        category:
-        - coding:
-          - system: http://terminology.hl7.org/CodeSystem/observation-category
-            code: vital-signs
-            display: Vital Signs
-        code:
-          coding:
-          - system: http://loinc.org
-            code: 59408-5
-            display: O2 % BldC Oximetry
-          - system: http://loinc.org
-            code: 2708-6
-            display: Oxygen saturation in Arterial blood
-        subject:
-          reference: Patient/1763
-          display: ALICE JONES NEWMAN, Alicia Jones
-        effectivePeriod:
-          start: '2017-09-14'
-        issued: '2017-09-14T23:48:00+00:00'
-        performer:
-        - reference: Practitioner/1765
-        valueQuantity:
-          value: 95
-          unit: '%'
-          system: http://unitsofmeasure.org
-          code: '%'
-        interpretation:
-        - coding:
-          - system: http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation
-            code: N
-        component:
-        - code:
-            coding:
-            - system: http://loinc.org
-              code: 3150-0
-              display: Inhaled Oxygen Concentration
-        - code:
-            coding:
-            - system: http://loinc.org
-              code: 3151-8
-              display: Flow Rate
-          valueQuantity:
-            value: 6
-            unit: L/min
-            system: http://unitsofmeasure.org
-            code: L/min
-      search:
-        mode: match
-- desc: graham/maxvalue-example
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=None, supporting=[''maxvalue-profile.json''],
-    version=4.0, dataFile=''maxvalue-example.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: maxvalue-example.xml
-- desc: graham/patient-value-present-good
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''patient-profile-value-present.xml'',
-    supporting=[], version=4.0, dataFile=''patient-value-present-good.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: patient-value-present-good.xml
-- desc: graham/patient-value-present-bad
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''patient-profile-value-present.xml'',
-    supporting=[], version=4.0, dataFile=''patient-value-present-bad.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: patient-value-present-bad.xml
-- desc: graham/patient-value-alternative-good
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''patient-profile-value-alternative.xml'',
-    supporting=[], version=4.0, dataFile=''patient-value-alternative-good.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: patient-value-alternative-good.xml
-- desc: graham/patient-value-alternative-bad
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''patient-profile-value-alternative.xml'',
-    supporting=[], version=4.0, dataFile=''patient-value-alternative-bad.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: patient-value-alternative-bad.xml
+  _skipReason: 'unmappable Java messages — bring back when each translates to fsNNN. outs=[''ERROR: The extension https://example.com/StructureDefinition/is-extemp
+    could not be found so is not allowed here'', "ERROR: Unknown code ''56248011000036107'' in the CodeSystem ''http://snomed.info/sct'' version
+    ''http://snomed.info/sct/900000000000207008/version/20250201'' (International Edition)"] (see DESIGN §15)'
 - desc: graham/bundle-invariant
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=None, supporting=[''bundle-invariant-profile.json''],
-    version=4.0, dataFile=''bundle-invariant-instance.json'' (see DESIGN §15)'
   schemas: []
+  _loadProfile:
+  - bundle-invariant-profile.json
   data:
     resourceType: Bundle
     meta:
@@ -2155,11 +1107,11 @@ tests:
       resource:
         resourceType: Patient
         gender: female
+  valid: true
 - desc: graham/contained-invariant
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=None, supporting=[''contained-invariant-profile.json''],
-    version=4.0, dataFile=''contained-invariant-instance.json'' (see DESIGN §15)'
   schemas: []
+  _loadProfile:
+  - contained-invariant-profile.json
   data:
     resourceType: Patient
     meta:
@@ -2172,11 +1124,12 @@ tests:
       - text: Dr Malaprop
     generalPractitioner:
     - reference: '#p1'
+  valid: true
 - desc: graham/res-inv-example-good
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''res-inv-profile-bundle.json'',
-    supporting=[''res-inv-cs.json''], version=4.0, dataFile=''res-inv-example-good.json'' (see DESIGN §15)'
   schemas: []
+  _loadProfile:
+  - res-inv-profile-bundle.json
+  - res-inv-cs.json
   data:
     resourceType: Bundle
     id: example1
@@ -2256,11 +1209,12 @@ tests:
         - coding:
           - code: none
             system: http://terminology.hl7.org/CodeSystem/endpoint-payload-type
+  valid: true
 - desc: graham/res-inv-example-bad
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''res-inv-profile-bundle.json'',
-    supporting=[''res-inv-cs.json''], version=4.0, dataFile=''res-inv-example-bad.json'' (see DESIGN §15)'
   schemas: []
+  _loadProfile:
+  - res-inv-profile-bundle.json
+  - res-inv-cs.json
   data:
     resourceType: Bundle
     id: example1
@@ -2340,26 +1294,11 @@ tests:
         - coding:
           - code: none
             system: http://terminology.hl7.org/CodeSystem/endpoint-payload-type
-- desc: graham/de-address-example
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''de-address/Profile-DAV-PR-ERP-Apotheke.xml'',
-    supporting=[''de-address/AD_Base-Apotheke.xml'', ''de-address/AD_address-de-basis.xml''], version=4.0, dataFile=''de-address/address-example.xml''
-    (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: de-address/address-example.xml
-- desc: graham/patient-country-noniso-bad
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''patient-address-preferred-country-profile.xml'',
-    supporting=[''address-country-preferred-binding-profile.xml''], version=4.0, dataFile=''patient-country-noniso-bad.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: patient-country-noniso-bad.xml
+  valid: true
 - desc: graham/ext-derived
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=None, supporting=[''ext-base.json''],
-    version=4.0, dataFile=''ext-derived.json'' (see DESIGN §15)'
   schemas: []
+  _loadProfile:
+  - ext-base.json
   data:
     resourceType: StructureDefinition
     id: ext-derived
@@ -2388,11 +1327,15 @@ tests:
         path: Extension.value[x]
         type:
         - code: string
-- desc: graham/ext-derived-circle
   skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=None, supporting=[''ext-base.json''],
-    version=4.0, dataFile=''ext-derived-circle.json'' (see DESIGN §15)'
+  _skipReason: 'unmappable Java messages — bring back when each translates to fsNNN. outs=["WARNING: Review the extension type for ext-derived:
+    extensions should not have a context of Element unless it''s really intended that they can be used anywhere", "ERROR: Value is ''http://hl7.org/fhir/test/StructureDefinition/ext-derived''
+    but is fixed to ''http://hl7.org/fhir/test/StructureDefinition/ext-base'' in the profile , because the value must match the fixed value define
+    in ''http://hl7.org/fhir/test/StructureDefinition/ext-base''"] (see DESIGN §15)'
+- desc: graham/ext-derived-circle
   schemas: []
+  _loadProfile:
+  - ext-base.json
   data:
     resourceType: StructureDefinition
     id: ext-derived
@@ -2421,11 +1364,11 @@ tests:
         path: Extension.value[x]
         type:
         - code: string
+  valid: true
 - desc: graham/ext-derived-circle
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=None, supporting=[''ext-base.json''],
-    version=4.0, dataFile=''ext-derived-circle.json'' (see DESIGN §15)'
   schemas: []
+  _loadProfile:
+  - ext-base.json
   data:
     resourceType: StructureDefinition
     id: ext-derived
@@ -2454,11 +1397,12 @@ tests:
         path: Extension.value[x]
         type:
         - code: string
+  valid: true
 - desc: graham/additional-bindings-observation-2
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''additional-bindings-profile-2.json'',
-    supporting=[''additional-bindings-vs1.json''], version=4.0, dataFile=''additional-bindings-observation.json'' (see DESIGN §15)'
   schemas: []
+  _loadProfile:
+  - additional-bindings-profile-2.json
+  - additional-bindings-vs1.json
   data:
     resourceType: Observation
     status: final
@@ -2466,11 +1410,12 @@ tests:
       coding:
       - system: http://loinc.org
         code: 100066-0
+  valid: true
 - desc: graham/obs-percent
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''obs-percent-profile.json'',
-    supporting=[''obs-percent-vs.json''], version=4.0, dataFile=''obs-percent.json'' (see DESIGN §15)'
   schemas: []
+  _loadProfile:
+  - obs-percent-profile.json
+  - obs-percent-vs.json
   data:
     resourceType: Observation
     id: Example-observation-sauerstoffsaettigung
@@ -2526,11 +1471,11 @@ tests:
     subject:
       reference: Patient/example
     effectiveDateTime: '2020-10-11'
+  valid: true
 - desc: graham/params-recursion
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=None, supporting=[''params-recursion-profile.json''],
-    version=4.0, dataFile=''params-recursion.json'' (see DESIGN §15)'
   schemas: []
+  _loadProfile:
+  - params-recursion-profile.json
   data:
     resourceType: Parameters
     id: payer-multi-member-match-in
@@ -2707,11 +1652,13 @@ tests:
               system: http://hl7.org/fhir/sid/us-npi
               value: 0123456789
             display: New Health Plan
-- desc: graham/ab-list-slicing
   skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=None, supporting=[''ab/StructureDefinition-my-appointment-profile.json''],
-    version=4.0, dataFile=''ab/List-ListExample.json'' (see DESIGN §15)'
+  _skipReason: Identifier.value typed as string in FHIR; Java reference validator accepts JSON numbers (string-from-number coercion). We are strict.
+    (see DESIGN §15 → "Permissive JSON shape")
+- desc: graham/ab-list-slicing
   schemas: []
+  _loadProfile:
+  - ab/StructureDefinition-my-appointment-profile.json
   data:
     resourceType: List
     id: ListExample
@@ -2744,18 +1691,13 @@ tests:
     entry:
     - item:
         reference: '#MyAppointmentExample'
-- desc: graham/patient-min-length
   skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''patient-min-length-profile.xml'',
-    supporting=[], version=4.0, dataFile=''patient-good.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: patient-good.xml
+  _skipReason: 'unmappable Java messages — bring back when each translates to fsNNN. outs=["ERROR: Hyperlink ''#hcListExample/MyAppointmentExample''
+    at ''div/table/tr/td/a'' for ''Appointment: status = proposed'' does not resolve"] (see DESIGN §15)'
 - desc: graham/type-slicing-multiple
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''type-slicing-multiple-profile.json'',
-    supporting=[], version=4.0, dataFile=''type-slicing-multiple-instance.json'' (see DESIGN §15)'
   schemas: []
+  _loadProfile:
+  - type-slicing-multiple-profile.json
   data:
     resourceType: Bundle
     type: collection
@@ -2772,11 +1714,11 @@ tests:
       resource:
         resourceType: PractitionerRole
         active: true
+  valid: true
 - desc: graham/type-slicing-multipleb
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''type-slicing-multiple-profileb.json'',
-    supporting=[], version=4.0, dataFile=''type-slicing-multiple-instance.json'' (see DESIGN §15)'
   schemas: []
+  _loadProfile:
+  - type-slicing-multiple-profileb.json
   data:
     resourceType: Bundle
     type: collection
@@ -2793,12 +1735,14 @@ tests:
       resource:
         resourceType: PractitionerRole
         active: true
+  valid: true
 - desc: graham/profile-slicing-multiple
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''profile-slicing-multiple-profile.json'',
-    supporting=[''profile-slicing-support-patient.json'', ''profile-slicing-support-practitioner.json'', ''profile-slicing-support-practitionerrole.json''],
-    version=4.0, dataFile=''type-slicing-multiple-instance.json'' (see DESIGN §15)'
   schemas: []
+  _loadProfile:
+  - profile-slicing-multiple-profile.json
+  - profile-slicing-support-patient.json
+  - profile-slicing-support-practitioner.json
+  - profile-slicing-support-practitionerrole.json
   data:
     resourceType: Bundle
     type: collection
@@ -2815,12 +1759,14 @@ tests:
       resource:
         resourceType: PractitionerRole
         active: true
+  valid: true
 - desc: graham/profile-slicing-multipleb
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''profile-slicing-multiple-profileb.json'',
-    supporting=[''profile-slicing-support-patient.json'', ''profile-slicing-support-practitioner.json'', ''profile-slicing-support-practitionerrole.json''],
-    version=4.0, dataFile=''type-slicing-multiple-instance.json'' (see DESIGN §15)'
   schemas: []
+  _loadProfile:
+  - profile-slicing-multiple-profileb.json
+  - profile-slicing-support-patient.json
+  - profile-slicing-support-practitioner.json
+  - profile-slicing-support-practitionerrole.json
   data:
     resourceType: Bundle
     type: collection
@@ -2837,11 +1783,12 @@ tests:
       resource:
         resourceType: PractitionerRole
         active: true
+  valid: true
 - desc: graham/opdef-params
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=None, supporting=[''opdef-in-profile.json'',
-    ''opdef-out-profile.json''], version=4.0, dataFile=''opdef-params.json'' (see DESIGN §15)'
   schemas: []
+  _loadProfile:
+  - opdef-in-profile.json
+  - opdef-out-profile.json
   data:
     resourceType: OperationDefinition
     id: opdef-params
@@ -2924,11 +1871,17 @@ tests:
       max: '1'
       documentation: Test target profile
       type: Reference
-- desc: graham/opdef2-params
   skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=None, supporting=[''opdef2-in-profile.json'',
-    ''opdef2-out-profile.json''], version=4.0, dataFile=''opdef2-params.json'' (see DESIGN §15)'
+  _skipReason: 'unmappable Java messages — bring back when each translates to fsNNN. outs=["WARNING: The ''in'' profile http://hl7.org/fhir/test/StructureDefinition/op-def-in-profile|2.1.0
+    defines a parameter ''in'' but this is not in the parameters list in the operation definition", "ERROR: The parameter ''questionnaire'' has
+    a value for ''min'' of ''1'' in the ''in'' profile 1 that is different to ''0'' which is the value in the parameter definition in the operation
+    definition", "ERROR: The parameter ''questionnaire'' has a value for ''max'' of ''1'' in the ''in'' profile 1 that is different to ''*'' which
+    is the value in the parameter definition in the operation definition"] (see DESIGN §15)'
+- desc: graham/opdef2-params
   schemas: []
+  _loadProfile:
+  - opdef2-in-profile.json
+  - opdef2-out-profile.json
   data:
     resourceType: OperationDefinition
     id: opdef2-params
@@ -3065,11 +2018,12 @@ tests:
     instance: true
     inputProfile: http://hl7.org/fhir/uv/sdc/StructureDefinition/parameters-opdef2-params-in
     outputProfile: http://hl7.org/fhir/uv/sdc/StructureDefinition/parameters-opdef2-params-out
-- desc: graham/cc-pattern-system-only
   skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=None, supporting=[''cc-pattern-system-only-cs.json''],
-    version=4.0, dataFile=''cc-pattern-system-only-profile.json'' (see DESIGN §15)'
+  _skipReason: no java outcome file (see DESIGN §15)
+- desc: graham/cc-pattern-system-only
   schemas: []
+  _loadProfile:
+  - cc-pattern-system-only-cs.json
   data:
     resourceType: StructureDefinition
     id: TestEncounterProfile
@@ -3089,28 +2043,12 @@ tests:
         patternCodeableConcept:
           coding:
           - system: https://gematik.de/fhir/isik/CodeSystem/TestCodeSystem
-- desc: graham/standards-status-x-r3
   skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=None, supporting=[''cs-stds-status-ext-r3.json''],
-    version=3.0, dataFile=''cs-stds-status-x.json'' (see DESIGN §15)'
-  schemas: []
-  data:
-    resourceType: CodeSystem
-    extension:
-    - url: http://hl7.org/fhir/StructureDefinition/structuredefinition-standards-status-x
-      valueCode: draft
-    url: http://hl7.org/fhir/test/CodeSystem/cs-stds-status
-    version: 0.1.0
-    name: STDsStatus
-    title: STDs Status
-    status: draft
-    experimental: false
-    content: not-present
+  _skipReason: no java outcome file (see DESIGN §15)
 - desc: graham/standards-status-x-r4
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=None, supporting=[''cs-stds-status-ext.json''],
-    version=4.0, dataFile=''cs-stds-status-x.json'' (see DESIGN §15)'
   schemas: []
+  _loadProfile:
+  - cs-stds-status-ext.json
   data:
     resourceType: CodeSystem
     extension:
@@ -3123,11 +2061,11 @@ tests:
     status: draft
     experimental: false
     content: not-present
+  valid: true
 - desc: graham/standards-status-x-r4b
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=None, supporting=[''cs-stds-status-ext.json''],
-    version=4.3, dataFile=''cs-stds-status-x.json'' (see DESIGN §15)'
   schemas: []
+  _loadProfile:
+  - cs-stds-status-ext.json
   data:
     resourceType: CodeSystem
     extension:
@@ -3140,11 +2078,11 @@ tests:
     status: draft
     experimental: false
     content: not-present
+  valid: true
 - desc: graham/bundle-resolve-deep
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=None, supporting=[''bundle-resolve-deep-profile.json''],
-    version=4.0, dataFile=''bundle-resolve-deep.json'' (see DESIGN §15)'
   schemas: []
+  _loadProfile:
+  - bundle-resolve-deep-profile.json
   data:
     resourceType: Bundle
     id: BundleTest
@@ -3189,29 +2127,32 @@ tests:
           text: SARS-CoV-2 RNA Resp Ql NAA+probe
         device:
           reference: '#contained-device'
+  skip: true
+  _skipReason: no java outcome file (see DESIGN §15)
 - desc: graham/pat-fixed-date
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''pat-fixed-date-profile.json'',
-    supporting=[], version=4.0, dataFile=''pat-fixed-date.json'' (see DESIGN §15)'
   schemas: []
+  _loadProfile:
+  - pat-fixed-date-profile.json
   data:
     resourceType: Patient
     id: test-pass-fixed-date-top-level
     birthDate: '2024-01-01'
+  skip: true
+  _skipReason: no java outcome file (see DESIGN §15)
 - desc: graham/pat-minvalue-date
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''pat-minvalue-date-profile.json'',
-    supporting=[], version=4.0, dataFile=''pat-fixed-date.json'' (see DESIGN §15)'
   schemas: []
+  _loadProfile:
+  - pat-minvalue-date-profile.json
   data:
     resourceType: Patient
     id: test-pass-fixed-date-top-level
     birthDate: '2024-01-01'
-- desc: graham/param-mintime
   skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''param-mintime-profile.json'',
-    supporting=[], version=4.0, dataFile=''param-mintime-instance.json'' (see DESIGN §15)'
+  _skipReason: no java outcome file (see DESIGN §15)
+- desc: graham/param-mintime
   schemas: []
+  _loadProfile:
+  - param-mintime-profile.json
   data:
     resourceType: Parameters
     parameter:
@@ -3221,11 +2162,12 @@ tests:
       valueTime: 02:15:00
     - name: value
       valueTime: '14:12:00'
-- desc: graham/obs-max-decimal
   skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''obs-max-decimal-profile.json'',
-    supporting=[], version=4.0, dataFile=''obs-max-decimal-instance.json'' (see DESIGN §15)'
+  _skipReason: no java outcome file (see DESIGN §15)
+- desc: graham/obs-max-decimal
   schemas: []
+  _loadProfile:
+  - obs-max-decimal-profile.json
   data:
     resourceType: Observation
     id: test-fail-max-value-decimal-sub-element
@@ -3237,47 +2179,48 @@ tests:
       unit: mg
       system: http://unitsofmeasure.org
       code: mg
-- desc: graham/toplevel-minvalueduration-pass
   skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''toplevel-minvalueduration-profile.json'',
-    supporting=[], version=4.0, dataFile=''toplevel-minvalueduration-pass.json'' (see DESIGN §15)'
+  _skipReason: no java outcome file (see DESIGN §15)
+- desc: graham/toplevel-minvalueduration-pass
   schemas: []
+  _loadProfile:
+  - toplevel-minvalueduration-profile.json
   data:
     resourceType: Patient
     id: test-minvalue-duration-pass
     birthDate: '1950-01-01'
+  valid: true
 - desc: graham/toplevel-minvalueduration-fail
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''toplevel-minvalueduration-profile.json'',
-    supporting=[], version=4.0, dataFile=''toplevel-minvalueduration-fail.json'' (see DESIGN §15)'
   schemas: []
+  _loadProfile:
+  - toplevel-minvalueduration-profile.json
   data:
     resourceType: Patient
     id: test-minvalue-duration-fail
     birthDate: '1850-01-01'
+  valid: true
 - desc: graham/toplevel-maxvalueduration-pass
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''toplevel-maxvalueduration-profile.json'',
-    supporting=[], version=4.0, dataFile=''toplevel-maxvalueduration-pass.json'' (see DESIGN §15)'
   schemas: []
+  _loadProfile:
+  - toplevel-maxvalueduration-profile.json
   data:
     resourceType: Patient
     id: test-maxvalue-duration-pass
     birthDate: '2020-01-01'
+  valid: true
 - desc: graham/toplevel-maxvalueduration-fail
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''toplevel-maxvalueduration-profile.json'',
-    supporting=[], version=4.0, dataFile=''toplevel-maxvalueduration-fail.json'' (see DESIGN §15)'
   schemas: []
+  _loadProfile:
+  - toplevel-maxvalueduration-profile.json
   data:
     resourceType: Patient
     id: test-maxvalue-duration-fail
     birthDate: '2100-01-01'
+  valid: true
 - desc: graham/media-mime-type-tx
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''media-mime-type-profile.json'',
-    supporting=[], version=4.0, dataFile=''media-mime-type-instance.json'' (see DESIGN §15)'
   schemas: []
+  _loadProfile:
+  - media-mime-type-profile.json
   data:
     resourceType: Media
     id: test-pass-fixed-base64binary-top-level
@@ -3285,11 +2228,12 @@ tests:
     content:
       contentType: image/jpeg
       data: SGVsbG8gV29ybGQ=
+  skip: true
+  _skipReason: no java outcome file (see DESIGN §15)
 - desc: graham/media-mime-type-notx
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''media-mime-type-profile.json'',
-    supporting=[], version=4.0, dataFile=''media-mime-type-instance.json'' (see DESIGN §15)'
   schemas: []
+  _loadProfile:
+  - media-mime-type-profile.json
   data:
     resourceType: Media
     id: test-pass-fixed-base64binary-top-level
@@ -3297,31 +2241,5 @@ tests:
     content:
       contentType: image/jpeg
       data: SGVsbG8gV29ybGQ=
-- desc: graham/aggregation-apart-good4
   skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''aggregation-profile.xml'',
-    supporting=[], version=4.0, dataFile=''aggregation-instance.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: aggregation-instance.xml
-- desc: graham/aggregation-apart-bad4
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''aggregation-profile.xml'',
-    supporting=[], version=4.0, dataFile=''aggregation-instance.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: aggregation-instance.xml
-- desc: graham/aggregation-bundle-good4
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''aggregation-profile-bundle.xml'',
-    supporting=[''aggregation-profile.xml''], version=4.0, dataFile=''aggregation-bundle-good.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: aggregation-bundle-good.xml
-- desc: graham/aggregation-bundle-bad4
-  skip: true
-  _skipReason: 'needs profile-loading infrastructure: pre-translate the profile SD, register in ctx, validate against it. profile=''aggregation-profile-bundle.xml'',
-    supporting=[''aggregation-profile.xml''], version=4.0, dataFile=''aggregation-bundle-bad.xml'' (see DESIGN §15)'
-  schemas: []
-  data:
-    _xmlDataFile: aggregation-bundle-bad.xml
+  _skipReason: no java outcome file (see DESIGN §15)

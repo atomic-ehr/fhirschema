@@ -19,7 +19,13 @@ import { join } from 'node:path';
 import { translate } from '../src/converter/index.ts';
 import type { StructureDefinition } from '../src/converter/types.ts';
 
-type Pkg = { id: string; version: string; url: string };
+type Pkg = {
+  id: string;
+  version: string;
+  /** Either a fetchable URL or a local .tgz path (relative to repo root). */
+  url?: string;
+  localTgz?: string;
+};
 
 const ROOT = join(import.meta.dir, '..');
 const FIXTURES_ROOT = join(ROOT, 'test', 'fixtures');
@@ -41,16 +47,44 @@ const PACKAGES: Pkg[] = [
     version: '5.0.0',
     url: 'https://packages.simplifier.net/hl7.fhir.r5.core/5.0.0',
   },
+  // Graham IG-package test bucket — packages needed to validate cases under
+  // test/cases/validator/graham-ig-*.yaml. Local .tgz files are shipped
+  // inside the fhir-test-cases repo; online ones come from simplifier.
+  // Versions match the test manifest exactly.
+  { id: 'hl7.fhir.test.verA', version: '1.0.0',
+    localTgz: '../fhir-test-cases/validator/packages/hl7.fhir.test.verA#1.0.0.tgz' },
+  { id: 'hl7.fhir.test.verA', version: '2.0.0',
+    localTgz: '../fhir-test-cases/validator/packages/hl7.fhir.test.verA#2.0.0.tgz' },
+  { id: 'hl7.fhir.test.verB', version: '1.0.0',
+    localTgz: '../fhir-test-cases/validator/packages/hl7.fhir.test.verB#1.0.0.tgz' },
+  { id: 'hl7.fhir.test.verB', version: '2.0.0',
+    localTgz: '../fhir-test-cases/validator/packages/hl7.fhir.test.verB#2.0.0.tgz' },
+  { id: 'hl7.fhir.test.verC', version: '1.0.0',
+    localTgz: '../fhir-test-cases/validator/packages/hl7.fhir.test.verC#1.0.0.tgz' },
+  { id: 'hl7.fhir.uv.ips', version: '1.1.0',
+    url: 'https://packages.simplifier.net/hl7.fhir.uv.ips/1.1.0' },
+  { id: 'hl7.fhir.us.core', version: '3.1.0',
+    url: 'https://packages.simplifier.net/hl7.fhir.us.core/3.1.0' },
+  { id: 'hl7.fhir.us.core', version: '3.1.1',
+    url: 'https://packages.simplifier.net/hl7.fhir.us.core/3.1.1' },
 ];
 
 async function downloadAndExtract(pkg: Pkg, dest: string): Promise<void> {
   const tgz = join(dest, `${pkg.id}.tgz`);
   mkdirSync(dest, { recursive: true });
 
-  console.log(`[prepare-fixtures] downloading ${pkg.id}@${pkg.version} ...`);
-  const res = await fetch(pkg.url);
-  if (!res.ok) throw new Error(`fetch ${pkg.url} → ${res.status} ${res.statusText}`);
-  await Bun.write(tgz, await res.arrayBuffer());
+  if (pkg.localTgz) {
+    const src = join(ROOT, pkg.localTgz);
+    if (!existsSync(src)) throw new Error(`local tgz not found: ${src}`);
+    console.log(`[prepare-fixtures] copying ${pkg.id}@${pkg.version} from ${pkg.localTgz} ...`);
+    await Bun.write(tgz, Bun.file(src));
+  } else {
+    if (!pkg.url) throw new Error(`${pkg.id}: neither url nor localTgz`);
+    console.log(`[prepare-fixtures] downloading ${pkg.id}@${pkg.version} ...`);
+    const res = await fetch(pkg.url);
+    if (!res.ok) throw new Error(`fetch ${pkg.url} → ${res.status} ${res.statusText}`);
+    await Bun.write(tgz, await res.arrayBuffer());
+  }
 
   console.log('[prepare-fixtures] extracting ...');
   const tar = Bun.spawnSync(['tar', 'xzf', tgz, '-C', dest]);
@@ -102,17 +136,33 @@ function fixturesPresent(dir: string): boolean {
   }
 }
 
+/**
+ * Pick a per-fixture directory name. For core packages (single version) we
+ * keep the bare `pkg.id` for backwards compatibility with existing tests
+ * that ask for `loadPackageFixtures('hl7.fhir.r4.core')`. For others,
+ * suffix with `@version` so multiple versions can coexist.
+ */
+function fixtureDirName(pkg: Pkg): string {
+  const isCore = [
+    'hl7.fhir.r4.core@4.0.1',
+    'hl7.fhir.r5.core@5.0.0',
+    'hl7.fhir.us.core@5.0.1',
+  ].includes(`${pkg.id}@${pkg.version}`);
+  return isCore ? pkg.id : `${pkg.id}@${pkg.version}`;
+}
+
 async function main(): Promise<void> {
   for (const pkg of PACKAGES) {
-    const out = join(FIXTURES_ROOT, pkg.id);
+    const dirName = fixtureDirName(pkg);
+    const out = join(FIXTURES_ROOT, dirName);
     if (fixturesPresent(out)) {
       console.log(
-        `[prepare-fixtures] ${pkg.id} already prepared (${readdirSync(out).length} files), skipping`,
+        `[prepare-fixtures] ${dirName} already prepared (${readdirSync(out).length} files), skipping`,
       );
       continue;
     }
 
-    const tmp = join(TMP, pkg.id);
+    const tmp = join(TMP, dirName);
     rmSync(tmp, { recursive: true, force: true });
     await downloadAndExtract(pkg, tmp);
 

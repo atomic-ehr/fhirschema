@@ -1,18 +1,88 @@
-suite: Graham fhir-test-cases — ig-package-loading (R4, skipped pending infra)
+suite: Graham fhir-test-cases — IG-package (R4)
 defaults:
   useR4: true
 tests:
-- desc: graham/ch/mixed-valueset-dr
-  skip: true
-  _skipReason: needs IG package(s) fetched and translated. packages=['swiss.mednet.fhir#0.5.0.tgz'], profile='ch/mixed-valueset-sd.xml', version=4.0,
-    dataFile='ch/mixed-valueset-dr.xml' (see DESIGN §15)
+- desc: graham/us-docref.json
   schemas: []
   data:
-    _xmlDataFile: ch/mixed-valueset-dr.xml
+    resourceType: DocumentReference
+    meta:
+      profile:
+      - http://hl7.org/fhir/us/core/StructureDefinition/us-core-documentreference
+    _status:
+      extension:
+      - url: http://hl7.org/fhir/StructureDefinition/data-absent-reason
+        valueCode: unknown
+    type:
+      coding:
+      - system: http://terminology.hl7.org/CodeSystem/v3-NullFlavor
+        code: UNK
+    category:
+    - coding:
+      - system: http://hl7.org/fhir/us/core/CodeSystem/us-core-documentreference-category
+        code: clinical-note
+    subject:
+      reference: Patient/example
+    content:
+    - attachment:
+        _contentType:
+          extension:
+          - url: http://hl7.org/fhir/StructureDefinition/data-absent-reason
+            valueCode: unknown
+        _data:
+          extension:
+          - url: http://hl7.org/fhir/StructureDefinition/data-absent-reason
+            valueCode: unknown
+  _usePackages:
+  - hl7.fhir.us.core@3.1.0
+  issues:
+  - code: fs501
+  - code: fs501
+- desc: graham/us-cond
+  schemas: []
+  data:
+    resourceType: Condition
+    id: hc1
+    meta:
+      profile:
+      - http://hl7.org/fhir/us/core/StructureDefinition/us-core-condition
+    text:
+      status: generated
+      div: '<div xmlns="http://www.w3.org/1999/xhtml"><p><b>Generated Narrative</b></p><p><b>id</b>: hc1</p><p><b>meta</b>: </p><p><b>clinicalStatus</b>:
+        <span title="Codes: {http://terminology.hl7.org/CodeSystem/condition-clinical active}">Active</span></p><p><b>verificationStatus</b>:
+        <span title="Codes: {http://terminology.hl7.org/CodeSystem/condition-ver-status confirmed}">Confirmed</span></p><p><b>category</b>: <span
+        title="Codes: {http://hl7.org/fhir/us/core/CodeSystem/condition-category health-concern}">Health Concern</span></p><p><b>code</b>: <span
+        title="Codes: ">Cost of medications</span></p><p><b>subject</b>: <a href="Patient-example.html">Amy Shaw. Generated Summary: id: example;
+        Medical Record Number: 1032702 (USUAL); active; Amy V. Shaw , Amy V. Baxter ; ph: 555-555-5555(HOME), amy.shaw@example.com; gender: female;
+        birthDate: 1987-02-20</a></p><p><b>onset</b>: 2007-12-14</p></div>'
+    clinicalStatus:
+      coding:
+      - system: http://terminology.hl7.org/CodeSystem/condition-clinical
+        code: active
+        display: Active
+      text: Active
+    verificationStatus:
+      coding:
+      - system: http://terminology.hl7.org/CodeSystem/condition-ver-status
+        code: confirmed
+        display: Confirmed
+      text: Confirmed
+    category:
+    - coding:
+      - system: http://hl7.org/fhir/us/core/CodeSystem/condition-category
+        code: health-concern
+        display: Health Concern
+      text: Health Concern
+    code:
+      text: Cost of medications
+    subject:
+      reference: Patient/example
+      display: Amy Shaw
+    onsetDateTime: '2007-12-14'
+  _usePackages:
+  - hl7.fhir.us.core@3.1.1
+  valid: true
 - desc: graham/dr-eh
-  skip: true
-  _skipReason: needs IG package(s) fetched and translated. packages=['hl7.fhir.us.core#3.1.0'], profile=None, version=4.0, dataFile='dr-eh.json'
-    (see DESIGN §15)
   schemas: []
   data:
     resourceType: DocumentReference
@@ -57,88 +127,13 @@ tests:
       period:
         start: '2004-12-23T08:00:00+11:00'
         end: '2004-12-23T08:01:00+11:00'
-- desc: graham/us-docref.json
+  _usePackages:
+  - hl7.fhir.us.core@3.1.0
   skip: true
-  _skipReason: needs IG package(s) fetched and translated. packages=['hl7.fhir.us.core#3.1.0'], profile=None, version=4.0, dataFile='us-docref.json'
-    (see DESIGN §15)
-  schemas: []
-  data:
-    resourceType: DocumentReference
-    meta:
-      profile:
-      - http://hl7.org/fhir/us/core/StructureDefinition/us-core-documentreference
-    _status:
-      extension:
-      - url: http://hl7.org/fhir/StructureDefinition/data-absent-reason
-        valueCode: unknown
-    type:
-      coding:
-      - system: http://terminology.hl7.org/CodeSystem/v3-NullFlavor
-        code: UNK
-    category:
-    - coding:
-      - system: http://hl7.org/fhir/us/core/CodeSystem/us-core-documentreference-category
-        code: clinical-note
-    subject:
-      reference: Patient/example
-    content:
-    - attachment:
-        _contentType:
-          extension:
-          - url: http://hl7.org/fhir/StructureDefinition/data-absent-reason
-            valueCode: unknown
-        _data:
-          extension:
-          - url: http://hl7.org/fhir/StructureDefinition/data-absent-reason
-            valueCode: unknown
-- desc: graham/us-cond
-  skip: true
-  _skipReason: needs IG package(s) fetched and translated. packages=['hl7.fhir.us.core#3.1.1'], profile=None, version=4.0, dataFile='us-cond.json'
-    (see DESIGN §15)
-  schemas: []
-  data:
-    resourceType: Condition
-    id: hc1
-    meta:
-      profile:
-      - http://hl7.org/fhir/us/core/StructureDefinition/us-core-condition
-    text:
-      status: generated
-      div: '<div xmlns="http://www.w3.org/1999/xhtml"><p><b>Generated Narrative</b></p><p><b>id</b>: hc1</p><p><b>meta</b>: </p><p><b>clinicalStatus</b>:
-        <span title="Codes: {http://terminology.hl7.org/CodeSystem/condition-clinical active}">Active</span></p><p><b>verificationStatus</b>:
-        <span title="Codes: {http://terminology.hl7.org/CodeSystem/condition-ver-status confirmed}">Confirmed</span></p><p><b>category</b>: <span
-        title="Codes: {http://hl7.org/fhir/us/core/CodeSystem/condition-category health-concern}">Health Concern</span></p><p><b>code</b>: <span
-        title="Codes: ">Cost of medications</span></p><p><b>subject</b>: <a href="Patient-example.html">Amy Shaw. Generated Summary: id: example;
-        Medical Record Number: 1032702 (USUAL); active; Amy V. Shaw , Amy V. Baxter ; ph: 555-555-5555(HOME), amy.shaw@example.com; gender: female;
-        birthDate: 1987-02-20</a></p><p><b>onset</b>: 2007-12-14</p></div>'
-    clinicalStatus:
-      coding:
-      - system: http://terminology.hl7.org/CodeSystem/condition-clinical
-        code: active
-        display: Active
-      text: Active
-    verificationStatus:
-      coding:
-      - system: http://terminology.hl7.org/CodeSystem/condition-ver-status
-        code: confirmed
-        display: Confirmed
-      text: Confirmed
-    category:
-    - coding:
-      - system: http://hl7.org/fhir/us/core/CodeSystem/condition-category
-        code: health-concern
-        display: Health Concern
-      text: Health Concern
-    code:
-      text: Cost of medications
-    subject:
-      reference: Patient/example
-      display: Amy Shaw
-    onsetDateTime: '2007-12-14'
+  _skipReason: 'unmappable Java messages outs=["WARNING: A definition for CodeSystem ''urn:oid:1.3.6.1.4.1.19376.1.2.3'' could not be found, so
+    the code cannot be validated", "ERROR: The type ''Device'' implied by the reference URL Device/foo is not a valid Target for this element
+    (must be one of [Patient])"] (DESIGN §15)'
 - desc: graham/condition-with-extensions-on-pattern
-  skip: true
-  _skipReason: needs IG package(s) fetched and translated. packages=['de.medizininformatikinitiative.kerndatensatz.diagnose#1.0.4'], profile=None,
-    version=4.0, dataFile='condition-extensions-on-pattern.json' (see DESIGN §15)
   schemas: []
   data:
     resourceType: Condition
@@ -174,10 +169,9 @@ tests:
         display: Bursitis gonorrhoica
     subject:
       reference: Patient/12345
+  skip: true
+  _skipReason: 'IG fixtures missing: [''de.medizininformatikinitiative.kerndatensatz.diagnose@1.0.4''] (add to prepare-fixtures, DESIGN §15)'
 - desc: graham/no.gastronet
-  skip: true
-  _skipReason: needs IG package(s) fetched and translated. packages=['colonoscopyreport.no#0.7.4'], profile=None, version=4.0, dataFile='no.gastronet.json'
-    (see DESIGN §15)
   schemas: []
   data:
     resourceType: Bundle
@@ -527,10 +521,9 @@ tests:
         - system: urn:oid:2.16.578.1.12.4.1.4.102
           value: '46372864397'
         name: Test Clinic
+  skip: true
+  _skipReason: 'IG fixtures missing: [''colonoscopyreport.no@0.7.4''] (add to prepare-fixtures, DESIGN §15)'
 - desc: graham/no.gastronet.message-limit
-  skip: true
-  _skipReason: needs IG package(s) fetched and translated. packages=['colonoscopyreport.no#0.7.4'], profile=None, version=4.0, dataFile='no.gastronet.json'
-    (see DESIGN §15)
   schemas: []
   data:
     resourceType: Bundle
@@ -880,10 +873,9 @@ tests:
         - system: urn:oid:2.16.578.1.12.4.1.4.102
           value: '46372864397'
         name: Test Clinic
-- desc: graham/mimic
   skip: true
-  _skipReason: needs IG package(s) fetched and translated. packages=['mimic/mimic-0.1.2.tgz'], profile=None, version=4.0, dataFile='mimic/encounter.json'
-    (see DESIGN §15)
+  _skipReason: 'IG fixtures missing: [''colonoscopyreport.no@0.7.4''] (add to prepare-fixtures, DESIGN §15)'
+- desc: graham/mimic
   schemas: []
   data:
     id: 59bbcf99-d3c2-5224-945e-1d35f73d1ccc
@@ -921,17 +913,9 @@ tests:
           display: HOME
     serviceProvider:
       reference: Organization/ee172322-118b-5716-abbc-18e4c5437ecc
-- desc: graham/ext-context1
   skip: true
-  _skipReason: needs IG package(s) fetched and translated. packages=['kbv.basis#1.2.0', 'de.basisprofil.r4#0.9.13', 'de.medizininformatikinitiative.kerndatensatz.diagnose#1.0.4'],
-    profile=None, version=4.0, dataFile='ext_context1_bundle.xml' (see DESIGN §15)
-  schemas: []
-  data:
-    _xmlDataFile: ext_context1_bundle.xml
+  _skipReason: 'IG fixtures missing: [''mimic-0.1.2''] (add to prepare-fixtures, DESIGN §15)'
 - desc: graham/bundle-urn
-  skip: true
-  _skipReason: needs IG package(s) fetched and translated. packages=['hl7.fhir.uv.ips#1.1.0'], profile=None, version=4.0, dataFile='bundle-urn.json'
-    (see DESIGN §15)
   schemas: []
   data:
     resourceType: Bundle
@@ -1093,10 +1077,13 @@ tests:
           state: MA
           postalCode: 02481
           country: USA
+  _usePackages:
+  - hl7.fhir.uv.ips@1.1.0
+  skip: true
+  _skipReason: 'unmappable Java messages outs=["INFORMATION: The URL value ''#jFE6f3a0zoZFHfj5'' might be wrong because it appears to point to
+    an internal target, but there is no matching target", "INFORMATION: The URL value ''#wOHXO3dHsmGHTjyu'' might be wrong because it appears
+    to point to an internal target, but there is no matching target"] (DESIGN §15)'
 - desc: graham/obs-de
-  skip: true
-  _skipReason: needs IG package(s) fetched and translated. packages=['kbv.basis#1.2.0', 'de.basisprofil.r4#0.9.13', 'de.gevko.emdaf#1.2.0', 'kbv.mio.diga#1.0.0-festlegung'],
-    profile=None, version=4.0, dataFile='obs-de.json' (see DESIGN §15)
   schemas: []
   data:
     resourceType: Observation
@@ -1163,10 +1150,10 @@ tests:
             extension:
             - url: content
               valueString: Gesamtkörper
+  skip: true
+  _skipReason: 'IG fixtures missing: [''kbv.basis@1.2.0'', ''de.basisprofil.r4@0.9.13'', ''de.gevko.emdaf@1.2.0'', ''kbv.mio.diga@1.0.0-festlegung'']
+    (add to prepare-fixtures, DESIGN §15)'
 - desc: graham/obs-de-notx
-  skip: true
-  _skipReason: needs IG package(s) fetched and translated. packages=['kbv.basis#1.2.0', 'de.basisprofil.r4#0.9.13', 'de.gevko.emdaf#1.2.0', 'kbv.mio.diga#1.0.0-festlegung'],
-    profile=None, version=4.0, dataFile='obs-de.json' (see DESIGN §15)
   schemas: []
   data:
     resourceType: Observation
@@ -1233,10 +1220,10 @@ tests:
             extension:
             - url: content
               valueString: Gesamtkörper
-- desc: graham/med-example
   skip: true
-  _skipReason: needs IG package(s) fetched and translated. packages=['de.medizininformatikinitiative.kerndatensatz.medikation#2.0.0-ballot1',
-    'basisprofil.de#0.2.40', 'de.basisprofil.r4#1.0.0'], profile=None, version=4.0, dataFile='med-example.json' (see DESIGN §15)
+  _skipReason: 'IG fixtures missing: [''kbv.basis@1.2.0'', ''de.basisprofil.r4@0.9.13'', ''de.gevko.emdaf@1.2.0'', ''kbv.mio.diga@1.0.0-festlegung'']
+    (add to prepare-fixtures, DESIGN §15)'
+- desc: graham/med-example
   schemas: []
   data:
     resourceType: Bundle
@@ -1288,10 +1275,10 @@ tests:
             - system: http://fhir.de/CodeSystem/ask
               code: '06226'
               display: Blutgerinnungsfaktor X
-- desc: graham/ips-htmlrefs-forwards
   skip: true
-  _skipReason: needs IG package(s) fetched and translated. packages=['hl7.fhir.us.core#3.1.1'], profile=None, version=4.0, dataFile='ips-htmlrefs-forwards.json'
-    (see DESIGN §15)
+  _skipReason: 'IG fixtures missing: [''de.medizininformatikinitiative.kerndatensatz.medikation@2.0.0-ballot1'', ''basisprofil.de@0.2.40'', ''de.basisprofil.r4@1.0.0'']
+    (add to prepare-fixtures, DESIGN §15)'
+- desc: graham/ips-htmlrefs-forwards
   schemas: []
   data:
     resourceType: Bundle
@@ -1458,10 +1445,14 @@ tests:
           city: Nicosia
           postalCode: '2109'
           country: CY
-- desc: graham/ips-link
+  _usePackages:
+  - hl7.fhir.us.core@3.1.1
   skip: true
-  _skipReason: needs IG package(s) fetched and translated. packages=['hl7.fhir.uv.ips#1.1.0'], profile=None, version=4.0, dataFile='ips-link.json'
-    (see DESIGN §15)
+  _skipReason: 'unmappable Java messages outs=["ERROR: Constraint failed: txt-1: ''The narrative SHALL contain only the basic html formatting
+    elements and attributes described in chapters 7-11 (except section 4 of chapter 9) and 15 of the HTML 4.0 standard, <a> elements (either name
+    or href), images and internally contained style attributes''", "ERROR: Invalid attribute name in the XHTML (''idref'' on ''tr'')"] (DESIGN
+    §15)'
+- desc: graham/ips-link
   schemas: []
   data:
     resourceType: Bundle
@@ -1819,17 +1810,12 @@ tests:
         protocolApplied:
         - series: 45y (Eligible condition (Influenza))
           doseNumberPositiveInt: 1
-- desc: graham/ips-link-xml
+  _usePackages:
+  - hl7.fhir.uv.ips@1.1.0
   skip: true
-  _skipReason: needs IG package(s) fetched and translated. packages=['hl7.fhir.uv.ips#1.1.0'], profile=None, version=4.0, dataFile='ips-link.xml'
-    (see DESIGN §15)
-  schemas: []
-  data:
-    _xmlDataFile: ips-link.xml
+  _skipReason: 'unmappable Java messages outs=["ERROR: The html id ''AAA1234XJ'' was not found in the xhtml", "ERROR: The target of the textLink
+    data reference ''#AAA1234XJ'' was not found in the resource"] (DESIGN §15)'
 - desc: graham/profile-compliesWith
-  skip: true
-  _skipReason: needs IG package(s) fetched and translated. packages=['hl7.fhir.us.core#8.0.0-ballot'], profile=None, version=4.0, dataFile='profile-compliesWith-derived.json'
-    (see DESIGN §15)
   schemas: []
   data:
     resourceType: StructureDefinition
@@ -5365,10 +5351,9 @@ tests:
         mapping:
         - identity: argonaut-dq-dstu2
           map: Patient.communication.language
-- desc: graham/bnd-slicing-cgm
   skip: true
-  _skipReason: needs IG package(s) fetched and translated. packages=['hl7.fhir.uv.cgm#1.0.0-ballot'], profile='http://hl7.org/fhir/uv/cgm/StructureDefinition/cgm-data-submission-bundle',
-    version=4.0, dataFile='bnd-slicing-cgm.json' (see DESIGN §15)
+  _skipReason: 'IG fixtures missing: [''hl7.fhir.us.core@8.0.0-ballot''] (add to prepare-fixtures, DESIGN §15)'
+- desc: graham/bnd-slicing-cgm
   schemas: []
   data:
     resourceType: Bundle
@@ -5652,10 +5637,9 @@ tests:
       request:
         method: POST
         url: Observation
-- desc: graham/scoring-test
   skip: true
-  _skipReason: needs IG package(s) fetched and translated. packages=['hl7.fhir.us.core#8.0.0'], profile=None, version=4.0, dataFile='scoring-test.json'
-    (see DESIGN §15)
+  _skipReason: 'IG fixtures missing: [''hl7.fhir.uv.cgm@1.0.0-ballot''] (add to prepare-fixtures, DESIGN §15)'
+- desc: graham/scoring-test
   schemas: []
   data:
     resourceType: Patient
@@ -5838,10 +5822,9 @@ tests:
           code: es
           display: Spanish
       preferred: true
+  skip: true
+  _skipReason: 'IG fixtures missing: [''hl7.fhir.us.core@8.0.0''] (add to prepare-fixtures, DESIGN §15)'
 - desc: graham/valueset-dependency-version-1
-  skip: true
-  _skipReason: needs IG package(s) fetched and translated. packages=['packages/hl7.fhir.test.verA#1.0.0.tgz', 'packages/hl7.fhir.test.verA#2.0.0.tgz',
-    'packages/hl7.fhir.test.verB#1.0.0.tgz'], profile=None, version=4.0, dataFile='valueset-dependency-version-1.json' (see DESIGN §15)
   schemas: []
   data:
     resourceType: Condition
@@ -5858,10 +5841,9 @@ tests:
       reference: Patient/example
       display: Amy V. Shaw
     onsetDateTime: '2016-08-10'
+  skip: true
+  _skipReason: no java outcome / unmappable (DESIGN §15)
 - desc: graham/valueset-dependency-version-2
-  skip: true
-  _skipReason: needs IG package(s) fetched and translated. packages=['packages/hl7.fhir.test.verA#1.0.0.tgz', 'packages/hl7.fhir.test.verA#2.0.0.tgz',
-    'packages/hl7.fhir.test.verB#2.0.0.tgz'], profile=None, version=4.0, dataFile='valueset-dependency-version-2.json' (see DESIGN §15)
   schemas: []
   data:
     resourceType: Condition
@@ -5878,10 +5860,9 @@ tests:
       reference: Patient/example
       display: Amy V. Shaw
     onsetDateTime: '2016-08-10'
+  skip: true
+  _skipReason: no java outcome / unmappable (DESIGN §15)
 - desc: graham/valueset-dependency-version-3
-  skip: true
-  _skipReason: needs IG package(s) fetched and translated. packages=['packages/hl7.fhir.test.verA#1.0.0.tgz', 'packages/hl7.fhir.test.verA#2.0.0.tgz',
-    'packages/hl7.fhir.test.verB#1.0.0.tgz'], profile=None, version=4.0, dataFile='valueset-dependency-version-3.json' (see DESIGN §15)
   schemas: []
   data:
     resourceType: Condition
@@ -5898,10 +5879,9 @@ tests:
       reference: Patient/example
       display: Amy V. Shaw
     onsetDateTime: '2016-08-10'
+  skip: true
+  _skipReason: no java outcome / unmappable (DESIGN §15)
 - desc: graham/valueset-dependency-version-4
-  skip: true
-  _skipReason: needs IG package(s) fetched and translated. packages=['packages/hl7.fhir.test.verA#1.0.0.tgz', 'packages/hl7.fhir.test.verA#2.0.0.tgz',
-    'packages/hl7.fhir.test.verB#2.0.0.tgz'], profile=None, version=4.0, dataFile='valueset-dependency-version-4.json' (see DESIGN §15)
   schemas: []
   data:
     resourceType: Condition
@@ -5918,10 +5898,9 @@ tests:
       reference: Patient/example
       display: Amy V. Shaw
     onsetDateTime: '2016-08-10'
-- desc: graham/valueset-dependency-version-5
   skip: true
-  _skipReason: needs IG package(s) fetched and translated. packages=['packages/hl7.fhir.test.verA#1.0.0.tgz', 'packages/hl7.fhir.test.verA#2.0.0.tgz',
-    'packages/hl7.fhir.test.verC#1.0.0.tgz'], profile=None, version=4.0, dataFile='valueset-dependency-version-5.json' (see DESIGN §15)
+  _skipReason: no java outcome / unmappable (DESIGN §15)
+- desc: graham/valueset-dependency-version-5
   schemas: []
   data:
     resourceType: Condition
@@ -5938,10 +5917,9 @@ tests:
       reference: Patient/example
       display: Amy V. Shaw
     onsetDateTime: '2016-08-10'
-- desc: graham/valueset-dependency-version-6
   skip: true
-  _skipReason: needs IG package(s) fetched and translated. packages=['packages/hl7.fhir.test.verA#1.0.0.tgz', 'packages/hl7.fhir.test.verA#2.0.0.tgz',
-    'packages/hl7.fhir.test.verC#1.0.0.tgz'], profile=None, version=4.0, dataFile='valueset-dependency-version-6.json' (see DESIGN §15)
+  _skipReason: no java outcome / unmappable (DESIGN §15)
+- desc: graham/valueset-dependency-version-6
   schemas: []
   data:
     resourceType: Condition
@@ -5958,10 +5936,9 @@ tests:
       reference: Patient/example
       display: Amy V. Shaw
     onsetDateTime: '2016-08-10'
-- desc: graham/sdc-inv-1
   skip: true
-  _skipReason: needs IG package(s) fetched and translated. packages=['hl7.fhir.uv.sdc#4.0.0-ballot'], profile=None, version=4.0, dataFile='sdc-inv-1.json'
-    (see DESIGN §15)
+  _skipReason: no java outcome / unmappable (DESIGN §15)
+- desc: graham/sdc-inv-1
   schemas: []
   data:
     resourceType: Questionnaire
@@ -5990,3 +5967,5 @@ tests:
           expression: 1 + 1
       answerValueSet: http://hl7.org/a/1
       type: decimal
+  skip: true
+  _skipReason: 'IG fixtures missing: [''hl7.fhir.uv.sdc@4.0.0-ballot''] (add to prepare-fixtures, DESIGN §15)'

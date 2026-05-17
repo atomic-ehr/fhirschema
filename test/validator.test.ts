@@ -75,6 +75,7 @@ const referenceResolverAdapter: ReferenceResolver = {
 import {
   buildResolverMap,
   loadPackageFixtures,
+  loadProfileSchema,
   loadSuites,
   subsetMatch,
   type ValidatorCase,
@@ -158,11 +159,32 @@ for (const file of files) {
       if (focused && !t.only) continue;
 
       it(t.desc, () => {
+        // `_loadProfile: ["validator/some-profile.json", ...]` — read each
+        // SD from fhir-test-cases, translate on the fly, register in ctx.
+        const profileLoaded: FHIRSchema[] = [];
+        const lp = (t as { _loadProfile?: unknown })._loadProfile;
+        if (Array.isArray(lp)) {
+          for (const p of lp) {
+            if (typeof p === 'string') profileLoaded.push(loadProfileSchema(p));
+          }
+        } else if (typeof lp === 'string') {
+          profileLoaded.push(loadProfileSchema(lp));
+        }
         const registry = [
           ...((defaults?.registry as FHIRSchema[] | undefined) ?? []),
           ...((t.registry as FHIRSchema[] | undefined) ?? []),
+          ...profileLoaded,
         ];
-        const ctx = makeCtx(registry, baseMap);
+        // Per-test `_usePackages` overrides suite defaults — used by
+        // Graham IG-package cases that need version-specific fixture dirs.
+        const tup = (t as { _usePackages?: unknown })._usePackages;
+        let effectiveBase = baseMap;
+        if (Array.isArray(tup) && tup.length > 0) {
+          const r4 = defaults?.useR4 ? ['hl7.fhir.r4.core'] : [];
+          const ids = [...r4, ...tup.filter((x): x is string => typeof x === 'string')];
+          effectiveBase = mergeMaps(ids.map(getPackageMap));
+        }
+        const ctx = makeCtx(registry, effectiveBase);
         const suiteOpts: Record<string, unknown> = {};
         const d = defaults as
           | {
