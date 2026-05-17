@@ -1,5 +1,5 @@
 suite: 'recursive schemas via elementReference (sansara L198)'
-# Questionnaire.item is array<BackboneElement>; Questionnaire.item.item
+# Questionnaire.item is array<BackboneElement>; jQuestionnaire.item.item
 # is `elementReference: [http://hl7.org/fhir/StructureDefinition/Questionnaire,
 # elements, item]` — cyclic. The validator must follow the reference on
 # walk-in so deep nested items get validated against the same shape.

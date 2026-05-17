@@ -106,3 +106,67 @@ tests:
           period: { start: '2012' }
       managingOrganization: { reference: 'Organization/1' }
     valid: true
+
+  # ─── _field deep validation (D) ─────────────────────────────────────
+  - desc: 'invalid valueString inside patient-birthTime extension → fs801'
+    schemas: []
+    data:
+      resourceType: Patient
+      birthDate: '1974-12-25'
+      _birthDate:
+        extension:
+          - url: http://hl7.org/fhir/StructureDefinition/patient-birthTime
+            valueString: somestring
+    issues:
+      - { code: fs801, path: [_birthDate, extension, 0, valueString] }
+
+  - desc: '_active payload is a string (scalar primitive, must be object) → fs401'
+    schemas: []
+    data:
+      resourceType: Patient
+      _active: test
+    issues:
+      - { code: fs401, path: [_active] }
+
+  - desc: '_active payload is an array (scalar primitive, must be object) → fs401'
+    schemas: []
+    data:
+      resourceType: Patient
+      _active:
+        - id: test
+    issues:
+      - { code: fs401, path: [_active] }
+
+  - desc: '_given as object when array expected (given is array primitive) → fs401'
+    schemas: []
+    data:
+      resourceType: Patient
+      name:
+        - given: [a]
+          _given: { id: test }
+    issues:
+      - { code: fs401, path: [name, 0, _given] }
+
+  - desc: '_given as array of Elements → valid (matches array primitive shape)'
+    schemas: []
+    data:
+      resourceType: Patient
+      name:
+        - given: [a]
+          _given:
+            - id: test
+              extension:
+                - url: http://hl7.org/fhir/StructureDefinition/humanname-own-prefix
+                  valueString: VV
+    valid: true
+
+  - desc: '_given as array with null placeholders → valid'
+    schemas: []
+    data:
+      resourceType: Patient
+      name:
+        - given: [a, b]
+          _given:
+            - null
+            - id: shadow-b
+    valid: true

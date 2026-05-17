@@ -410,9 +410,12 @@ function walkObject(
     for (const r of o.el.required ?? []) required.add(r);
   }
   for (const r of required) {
-    const allowed = choiceGroups.get(r);
-    if (allowed !== undefined) {
-      const present = allowed.some((v) => v in obj || `_${v}` in obj);
+    if (choiceGroups.has(r)) {
+      // For a required choice parent, ANY declared variant present
+      // satisfies the slot — even a narrowed-away one. Variant-not-allowed
+      // is handled by checkChoiceGroups (fs801); we don't double-fire.
+      const allVariants = collectAllChoiceVariants(expanded, r);
+      const present = allVariants.some((v) => v in obj || `_${v}` in obj);
       if (!present) {
         issues.push({ code: FS.REQUIRED, path: [...path, r], expected: r });
       }
@@ -478,11 +481,93 @@ function walkObject(
         });
         continue;
       }
-      // Treat `_field` payload as Element (id + extension); leave deep check for later.
+      // Deep `_field` validation: payload shape (object for scalar primitive,
+      // array<object|null> for array primitive) plus walking into Element
+      // (id + extension[]). Extension's own elements are resolved via the
+      // standard expandTypeOverlays path.
+      const isArrayPrimitive = childOverlays.some((o) => o.el.array === true);
+      validateShadowPayload(
+        ctx,
+        obj[key],
+        [...path, key],
+        issues,
+        isArrayPrimitive,
+        options,
+      );
       continue;
     }
 
     walk(ctx, childOverlays, obj[key], [...path, key], issues, options);
+  }
+}
+
+// Inline overlay describing the Element complex type: `{id?, extension?[]}`.
+// Used to walk `_field` payloads so primitive-extension extensions get full
+// validation (URL deref, choice intersection, required-key checks).
+//
+// Only emitted when Extension is resolvable. If not (e.g. inline-schema
+// tests with no R4 loaded), we fall back to a shape-only check upstream.
+const ELEMENT_OVERLAY: Overlay = {
+  el: {
+    elements: {
+      id: { type: 'id' },
+      extension: { type: 'Extension', array: true },
+    },
+  } as FHIRSchemaElement,
+  source: undefined,
+};
+
+function validateShadowPayload(
+  ctx: ValidateContext,
+  payload: unknown,
+  path: (string | number)[],
+  issues: ValidationIssue[],
+  isArrayPrimitive: boolean,
+  options?: ValidateOptions,
+): void {
+  // Walking into the Element shape requires the Extension type to be
+  // resolvable in ctx (R4 loaded). Otherwise shape-check only.
+  const deep = ctx.resolve('Extension') !== undefined;
+
+  if (isArrayPrimitive) {
+    if (!Array.isArray(payload)) {
+      issues.push({
+        code: FS.INVALID_PRIMITIVE_EXTENSION,
+        path,
+        expected: 'array of Element|null',
+        got: jsTypeOf(payload),
+      });
+      return;
+    }
+    for (let i = 0; i < payload.length; i++) {
+      const item = payload[i];
+      if (item === null) continue;
+      if (typeof item !== 'object' || Array.isArray(item)) {
+        issues.push({
+          code: FS.INVALID_PRIMITIVE_EXTENSION,
+          path: [...path, i],
+          expected: 'Element object or null',
+          got: jsTypeOf(item),
+        });
+        continue;
+      }
+      if (deep) {
+        walkObject(ctx, [ELEMENT_OVERLAY], item, [...path, i], issues, false, options);
+      }
+    }
+    return;
+  }
+  if (payload === null || typeof payload !== 'object' || Array.isArray(payload)) {
+    issues.push({
+      code: FS.INVALID_PRIMITIVE_EXTENSION,
+      path,
+      expected: 'Element object',
+      got: jsTypeOf(payload),
+    });
+    return;
+  }
+  if (deep) {
+    walkObject(ctx, [ELEMENT_OVERLAY], payload, path, issues, false, options);
   }
 }
 
@@ -564,6 +649,21 @@ function expandTypeOverlays(
  * Empty intersection still emits a group; a present variant will then fail
  * fs801.
  */
+/** Union of variants for one choice parent across overlays. */
+function collectAllChoiceVariants(overlays: Overlay[], parent: string): string[] {
+  const out = new Set<string>();
+  for (const o of overlays) {
+    for (const [n, el] of Object.entries(o.el.elements ?? {})) {
+      if (el.choiceOf === parent) out.add(n);
+    }
+    const pEl = o.el.elements?.[parent];
+    if (Array.isArray(pEl?.choices)) {
+      for (const v of pEl.choices) out.add(v);
+    }
+  }
+  return [...out];
+}
+
 function collectChoiceGroups(overlays: Overlay[]): Map<string, string[]> {
   const out = new Map<string, string[]>();
   for (const o of overlays) {

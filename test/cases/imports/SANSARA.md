@@ -75,7 +75,7 @@ imported into our YAML suite, which are pending, and which we mark
 | | us-core-race invalid sub-extension (L2210) | ✅ | `us-core.yaml` | F4 extension URL deref unlocks this |
 | `multiple-slice-match-test` (L2229) | | ⛔ | — | `slice.match` as array-of-patterns (AND semantics) — translator + validator change |
 | `primitive-extensions-test` (L2261) | valid extension on birthDate (L2294, L2318) | ✅ | `primitive-extensions-r4.yaml` | imported against real R4 patient-birthTime fixture |
-| | invalid extension on birthDate (L2305) | ⏳ | — | needs `_field` deep validation (feature D) to emit fs801 inside extension |
+| | invalid extension on birthDate (L2305) | ✅ | `primitive-extensions-r4.yaml` | feature D unlocked; valueString-in-narrowed-extension → fs801 |
 | | FHIR general person sample (L2328) | ✅ | `primitive-extensions-r4.yaml` | full realistic Patient with nested _family ext |
 | | extension for unknown (L2405) | ✅ | `primitive-extensions.yaml` | `_unknown: {id: 1}` → fs201 |
 | | extension for non-primitive element (L2414) | ✅ | `primitive-extensions.yaml` (fs401) | |
