@@ -50,7 +50,7 @@ tests:
   _usePackages:
   - hl7.fhir.us.core@3.1.0
   skip: true
-  _skipReason: Expected fs1001 not firing; profile-specific reference type check on Reference target. Needs investigation. (DESIGN §15)
+  _skipReason: fs1001 not firing on Reference target check inside loaded profile chain; needs investigation. (DESIGN §15)
 - desc: graham/us-docref.json
   schemas: []
   data:
@@ -131,1244 +131,6 @@ tests:
   _usePackages:
   - hl7.fhir.us.core@3.1.1
   valid: true
-- desc: graham/bnd-slicing-cgm
-  schemas: []
-  data:
-    resourceType: Bundle
-    id: cgmDataSubmissionBundle
-    type: transaction
-    timestamp: '2024-05-02T14:30:00Z'
-    entry:
-    - fullUrl: https://example.org/DiagnosticReport/cgmSummaryPDFExample
-      resource:
-        resourceType: DiagnosticReport
-        id: cgmSummaryPDFExample
-        status: final
-        category:
-        - coding:
-          - system: http://terminology.hl7.org/CodeSystem/v2-0074
-            code: LAB
-        code:
-          coding:
-          - system: http://hl7.org/fhir/uv/cgm/CodeSystem/cgm-summary-codes-temporary
-            code: cgm-summary
-        subject:
-          reference: Patient/patientExample
-        effectivePeriod:
-          start: '2024-05-01'
-          end: '2024-05-14'
-        issued: '2024-05-15T14:30:00Z'
-        result:
-        - reference: Observation/cgmSummaryExample
-        presentedForm:
-        - contentType: application/pdf
-          data: JVBERi0xLjAKJcK1wrYKCjEgMCBvYmoKPDwvVHlwZS9DYXRhbG9nL1BhZ2VzIDIgMCBSPj4KZW5kb2JqCgoyIDAgb2JqCjw8L0tpZHNbMyAwIFJdL0NvdW50IDEvVHlwZS9QYWdlcy9NZWRpYUJveFswIDAgNTk1IDc5Ml0+PgplbmRvYmoKCjMgMCBvYmoKPDwvVHlwZS9QYWdlL1BhcmVudCAyIDAgUi9Db250ZW50cyA0IDAgUi9SZXNvdXJjZXM8PD4+Pj4KZW5kb2JqCgo0IDAgb2JqCjw8L0xlbmd0aCA1OD4+CnN0cmVhbQpxCkJUCi8gOTYgVGYKMSAwIDAgMSAzNiA2ODQgVG0KKEZISVIgQ0dNISkgVGoKRVQKUQoKZW5kc3RyZWFtCmVuZG9iagoKeHJlZgowIDUKMDAwMDAwMDAwMCA2NTUzNiBmIAowMDAwMDAwMDE2IDAwMDAwIG4gCjAwMDAwMDAwNjIgMDAwMDAgbiAKMDAwMDAwMDEzNiAwMDAwMCBuIAowMDAwMDAwMjA5IDAwMDAwIG4gCgp0cmFpbGVyCjw8L1NpemUgNS9Sb290IDEgMCBSPj4Kc3RhcnR4cmVmCjMxNgolJUVPRgoK
-      request:
-        method: POST
-        url: DiagnosticReport
-    - fullUrl: https://example.org/Observation/cgmSummaryExample
-      resource:
-        resourceType: Observation
-        id: cgmSummaryExample
-        status: final
-        category:
-        - coding:
-          - system: http://terminology.hl7.org/CodeSystem/observation-category
-            code: laboratory
-        code:
-          coding:
-          - system: http://hl7.org/fhir/uv/cgm/CodeSystem/cgm-summary-codes-temporary
-            code: cgm-summary
-        subject:
-          reference: Patient/patientExample
-        effectivePeriod:
-          start: '2024-05-01'
-          end: '2024-05-31'
-        hasMember:
-        - reference: Observation/cgmSummaryMeanGlucoseMassPerVolumeExample
-        - reference: Observation/cgmSummaryTimesInRangesExample
-        - reference: Observation/cgmSummaryGMIExample
-        - reference: Observation/cgmSummaryCoefficientOfVariationExample
-        - reference: Observation/cgmSummaryDaysOfWearExample
-        - reference: Observation/cgmSummarySensorActivePercentageExample
-      request:
-        method: POST
-        url: Observation
-    - fullUrl: https://example.org/Observation/cgmSummaryMeanGlucoseMassPerVolumeExample
-      resource:
-        resourceType: Observation
-        id: cgmSummaryMeanGlucoseMassPerVolumeExample
-        status: final
-        category:
-        - coding:
-          - system: http://terminology.hl7.org/CodeSystem/observation-category
-            code: laboratory
-        code:
-          coding:
-          - system: http://loinc.org
-            code: 97507-8
-        subject:
-          reference: Patient/patientExample
-        effectivePeriod:
-          start: '2024-05-01'
-          end: '2024-05-31'
-        valueQuantity:
-          value: 145
-          unit: mg/dl
-          system: http://unitsofmeasure.org
-          code: mg/dL
-      request:
-        method: POST
-        url: Observation
-    - fullUrl: https://example.org/Observation/cgmSummaryTimesInRangesExample
-      resource:
-        resourceType: Observation
-        id: cgmSummaryTimesInRangesExample
-        status: final
-        category:
-        - coding:
-          - system: http://terminology.hl7.org/CodeSystem/observation-category
-            code: laboratory
-        code:
-          coding:
-          - system: http://loinc.org
-            code: 106793-3
-        subject:
-          reference: Patient/patientExample
-        effectivePeriod:
-          start: '2024-05-01'
-          end: '2024-05-31'
-        component:
-        - code:
-            coding:
-            - system: http://loinc.org
-              code: 104642-4
-          valueQuantity:
-            value: 3
-            unit: '%'
-            system: http://unitsofmeasure.org
-            code: '%'
-        - code:
-            coding:
-            - system: http://loinc.org
-              code: 104641-6
-          valueQuantity:
-            value: 8
-            unit: '%'
-            system: http://unitsofmeasure.org
-            code: '%'
-        - code:
-            coding:
-            - system: http://loinc.org
-              code: 97510-2
-          valueQuantity:
-            value: 65
-            unit: '%'
-            system: http://unitsofmeasure.org
-            code: '%'
-        - code:
-            coding:
-            - system: http://loinc.org
-              code: 104640-8
-          valueQuantity:
-            value: 20
-            unit: '%'
-            system: http://unitsofmeasure.org
-            code: '%'
-        - code:
-            coding:
-            - system: http://loinc.org
-              code: 104639-0
-          valueQuantity:
-            value: 4
-            unit: '%'
-            system: http://unitsofmeasure.org
-            code: '%'
-      request:
-        method: POST
-        url: Observation
-    - fullUrl: https://example.org/Observation/cgmSummaryGMIExample
-      resource:
-        resourceType: Observation
-        id: cgmSummaryGMIExample
-        status: final
-        category:
-        - coding:
-          - system: http://terminology.hl7.org/CodeSystem/observation-category
-            code: laboratory
-        code:
-          coding:
-          - system: http://loinc.org
-            code: 97506-0
-        subject:
-          reference: Patient/patientExample
-        effectivePeriod:
-          start: '2024-05-01'
-          end: '2024-05-31'
-        valueQuantity:
-          value: 6.8
-          unit: '%'
-          system: http://unitsofmeasure.org
-          code: '%'
-      request:
-        method: POST
-        url: Observation
-    - fullUrl: https://example.org/Observation/cgmSummaryCoefficientOfVariationExample
-      resource:
-        resourceType: Observation
-        id: cgmSummaryCoefficientOfVariationExample
-        status: final
-        category:
-        - coding:
-          - system: http://terminology.hl7.org/CodeSystem/observation-category
-            code: laboratory
-        code:
-          coding:
-          - system: http://loinc.org
-            code: 104638-2
-        subject:
-          reference: Patient/patientExample
-        effectivePeriod:
-          start: '2024-05-01'
-          end: '2024-05-31'
-        valueQuantity:
-          value: 34
-          unit: '%'
-          system: http://unitsofmeasure.org
-          code: '%'
-      request:
-        method: POST
-        url: Observation
-    - fullUrl: https://example.org/Observation/cgmSummaryDaysOfWearExample
-      resource:
-        resourceType: Observation
-        id: cgmSummaryDaysOfWearExample
-        status: final
-        category:
-        - coding:
-          - system: http://terminology.hl7.org/CodeSystem/observation-category
-            code: laboratory
-        code:
-          coding:
-          - system: http://loinc.org
-            code: 104636-6
-        subject:
-          reference: Patient/patientExample
-        effectivePeriod:
-          start: '2024-05-01'
-          end: '2024-05-31'
-        valueQuantity:
-          value: 28
-          unit: days
-          system: http://unitsofmeasure.org
-          code: d
-      request:
-        method: POST
-        url: Observation
-    - fullUrl: https://example.org/Observation/cgmSummarySensorActivePercentageExample
-      resource:
-        resourceType: Observation
-        id: cgmSummarySensorActivePercentageExample
-        status: final
-        category:
-        - coding:
-          - system: http://terminology.hl7.org/CodeSystem/observation-category
-            code: laboratory
-        code:
-          coding:
-          - system: http://loinc.org
-            code: 104637-4
-        subject:
-          reference: Patient/patientExample
-        effectivePeriod:
-          start: '2024-05-01'
-          end: '2024-05-31'
-        valueQuantity:
-          value: 95
-          unit: '%'
-          system: http://unitsofmeasure.org
-          code: '%'
-      request:
-        method: POST
-        url: Observation
-    - fullUrl: https://example.org/Observation/cgmSensorReadingMassPerVolumeExample
-      resource:
-        resourceType: Observation
-        id: cgmSensorReadingMassPerVolumeExample
-        status: final
-        category:
-        - coding:
-          - system: http://terminology.hl7.org/CodeSystem/observation-category
-            code: laboratory
-        code:
-          coding:
-          - system: http://loinc.org
-            code: 99504-3
-        subject:
-          reference: Patient/patientExample
-        effectiveDateTime: '2024-05-02T10:15:00Z'
-        valueQuantity:
-          value: 120
-          unit: mg/dl
-          system: http://unitsofmeasure.org
-          code: mg/dL
-      request:
-        method: POST
-        url: Observation
-  _usePackages:
-  - hl7.fhir.uv.cgm@1.0.0-ballot
-  _applyProfileUrl: http://hl7.org/fhir/uv/cgm/StructureDefinition/cgm-data-submission-bundle
-  valid: true
-- desc: graham/condition-with-extensions-on-pattern
-  schemas: []
-  data:
-    resourceType: Condition
-    id: ExampleConditionWithExtensionsOnPattern
-    meta:
-      profile:
-      - https://www.medizininformatik-initiative.de/fhir/core/modul-diagnose/StructureDefinition/Diagnose
-    code:
-      coding:
-      - extension:
-        - url: http://fhir.de/StructureDefinition/icd-10-gm-primaercode
-          valueCoding:
-            system: http://fhir.de/CodeSystem/dimdi/icd-10-gm
-            version: '2020'
-            code: A54.4
-        - url: http://fhir.de/StructureDefinition/icd-10-gm-manifestationscode
-          valueCoding:
-            system: http://fhir.de/CodeSystem/dimdi/icd-10-gm
-            version: '2020'
-            code: M73.04
-        - url: http://fhir.de/StructureDefinition/icd-10-gm-diagnosesicherheit
-          valueCoding:
-            system: https://fhir.kbv.de/CodeSystem/KBV_CS_SFHIR_ICD_DIAGNOSESICHERHEIT
-            code: G
-        - url: http://fhir.de/StructureDefinition/seitenlokalisation
-          valueCoding:
-            system: https://fhir.kbv.de/CodeSystem/KBV_CS_SFHIR_ICD_SEITENLOKALISATION
-            code: L
-            display: links
-        system: http://fhir.de/CodeSystem/dimdi/icd-10-gm
-        version: '2020'
-        code: A54.4† M73.04*
-        display: Bursitis gonorrhoica
-    subject:
-      reference: Patient/12345
-  skip: true
-  _skipReason: 'IG fixtures missing: [''de.medizininformatikinitiative.kerndatensatz.diagnose@1.0.4''] (DESIGN §15)'
-- desc: graham/no.gastronet
-  schemas: []
-  data:
-    resourceType: Bundle
-    meta:
-      profile:
-      - http://kvalitetsregistre.no/fhir/StructureDefinition/colonoscopyreport-bundle-gastronet
-    identifier:
-      system: http://kreftregisteret.no/fhir/NamingSystem/colonoscopy-report-id
-      value: 1b31da0f-d1d4-40ec-b7a6-59269a8b6549
-    type: collection
-    timestamp: '2021-11-16T13:28:17.239+01:00'
-    entry:
-    - fullUrl: http://testdata.no/fhir/Patient/1
-      resource:
-        resourceType: Patient
-        id: '1'
-        meta:
-          profile:
-          - http://kvalitetsregistre.no/fhir/StructureDefinition/colonoscopyreport-patient-gastronet
-        identifier:
-        - system: urn:oid:2.16.578.1.12.4.1.4.1
-          value: '13116900216'
-        name:
-        - extension:
-          - url: http://hl7.no/fhir/StructureDefinition/no-basis-middlename
-            valueString: Erik
-          family: Line
-          given:
-          - Danser
-        - extension:
-          - url: http://hl7.no/fhir/StructureDefinition/no-basis-middlename
-            valueString: Erik
-          family: Eksempel
-          given:
-          - Espen
-    - fullUrl: http://testdata.no/fhir/Procedure/1
-      resource:
-        resourceType: Procedure
-        id: '1'
-        meta:
-          profile:
-          - http://kvalitetsregistre.no/fhir/StructureDefinition/colonoscopyreport-colonoscopy-gastronet
-        extension:
-        - url: http://kreftregisteret.no/fhir/StructureDefinition/colonoscopyreport-laxatives-extension
-          extension:
-          - url: type
-            valueCodeableConcept:
-              coding:
-              - system: http://ehelse.no/fhir/CodeSystem/colonoscopy-model-specific-codes
-                code: laxabon
-          - url: takenAsSplitDose
-            valueCodeableConcept:
-              coding:
-              - system: http://terminology.hl7.org/CodeSystem/v3-NullFlavor
-                code: NA
-        - url: http://kreftregisteret.no/fhir/StructureDefinition/colonoscopyreport-complicationconsequence-extension
-          valueCodeableConcept:
-            coding:
-            - system: http://snomed.info/sct
-              code: '32485007'
-              display: Hospital admission (procedure)
-        - url: http://kreftregisteret.no/fhir/StructureDefinition/colonoscopyreport-partofbowelreached-extension
-          valueCodeableConcept:
-            coding:
-            - system: http://snomed.info/sct
-              code: '32713005'
-              display: Cecum structure (body structure)
-        - url: http://kreftregisteret.no/fhir/StructureDefinition/colonoscopyreport-withdrawaltime
-          valueDuration:
-            value: 2
-            unit: min
-            system: http://unitsofmeasure.org
-            code: min
-        - url: http://kreftregisteret.no/fhir/StructureDefinition/colonoscopyreport-caecumreacheddocumentation-extension
-          valueBoolean: true
-        - url: http://kreftregisteret.no/fhir/StructureDefinition/colonoscopyreport-medicationgiven-extension
-          valueBoolean: true
-        - url: http://kreftregisteret.no/fhir/StructureDefinition/colonoscopyreport-sedationlevel-extension
-          valueCodeableConcept:
-            coding:
-            - system: http://snomed.info/sct
-              code: '10821000202101'
-              display: Narkose eller dyp sedasjon med anestesistøtte
-        status: completed
-        category:
-          coding:
-          - system: http://snomed.info/sct
-            code: '446745002'
-            display: Diagnostisk med biopsi
-        code:
-          coding:
-          - system: http://snomed.info/sct
-            code: '73761001'
-            display: Colonoscopy (procedure)
-        subject:
-          reference: http://testdata.no/fhir/Patient/1
-        performedDateTime: '2020-11-01T15:00:00+01:00'
-        performer:
-        - function:
-            coding:
-            - system: http://snomed.info/sct
-              code: '8921000202108'
-              display: Primary performing endoscopist (person)
-          actor:
-            reference: http://testdata.no/fhir/Practitioner/2
-        - function:
-            coding:
-            - system: http://snomed.info/sct
-              code: '8951000202101'
-              display: Main nurse assisting procedure (person)
-          actor:
-            reference: http://testdata.no/fhir/Practitioner/3
-        location:
-          reference: http://testdata.no/fhir/Location/1
-        reasonCode:
-        - coding:
-          - system: http://ehelse.no/fhir/CodeSystem/colonoscopy-model-specific-codes
-            code: indikasjon-polyppkontroll
-            display: Polyppkontroll
-        report:
-        - reference: http://testdata.no/fhir/DiagnosticReport/1
-        complication:
-        - coding:
-          - system: http://snomed.info/sct
-            code: '712510007'
-            display: Intestinal hemorrhage (disorder)
-    - fullUrl: http://testdata.no/fhir/DiagnosticReport/1
-      resource:
-        resourceType: DiagnosticReport
-        id: '1'
-        meta:
-          profile:
-          - http://kvalitetsregistre.no/fhir/StructureDefinition/colonoscopyreport-diagnosticreport-gastronet
-        status: final
-        code:
-          coding:
-          - system: http://snomed.info/sct
-            code: '73761001'
-            display: Colonoscopy (procedure)
-        subject:
-          reference: http://testdata.no/fhir/Patient/1
-        result:
-        - reference: http://testdata.no/fhir/Observation/lesion-1
-        - reference: http://testdata.no/fhir/Observation/bbps
-        - reference: http://testdata.no/fhir/Observation/numberoflesions
-        - reference: http://testdata.no/fhir/Observation/lumen
-        conclusionCode:
-        - extension:
-          - url: http://kreftregisteret.no/fhir/StructureDefinition/diagnosticreport-conclusion-ismaindiagnosis
-            valueBoolean: true
-          coding:
-          - system: http://hl7.org/fhir/sid/icd-10
-            code: C18.0
-            display: 'Malignant neoplasm: Caecum'
-    - fullUrl: http://testdata.no/fhir/Observation/numberoflesions
-      resource:
-        resourceType: Observation
-        id: numberoflesions
-        meta:
-          profile:
-          - http://kvalitetsregistre.no/fhir/StructureDefinition/colonoscopyreport-numberoflesions-gastronet
-        status: final
-        code:
-          coding:
-          - system: http://snomed.info/sct
-            code: '246206008'
-        valueQuantity:
-          value: 1
-    - fullUrl: http://testdata.no/fhir/Observation/lesion-1
-      resource:
-        resourceType: Observation
-        id: lesion-1
-        meta:
-          profile:
-          - http://kvalitetsregistre.no/fhir/StructureDefinition/colonoscopyreport-lesion-gastronet
-        identifier:
-        - system: http://kreftregisteret.no/fhir/NamingSystem/lesion-number
-          value: '1'
-        status: final
-        code:
-          coding:
-          - system: http://snomed.info/sct
-            code: '300577008'
-            display: Finding of lesion (finding)
-        component:
-        - code:
-            coding:
-            - system: http://snomed.info/sct
-              code: '10291000202102'
-              display: Lesion size given by largest diameter (observable entity)
-          valueQuantity:
-            value: 3
-            unit: mm
-            system: http://unitsofmeasure.org
-            code: mm
-    - fullUrl: http://testdata.no/fhir/Observation/bbps
-      resource:
-        resourceType: Observation
-        id: bbps
-        meta:
-          profile:
-          - http://kvalitetsregistre.no/fhir/StructureDefinition/colonoscopyreport-bostonbowelpreparationscale-gastronet
-        status: final
-        code:
-          coding:
-          - system: http://snomed.info/sct
-            code: '722818007'
-            display: Boston bowel preparation scale (assessment scale)
-        component:
-        - code:
-            coding:
-            - system: http://snomed.info/sct
-              code: '8901000202102'
-              display: Boston bowel preparation skala høyre kolon
-          valueCodeableConcept:
-            coding:
-            - system: http://snomed.info/sct
-              code: '10291000132101'
-              display: Portion of mucosa of colon segment seen, but other areas of colon segment not well seen due to staining, residual stool
-                and/or opaque liquid (finding)
-        - code:
-            coding:
-            - system: http://snomed.info/sct
-              code: '8911000202100'
-              display: Boston bowel preparation skala kolon transversum
-          valueCodeableConcept:
-            coding:
-            - system: http://snomed.info/sct
-              code: '10301000132102'
-              display: Minor amount of residual staining, small fragments of stool and/or opaque liquid, but mucosa of colon segment seen well
-                (finding)
-        - code:
-            coding:
-            - system: http://snomed.info/sct
-              code: '8891000202103'
-              display: Boston bowel preparation skala venstre kolon
-          valueCodeableConcept:
-            coding:
-            - system: http://snomed.info/sct
-              code: '10311000132100'
-              display: Entire mucosa of colon segment seen well with no residual staining, small fragments of stool or opaque liquid (finding)
-    - fullUrl: http://testdata.no/fhir/Observation/lumen
-      resource:
-        resourceType: Observation
-        id: lumen
-        meta:
-          profile:
-          - http://kvalitetsregistre.no/fhir/StructureDefinition/colonoscopyreport-lumen-gastronet
-        status: final
-        code:
-          coding:
-          - system: http://snomed.info/sct
-            code: '15991000202102'
-            display: Appearance of intestinal lumen
-        valueCodeableConcept:
-          coding:
-          - system: http://snomed.info/sct
-            code: '17621005'
-            display: Normal (qualifier value)
-    - fullUrl: http://testdata.no/fhir/List/medication-list
-      resource:
-        resourceType: List
-        id: medication-list
-        meta:
-          profile:
-          - http://kvalitetsregistre.no/fhir/StructureDefinition/colonoscopyreport-medicationlist-gastronet
-        status: current
-        mode: snapshot
-        code:
-          coding:
-          - system: http://terminology.hl7.org/CodeSystem/list-example-use-codes
-            code: medications
-        subject:
-          reference: http://testdata.no/fhir/Patient/1
-        entry:
-        - item:
-            reference: http://testdata.no/fhir/MedicationStatement/2
-        - item:
-            reference: http://testdata.no/fhir/MedicationStatement/3
-    - fullUrl: http://testdata.no/fhir/MedicationStatement/2
-      resource:
-        resourceType: MedicationStatement
-        id: '2'
-        meta:
-          profile:
-          - http://kvalitetsregistre.no/fhir/StructureDefinition/colonoscopyreport-current-medication-gastronet
-        status: active
-        medicationCodeableConcept:
-          coding:
-          - system: http://snomed.info/sct
-            code: '372756006'
-            display: Warfarin (substance)
-        subject:
-          reference: http://testdata.no/fhir/Patient/1
-    - fullUrl: http://testdata.no/fhir/MedicationStatement/3
-      resource:
-        resourceType: MedicationStatement
-        id: '3'
-        meta:
-          profile:
-          - http://kvalitetsregistre.no/fhir/StructureDefinition/colonoscopyreport-current-medication-gastronet
-        status: active
-        medicationCodeableConcept:
-          coding:
-          - system: http://snomed.info/sct
-            code: '387458008'
-            display: Aspirin (substance)
-        subject:
-          reference: http://testdata.no/fhir/Patient/1
-    - fullUrl: http://testdata.no/fhir/Practitioner/2
-      resource:
-        resourceType: Practitioner
-        id: '2'
-        meta:
-          profile:
-          - http://hl7.no/fhir/StructureDefinition/no-basis-Practitioner
-        identifier:
-        - system: urn:oid:2.16.578.1.12.4.1.4.4
-          value: '958100012'
-    - fullUrl: http://testdata.no/fhir/Practitioner/3
-      resource:
-        resourceType: Practitioner
-        id: '3'
-        meta:
-          profile:
-          - http://hl7.no/fhir/StructureDefinition/no-basis-Practitioner
-        identifier:
-        - system: urn:oid:2.16.578.1.12.4.1.4.4
-          value: 012345678
-    - fullUrl: http://testdata.no/fhir/Location/1
-      resource:
-        resourceType: Location
-        id: '1'
-        meta:
-          profile:
-          - http://hl7.no/fhir/StructureDefinition/no-basis-Location
-        managingOrganization:
-          reference: http://testdata.no/fhir/Organization/1
-    - fullUrl: http://testdata.no/fhir/Organization/1
-      resource:
-        resourceType: Organization
-        id: '1'
-        meta:
-          profile:
-          - http://hl7.no/fhir/StructureDefinition/no-basis-Organization
-        identifier:
-        - system: urn:oid:2.16.578.1.12.4.1.4.102
-          value: '46372864397'
-        name: Test Clinic
-  skip: true
-  _skipReason: 'IG fixtures missing: [''colonoscopyreport.no@0.7.4''] (DESIGN §15)'
-- desc: graham/no.gastronet.message-limit
-  schemas: []
-  data:
-    resourceType: Bundle
-    meta:
-      profile:
-      - http://kvalitetsregistre.no/fhir/StructureDefinition/colonoscopyreport-bundle-gastronet
-    identifier:
-      system: http://kreftregisteret.no/fhir/NamingSystem/colonoscopy-report-id
-      value: 1b31da0f-d1d4-40ec-b7a6-59269a8b6549
-    type: collection
-    timestamp: '2021-11-16T13:28:17.239+01:00'
-    entry:
-    - fullUrl: http://testdata.no/fhir/Patient/1
-      resource:
-        resourceType: Patient
-        id: '1'
-        meta:
-          profile:
-          - http://kvalitetsregistre.no/fhir/StructureDefinition/colonoscopyreport-patient-gastronet
-        identifier:
-        - system: urn:oid:2.16.578.1.12.4.1.4.1
-          value: '13116900216'
-        name:
-        - extension:
-          - url: http://hl7.no/fhir/StructureDefinition/no-basis-middlename
-            valueString: Erik
-          family: Line
-          given:
-          - Danser
-        - extension:
-          - url: http://hl7.no/fhir/StructureDefinition/no-basis-middlename
-            valueString: Erik
-          family: Eksempel
-          given:
-          - Espen
-    - fullUrl: http://testdata.no/fhir/Procedure/1
-      resource:
-        resourceType: Procedure
-        id: '1'
-        meta:
-          profile:
-          - http://kvalitetsregistre.no/fhir/StructureDefinition/colonoscopyreport-colonoscopy-gastronet
-        extension:
-        - url: http://kreftregisteret.no/fhir/StructureDefinition/colonoscopyreport-laxatives-extension
-          extension:
-          - url: type
-            valueCodeableConcept:
-              coding:
-              - system: http://ehelse.no/fhir/CodeSystem/colonoscopy-model-specific-codes
-                code: laxabon
-          - url: takenAsSplitDose
-            valueCodeableConcept:
-              coding:
-              - system: http://terminology.hl7.org/CodeSystem/v3-NullFlavor
-                code: NA
-        - url: http://kreftregisteret.no/fhir/StructureDefinition/colonoscopyreport-complicationconsequence-extension
-          valueCodeableConcept:
-            coding:
-            - system: http://snomed.info/sct
-              code: '32485007'
-              display: Hospital admission (procedure)
-        - url: http://kreftregisteret.no/fhir/StructureDefinition/colonoscopyreport-partofbowelreached-extension
-          valueCodeableConcept:
-            coding:
-            - system: http://snomed.info/sct
-              code: '32713005'
-              display: Cecum structure (body structure)
-        - url: http://kreftregisteret.no/fhir/StructureDefinition/colonoscopyreport-withdrawaltime
-          valueDuration:
-            value: 2
-            unit: min
-            system: http://unitsofmeasure.org
-            code: min
-        - url: http://kreftregisteret.no/fhir/StructureDefinition/colonoscopyreport-caecumreacheddocumentation-extension
-          valueBoolean: true
-        - url: http://kreftregisteret.no/fhir/StructureDefinition/colonoscopyreport-medicationgiven-extension
-          valueBoolean: true
-        - url: http://kreftregisteret.no/fhir/StructureDefinition/colonoscopyreport-sedationlevel-extension
-          valueCodeableConcept:
-            coding:
-            - system: http://snomed.info/sct
-              code: '10821000202101'
-              display: Narkose eller dyp sedasjon med anestesistøtte
-        status: completed
-        category:
-          coding:
-          - system: http://snomed.info/sct
-            code: '446745002'
-            display: Diagnostisk med biopsi
-        code:
-          coding:
-          - system: http://snomed.info/sct
-            code: '73761001'
-            display: Colonoscopy (procedure)
-        subject:
-          reference: http://testdata.no/fhir/Patient/1
-        performedDateTime: '2020-11-01T15:00:00+01:00'
-        performer:
-        - function:
-            coding:
-            - system: http://snomed.info/sct
-              code: '8921000202108'
-              display: Primary performing endoscopist (person)
-          actor:
-            reference: http://testdata.no/fhir/Practitioner/2
-        - function:
-            coding:
-            - system: http://snomed.info/sct
-              code: '8951000202101'
-              display: Main nurse assisting procedure (person)
-          actor:
-            reference: http://testdata.no/fhir/Practitioner/3
-        location:
-          reference: http://testdata.no/fhir/Location/1
-        reasonCode:
-        - coding:
-          - system: http://ehelse.no/fhir/CodeSystem/colonoscopy-model-specific-codes
-            code: indikasjon-polyppkontroll
-            display: Polyppkontroll
-        report:
-        - reference: http://testdata.no/fhir/DiagnosticReport/1
-        complication:
-        - coding:
-          - system: http://snomed.info/sct
-            code: '712510007'
-            display: Intestinal hemorrhage (disorder)
-    - fullUrl: http://testdata.no/fhir/DiagnosticReport/1
-      resource:
-        resourceType: DiagnosticReport
-        id: '1'
-        meta:
-          profile:
-          - http://kvalitetsregistre.no/fhir/StructureDefinition/colonoscopyreport-diagnosticreport-gastronet
-        status: final
-        code:
-          coding:
-          - system: http://snomed.info/sct
-            code: '73761001'
-            display: Colonoscopy (procedure)
-        subject:
-          reference: http://testdata.no/fhir/Patient/1
-        result:
-        - reference: http://testdata.no/fhir/Observation/lesion-1
-        - reference: http://testdata.no/fhir/Observation/bbps
-        - reference: http://testdata.no/fhir/Observation/numberoflesions
-        - reference: http://testdata.no/fhir/Observation/lumen
-        conclusionCode:
-        - extension:
-          - url: http://kreftregisteret.no/fhir/StructureDefinition/diagnosticreport-conclusion-ismaindiagnosis
-            valueBoolean: true
-          coding:
-          - system: http://hl7.org/fhir/sid/icd-10
-            code: C18.0
-            display: 'Malignant neoplasm: Caecum'
-    - fullUrl: http://testdata.no/fhir/Observation/numberoflesions
-      resource:
-        resourceType: Observation
-        id: numberoflesions
-        meta:
-          profile:
-          - http://kvalitetsregistre.no/fhir/StructureDefinition/colonoscopyreport-numberoflesions-gastronet
-        status: final
-        code:
-          coding:
-          - system: http://snomed.info/sct
-            code: '246206008'
-        valueQuantity:
-          value: 1
-    - fullUrl: http://testdata.no/fhir/Observation/lesion-1
-      resource:
-        resourceType: Observation
-        id: lesion-1
-        meta:
-          profile:
-          - http://kvalitetsregistre.no/fhir/StructureDefinition/colonoscopyreport-lesion-gastronet
-        identifier:
-        - system: http://kreftregisteret.no/fhir/NamingSystem/lesion-number
-          value: '1'
-        status: final
-        code:
-          coding:
-          - system: http://snomed.info/sct
-            code: '300577008'
-            display: Finding of lesion (finding)
-        component:
-        - code:
-            coding:
-            - system: http://snomed.info/sct
-              code: '10291000202102'
-              display: Lesion size given by largest diameter (observable entity)
-          valueQuantity:
-            value: 3
-            unit: mm
-            system: http://unitsofmeasure.org
-            code: mm
-    - fullUrl: http://testdata.no/fhir/Observation/bbps
-      resource:
-        resourceType: Observation
-        id: bbps
-        meta:
-          profile:
-          - http://kvalitetsregistre.no/fhir/StructureDefinition/colonoscopyreport-bostonbowelpreparationscale-gastronet
-        status: final
-        code:
-          coding:
-          - system: http://snomed.info/sct
-            code: '722818007'
-            display: Boston bowel preparation scale (assessment scale)
-        component:
-        - code:
-            coding:
-            - system: http://snomed.info/sct
-              code: '8901000202102'
-              display: Boston bowel preparation skala høyre kolon
-          valueCodeableConcept:
-            coding:
-            - system: http://snomed.info/sct
-              code: '10291000132101'
-              display: Portion of mucosa of colon segment seen, but other areas of colon segment not well seen due to staining, residual stool
-                and/or opaque liquid (finding)
-        - code:
-            coding:
-            - system: http://snomed.info/sct
-              code: '8911000202100'
-              display: Boston bowel preparation skala kolon transversum
-          valueCodeableConcept:
-            coding:
-            - system: http://snomed.info/sct
-              code: '10301000132102'
-              display: Minor amount of residual staining, small fragments of stool and/or opaque liquid, but mucosa of colon segment seen well
-                (finding)
-        - code:
-            coding:
-            - system: http://snomed.info/sct
-              code: '8891000202103'
-              display: Boston bowel preparation skala venstre kolon
-          valueCodeableConcept:
-            coding:
-            - system: http://snomed.info/sct
-              code: '10311000132100'
-              display: Entire mucosa of colon segment seen well with no residual staining, small fragments of stool or opaque liquid (finding)
-    - fullUrl: http://testdata.no/fhir/Observation/lumen
-      resource:
-        resourceType: Observation
-        id: lumen
-        meta:
-          profile:
-          - http://kvalitetsregistre.no/fhir/StructureDefinition/colonoscopyreport-lumen-gastronet
-        status: final
-        code:
-          coding:
-          - system: http://snomed.info/sct
-            code: '15991000202102'
-            display: Appearance of intestinal lumen
-        valueCodeableConcept:
-          coding:
-          - system: http://snomed.info/sct
-            code: '17621005'
-            display: Normal (qualifier value)
-    - fullUrl: http://testdata.no/fhir/List/medication-list
-      resource:
-        resourceType: List
-        id: medication-list
-        meta:
-          profile:
-          - http://kvalitetsregistre.no/fhir/StructureDefinition/colonoscopyreport-medicationlist-gastronet
-        status: current
-        mode: snapshot
-        code:
-          coding:
-          - system: http://terminology.hl7.org/CodeSystem/list-example-use-codes
-            code: medications
-        subject:
-          reference: http://testdata.no/fhir/Patient/1
-        entry:
-        - item:
-            reference: http://testdata.no/fhir/MedicationStatement/2
-        - item:
-            reference: http://testdata.no/fhir/MedicationStatement/3
-    - fullUrl: http://testdata.no/fhir/MedicationStatement/2
-      resource:
-        resourceType: MedicationStatement
-        id: '2'
-        meta:
-          profile:
-          - http://kvalitetsregistre.no/fhir/StructureDefinition/colonoscopyreport-current-medication-gastronet
-        status: active
-        medicationCodeableConcept:
-          coding:
-          - system: http://snomed.info/sct
-            code: '372756006'
-            display: Warfarin (substance)
-        subject:
-          reference: http://testdata.no/fhir/Patient/1
-    - fullUrl: http://testdata.no/fhir/MedicationStatement/3
-      resource:
-        resourceType: MedicationStatement
-        id: '3'
-        meta:
-          profile:
-          - http://kvalitetsregistre.no/fhir/StructureDefinition/colonoscopyreport-current-medication-gastronet
-        status: active
-        medicationCodeableConcept:
-          coding:
-          - system: http://snomed.info/sct
-            code: '387458008'
-            display: Aspirin (substance)
-        subject:
-          reference: http://testdata.no/fhir/Patient/1
-    - fullUrl: http://testdata.no/fhir/Practitioner/2
-      resource:
-        resourceType: Practitioner
-        id: '2'
-        meta:
-          profile:
-          - http://hl7.no/fhir/StructureDefinition/no-basis-Practitioner
-        identifier:
-        - system: urn:oid:2.16.578.1.12.4.1.4.4
-          value: '958100012'
-    - fullUrl: http://testdata.no/fhir/Practitioner/3
-      resource:
-        resourceType: Practitioner
-        id: '3'
-        meta:
-          profile:
-          - http://hl7.no/fhir/StructureDefinition/no-basis-Practitioner
-        identifier:
-        - system: urn:oid:2.16.578.1.12.4.1.4.4
-          value: 012345678
-    - fullUrl: http://testdata.no/fhir/Location/1
-      resource:
-        resourceType: Location
-        id: '1'
-        meta:
-          profile:
-          - http://hl7.no/fhir/StructureDefinition/no-basis-Location
-        managingOrganization:
-          reference: http://testdata.no/fhir/Organization/1
-    - fullUrl: http://testdata.no/fhir/Organization/1
-      resource:
-        resourceType: Organization
-        id: '1'
-        meta:
-          profile:
-          - http://hl7.no/fhir/StructureDefinition/no-basis-Organization
-        identifier:
-        - system: urn:oid:2.16.578.1.12.4.1.4.102
-          value: '46372864397'
-        name: Test Clinic
-  skip: true
-  _skipReason: 'IG fixtures missing: [''colonoscopyreport.no@0.7.4''] / no java outcome (DESIGN §15)'
-- desc: graham/mimic
-  schemas: []
-  data:
-    id: 59bbcf99-d3c2-5224-945e-1d35f73d1ccc
-    meta:
-      profile:
-      - http://fhir.mimic.mit.edu/StructureDefinition/mimic-encounter
-    type:
-    - coding:
-      - system: http://fhir.mimic.mit.edu/CodeSystem/admission-type
-        code: URGENT
-    class:
-      system: http://fhir.mimic.mit.edu/CodeSystem/admission-class
-      code: URGENT
-    period:
-      end: '2158-09-28T12:10:00-04:00'
-      start: '2158-09-28T01:21:00-04:00'
-    status: finished
-    subject:
-      reference: Patient/08fdadd0-70d8-59b4-902b-6b7a3b83d2cc
-    identifier:
-    - use: usual
-      value: '20769698'
-      system: http://fhir.mimic.mit.edu/CodeSystem/identifier-encounter
-      assigner:
-        reference: Organization/ee172322-118b-5716-abbc-18e4c5437e15
-    resourceType: Encounter
-    hospitalization:
-      admitSource:
-        coding:
-        - system: http://fhir.mimic.mit.edu/CodeSystem/admit-source
-          display: EMERGENCY ROOM
-      dischargeDisposition:
-        coding:
-        - system: http://fhir.mimic.mit.edu/CodeSystem/discharge-dispostion
-          display: HOME
-    serviceProvider:
-      reference: Organization/ee172322-118b-5716-abbc-18e4c5437ecc
-  skip: true
-  _skipReason: 'IG fixtures missing: [''mimic-0.1.2''] (DESIGN §15)'
-- desc: graham/bundle-urn
-  schemas: []
-  data:
-    resourceType: Bundle
-    identifier:
-      system: urn:ietf:rfc:4122
-      value: 4f0a749d-87af-46ad-adb8-bec181f01106
-    type: document
-    timestamp: '2023-01-15T18:35:00.448+00:00'
-    entry:
-    - fullUrl: urn:uuid:a6a8a8e6-415c-42e1-abf7-f8d876e5908b
-      resource:
-        resourceType: Composition
-        status: final
-        type:
-          coding:
-          - system: http://loinc.org
-            code: 60591-5
-            display: Patient Summary Document
-        subject:
-          reference: Patient/98549f1a-e0d5-4454-849c-f5b97d3ed299
-        date: '2023-01-15T18:35:00+00:00'
-        author:
-        - reference: urn:uuid:5277b703-de58-47a5-8df2-198aa8a8fb72
-        title: Patient Summary as of 01/15/2023
-        confidentiality: N
-        section:
-        - title: Allergies and Intolerances
-          code:
-            coding:
-            - system: http://loinc.org
-              code: 48765-2
-              display: Allergies and adverse reactions Document
-          text:
-            status: generated
-            div: <div xmlns='http://www.w3.org/1999/xhtml' lang='en-NZ' xml:lang='en-NZ'>There is no information available regarding the subject's
-              allergy conditions.</div>
-          entry:
-          - reference: AllergyIntolerance/e198be1e-9861-46af-9d97-841ef9f7c707
-        - title: Medication List
-          code:
-            coding:
-            - system: http://loinc.org
-              code: 10160-0
-              display: History of Medication use Narrative
-          text:
-            status: generated
-            div: '<div xmlns="http://www.w3.org/1999/xhtml"><table class="hapiPropertyTable"><caption>Medication Summary: Medication Statements</caption><thead><tr><th>Medication</th><th>Status</th><th>Route</th><th>Sig</th><th>Date</th></tr></thead><tbody><tr
-              id="MedicationSummary-d41ac499-c7e8-45fa-9246-69028bae178f"><td>Oxymetazoline hydrochloride  0.05 mg / 1 ml Spray</td><td>Active</td><td>
-              Nasal use </td><td /><td /></tr></tbody></table></div>'
-          entry:
-          - reference: MedicationStatement/d41ac499-c7e8-45fa-9246-69028bae178f
-        - title: Problem List
-          code:
-            coding:
-            - system: http://loinc.org
-              code: 11450-4
-              display: Problem list - Reported
-          text:
-            status: generated
-            div: <div xmlns='http://www.w3.org/1999/xhtml' lang='en-NZ' xml:lang='en-NZ'>There is no information available about the subject's
-              health problems or disabilities.</div>
-          entry:
-          - reference: Condition/da138a5d-633f-493f-9485-e5af1320db5b
-    - fullUrl: urn:uuid:98549f1a-e0d5-4454-849c-f5b97d3ed299
-      resource:
-        resourceType: Patient
-        id: 98549f1a-e0d5-4454-849c-f5b97d3ed299
-        meta:
-          versionId: '1'
-          lastUpdated: '2022-09-27T15:21:51.306+00:00'
-          source: '#jFE6f3a0zoZFHfj5'
-        text:
-          status: generated
-          div: <div xmlns="http://www.w3.org/1999/xhtml"><div class="hapiHeaderText">Maria <b>GRAVITATE </b></div><table class="hapiPropertyTable"><tbody><tr><td>Identifier</td><td>maria-1</td></tr><tr><td>Date
-            of birth</td><td><span>05 May 1946</span></td></tr></tbody></table></div>
-        extension:
-        - url: http://hl7.org/fhir/StructureDefinition/patient-citizenship
-          extension:
-          - url: code
-            valueCodeableConcept:
-              coding:
-              - system: urn:iso:std:iso:3166
-                code: 'NO'
-                display: Norway
-        identifier:
-        - system: https://www.gravitatehealth.eu/sid/doc
-          value: maria-1
-        active: true
-        name:
-        - family: Gravitate
-          given:
-          - Maria
-        gender: female
-        birthDate: '1946-05-05'
-    - fullUrl: urn:uuid:d41ac499-c7e8-45fa-9246-69028bae178f
-      resource:
-        resourceType: MedicationStatement
-        id: d41ac499-c7e8-45fa-9246-69028bae178f
-        meta:
-          versionId: '1'
-          lastUpdated: '2022-09-27T15:22:04.319+00:00'
-          source: '#wOHXO3dHsmGHTjyu'
-        extension:
-        - url: http://hl7.org/fhir/StructureDefinition/NarrativeLink
-          valueUri: urn:uuid:a6a8a8e6-415c-42e1-abf7-f8d876e5908b#MedicationSummary-d41ac499-c7e8-45fa-9246-69028bae178f
-        status: active
-        medicationCodeableConcept:
-          coding:
-          - system: http://www.nlm.nih.gov/research/umls/rxnorm
-            code: '1000990'
-            display: oxymetazoline hydrochloride 0.5 MG/ML Nasal Spray
-        subject:
-          reference: Patient/98549f1a-e0d5-4454-849c-f5b97d3ed299
-          display: Maria Gravitate
-        dosage:
-        - route:
-            coding:
-            - system: http://standardterms.edqm.eu
-              code: '20049000'
-              display: Nasal use
-    - fullUrl: urn:uuid:e198be1e-9861-46af-9d97-841ef9f7c707
-      resource:
-        resourceType: AllergyIntolerance
-        id: e198be1e-9861-46af-9d97-841ef9f7c707
-        clinicalStatus:
-          coding:
-          - system: http://terminology.hl7.org/CodeSystem/allergyintolerance-clinical
-            code: active
-        code:
-          coding:
-          - system: http://hl7.org/fhir/uv/ips/CodeSystem/absent-unknown-uv-ips
-            code: no-allergy-info
-            display: No information about allergies
-        patient:
-          reference: Patient/98549f1a-e0d5-4454-849c-f5b97d3ed299
-    - fullUrl: urn:uuid:da138a5d-633f-493f-9485-e5af1320db5b
-      resource:
-        resourceType: Condition
-        id: da138a5d-633f-493f-9485-e5af1320db5b
-        clinicalStatus:
-          coding:
-          - system: http://terminology.hl7.org/CodeSystem/condition-clinical
-            code: active
-        code:
-          coding:
-          - system: http://hl7.org/fhir/uv/ips/CodeSystem/absent-unknown-uv-ips
-            code: no-problem-info
-            display: No information about problems
-        subject:
-          reference: Patient/98549f1a-e0d5-4454-849c-f5b97d3ed299
-    - fullUrl: urn:uuid:5277b703-de58-47a5-8df2-198aa8a8fb72
-      resource:
-        resourceType: Organization
-        name: More Informatics, Inc
-        address:
-        - line:
-          - 59 Washington St.
-          city: Wellesley
-          state: MA
-          postalCode: 02481
-          country: USA
-  _usePackages:
-  - hl7.fhir.uv.ips@1.1.0
-  skip: true
-  _skipReason: 'unmappable Java messages outs=["INFORMATION: The URL value ''#jFE6f3a0zoZFHfj5'' might be wrong because it appears to point to
-    an internal target, but there is no matching target", "INFORMATION: The URL value ''#wOHXO3dHsmGHTjyu'' might be wrong because it appears
-    to point to an internal target, but there is no matching target"] (DESIGN §15)'
 - desc: graham/obs-de
   schemas: []
   data:
@@ -1436,9 +198,14 @@ tests:
             extension:
             - url: content
               valueString: Gesamtkörper
+  _usePackages:
+  - kbv.basis@1.2.0
+  - de.basisprofil.r4@0.9.13
+  - de.gevko.emdaf@1.2.0
+  - kbv.mio.diga@1.0.0-festlegung
   skip: true
-  _skipReason: 'IG fixtures missing: [''kbv.basis@1.2.0'', ''de.basisprofil.r4@0.9.13'', ''de.gevko.emdaf@1.2.0'', ''kbv.mio.diga@1.0.0-festlegung'']
-    (DESIGN §15)'
+  _skipReason: fs206 not firing on profile-defined fixed value in nested Observation.component; checkFixed misses profile-loaded context. (DESIGN
+    §15)
 - desc: graham/obs-de-notx
   schemas: []
   data:
@@ -1506,9 +273,13 @@ tests:
             extension:
             - url: content
               valueString: Gesamtkörper
+  _usePackages:
+  - kbv.basis@1.2.0
+  - de.basisprofil.r4@0.9.13
+  - de.gevko.emdaf@1.2.0
+  - kbv.mio.diga@1.0.0-festlegung
   skip: true
-  _skipReason: 'IG fixtures missing: [''kbv.basis@1.2.0'', ''de.basisprofil.r4@0.9.13'', ''de.gevko.emdaf@1.2.0'', ''kbv.mio.diga@1.0.0-festlegung'']
-    (DESIGN §15)'
+  _skipReason: Same as obs-de + fs1001 not firing on Reference target check. (DESIGN §15)
 - desc: graham/med-example
   schemas: []
   data:
@@ -1561,546 +332,12 @@ tests:
             - system: http://fhir.de/CodeSystem/ask
               code: '06226'
               display: Blutgerinnungsfaktor X
-  skip: true
-  _skipReason: 'IG fixtures missing: [''de.medizininformatikinitiative.kerndatensatz.medikation@2.0.0-ballot1'', ''basisprofil.de@0.2.40'', ''de.basisprofil.r4@1.0.0'']
-    (DESIGN §15)'
-- desc: graham/ips-htmlrefs-forwards
-  schemas: []
-  data:
-    resourceType: Bundle
-    identifier:
-      system: urn:ietf:rfc:4122
-      value: bc0be9cf-b905-4beb-a8f4-8a64e61b92a6
-    type: document
-    timestamp: '2023-11-30T21:41:29.867+00:00'
-    entry:
-    - fullUrl: urn:uuid:8ce7db7b-9b9b-41ae-b1d7-3f2d1c728a13
-      resource:
-        resourceType: Composition
-        text:
-          status: generated
-          div: <div xmlns="http://www.w3.org/1999/xhtml"><div><h1>Allergies and Intolerances</h1><div><div><table class="hapiPropertyTable"><caption>Allergies
-            And Intolerances</caption><thead><tr><th>Allergen</th><th>Status</th><th>Category</th><th>Reaction</th><th>Severity</th><th>Comments</th><th>Onset</th></tr></thead><tbody><tr
-            idref="ai1"><td> Barbituraten </td><td> active </td><td> MEDICATION </td><td></td><td></td><td> erg duizelig en misselijkheid </td><td>Fri
-            May 08 00:00:00 GMT 2020</td></tr><tr idref="ai2"><td> PARACETAMOL </td><td> active </td><td> BIOLOGIC </td><td></td><td></td><td></td><td>Tue
-            May 18 00:00:00 GMT 2021</td></tr></tbody></table></div></div></div></div>
-        status: final
-        type:
-          coding:
-          - system: http://loinc.org
-            code: 60591-5
-            display: Patient Summary Document
-        subject:
-          reference: urn:uuid:0118b1a2-87c0-4c04-b228-cefa3e43d092
-        date: '2023-11-30T21:41:29.691+00:00'
-        author:
-        - reference: urn:uuid:2ce90511-7938-4180-8f58-2c56eadf5ec4
-        title: Patient Summary as of 11/30/2023
-        confidentiality: N
-        section:
-        - title: Allergies and Intolerances
-          code:
-            coding:
-            - system: http://loinc.org
-              code: 48765-2
-              display: Allergies and adverse reactions Document
-          text:
-            status: generated
-            div: <div xmlns="http://www.w3.org/1999/xhtml"><table class="hapiPropertyTable"><caption>Allergies And Intolerances</caption><thead><tr><th>Allergen</th><th>Status</th><th>Category</th><th>Reaction</th><th>Severity</th><th>Comments</th><th>Onset</th></tr></thead><tbody><tr
-              idref="ai1"><td> Barbituraten </td><td> active </td><td> MEDICATION </td><td></td><td></td><td> erg duizelig en misselijkheid </td><td>Fri
-              May 08 00:00:00 GMT 2020</td></tr><tr idref="ai2"><td> PARACETAMOL </td><td> active </td><td> BIOLOGIC </td><td></td><td></td><td></td><td>Tue
-              May 18 00:00:00 GMT 2021</td></tr></tbody></table></div>
-          entry:
-          - id: ai1
-            reference: urn:uuid:edf25255-bfcd-4e29-a797-e89ea4ef000c
-          - id: ai2x
-            reference: urn:uuid:01ea6a58-df5f-4455-b6b2-7a31492be6b1
-    - fullUrl: urn:uuid:0118b1a2-87c0-4c04-b228-cefa3e43d092
-      resource:
-        resourceType: Patient
-        meta:
-          versionId: '1'
-          lastUpdated: '2023-09-05T14:05:45.414+00:00'
-          source: '#vAYMXrU9Wzm3Px0s'
-        text:
-          status: extensions
-          div: <div xmlns="http://www.w3.org/1999/xhtml"><div>Id <i>afgeschermd (ontbrekend gegeven)</i> (BSN), OG O.O. Persoon1, Man, 1 januari
-            1954</div><div>Lomanstraat 1, 1075PW Amsterdam</div></div>
-        identifier:
-        - system: http://fhir.nl/fhir/NamingSystem/bsn
-          _value:
-            extension:
-            - url: http://hl7.org/fhir/StructureDefinition/data-absent-reason
-              valueCode: masked
-        name:
-        - extension:
-          - url: http://hl7.org/fhir/StructureDefinition/humanname-assembly-order
-            valueCode: UNK
-          family: Persoon1
-          _family:
-            extension:
-            - url: http://hl7.org/fhir/StructureDefinition/humanname-own-name
-              valueString: Persoon1
-          given:
-          - OG
-          - O.O.
-          _given:
-          - extension:
-            - url: http://hl7.org/fhir/StructureDefinition/iso21090-EN-qualifier
-              valueCode: BR
-          - extension:
-            - url: http://hl7.org/fhir/StructureDefinition/iso21090-EN-qualifier
-              valueCode: IN
-        gender: male
-        birthDate: '1954-01-01'
-        address:
-        - line:
-          - Lomanstraat 1
-          _line:
-          - extension:
-            - url: http://hl7.org/fhir/StructureDefinition/iso21090-ADXP-streetName
-              valueString: Lomanstraat
-            - url: http://hl7.org/fhir/StructureDefinition/iso21090-ADXP-houseNumber
-              valueString: '1'
-          city: Amsterdam
-          postalCode: 1075PW
-    - fullUrl: urn:uuid:edf25255-bfcd-4e29-a797-e89ea4ef000c
-      resource:
-        resourceType: AllergyIntolerance
-        meta:
-          versionId: '1'
-          lastUpdated: '2023-09-05T14:05:45.615+00:00'
-          source: '#aiS4FNzTwJ2qSkJU'
-        text:
-          status: extensions
-          div: '<div xmlns="http://www.w3.org/1999/xhtml"><table><caption>Allergie/intolerantie. Patiënt: OG O.O. Persoon1. Id: ef61e1263243ef3276f06dde345eee32
-            (urn:oid:2.16.528.1.1007.3.3.90000382.418.3), Categorie: <span title="neiging tot ongewenste reactie op geneesmiddel (419511003 -
-            SNOMED CT)">neiging tot ongewenste reactie op geneesmiddel</span>, Status: actief / <i>onbekend (ontbrekend gegeven)</i></caption><tfoot><tr><td
-            colspan="2">erg duizelig en misselijkheid</td></tr></tfoot><tbody><tr><th>Code</th><td><span title="Barbituraten (6 - G-Standaard
-            Tabel 122)">Barbituraten</span></td></tr><tr><th>Eerste symptomen</th><td>8 mei 2020</td></tr></tbody></table></div>'
-        identifier:
-        - system: urn:oid:2.16.528.1.1007.3.3.90000382.418.3
-          value: ef61e1263243ef3276f06dde345eee32
-        clinicalStatus:
-          coding:
-          - system: http://terminology.hl7.org/CodeSystem/allergyintolerance-clinical
-            code: active
-        category:
-        - medication
-        code:
-          text: Barbituraten
-        patient:
-          reference: urn:uuid:0118b1a2-87c0-4c04-b228-cefa3e43d092
-        onsetDateTime: '2020-05-08'
-        note:
-        - text: erg duizelig en misselijkheid
-    - fullUrl: urn:uuid:01ea6a58-df5f-4455-b6b2-7a31492be6b1
-      resource:
-        resourceType: AllergyIntolerance
-        meta:
-          versionId: '1'
-          lastUpdated: '2023-09-05T14:05:45.653+00:00'
-          source: '#1njrRvLievK86CqZ'
-        text:
-          status: extensions
-          div: '<div xmlns="http://www.w3.org/1999/xhtml"><table><caption>Allergie/intolerantie. Patiënt: H. Henç Méldërs. Id: 1343 (urn:oid:2.16.528.1.1007.3.3.90000384.231.1),
-            Categorie: <span title="allergie voor substantie (419199007 - SNOMED CT)">allergie voor substantie</span>, Status: actief / <i>onbekend
-            (ontbrekend gegeven)</i></caption><tbody><tr><th>Code</th><td><span title="PARACETAMOL (906 - G-Standaard Bestand 750)">PARACETAMOL</span></td></tr><tr><th>Eerste
-            symptomen</th><td>18 mei 2021</td></tr></tbody></table></div>'
-        identifier:
-        - system: urn:oid:2.16.528.1.1007.3.3.90000384.231.1
-          value: '1343'
-        clinicalStatus:
-          coding:
-          - system: http://terminology.hl7.org/CodeSystem/allergyintolerance-clinical
-            code: active
-        category:
-        - biologic
-        code:
-          text: PARACETAMOL
-        patient:
-          reference: urn:uuid:0118b1a2-87c0-4c04-b228-cefa3e43d092
-        onsetDateTime: '2021-05-18'
-    - fullUrl: urn:uuid:2ce90511-7938-4180-8f58-2c56eadf5ec4
-      resource:
-        resourceType: Organization
-        name: eHealthLab - University of Cyprus
-        address:
-        - line:
-          - 1 University Avenue
-          city: Nicosia
-          postalCode: '2109'
-          country: CY
   _usePackages:
-  - hl7.fhir.us.core@3.1.1
+  - de.medizininformatikinitiative.kerndatensatz.medikation@2.0.0-ballot1
+  - basisprofil.de@0.2.40
+  - de.basisprofil.r4@1.0.0
   skip: true
-  _skipReason: 'unmappable Java messages outs=["ERROR: Constraint failed: txt-1: ''The narrative SHALL contain only the basic html formatting
-    elements and attributes described in chapters 7-11 (except section 4 of chapter 9) and 15 of the HTML 4.0 standard, <a> elements (either name
-    or href), images and internally contained style attributes''", "ERROR: Invalid attribute name in the XHTML (''idref'' on ''tr'')"] (DESIGN
-    §15)'
-- desc: graham/ips-link
-  schemas: []
-  data:
-    resourceType: Bundle
-    id: NZ-IPS-20231009024857
-    language: en-NZ
-    identifier:
-      system: urn:oid:2.16.724.4.8.10.200.10
-      value: 59f51f0b-2005-485c-858e-3d3ae9657287
-    type: document
-    timestamp: '2023-10-09T02:48:57.4219686+00:00'
-    entry:
-    - fullUrl: https://terminz.azurewebsites.net/fhir/Composition/d2d5d4dd-4e86-41c6-98d2-e412882e9b4c
-      resource:
-        resourceType: Composition
-        id: d2d5d4dd-4e86-41c6-98d2-e412882e9b4c
-        meta:
-          versionId: '1'
-        language: en-NZ
-        text:
-          status: generated
-          div: <div xmlns='http://www.w3.org/1999/xhtml' lang='en-NZ' xml:lang='en-NZ'>International Patient Summary for <span id="AAA1234">James</span>
-            Judge, <span id="AAA1234X">NHI AAA1234</span></div>
-          extension:
-          - url: http://hl7.org/fhir/StructureDefinition/textLink
-            extension:
-            - url: htmlid
-              valueString: AAA1234
-            - url: data
-              valueUri: '#AAA1234'
-          - url: http://hl7.org/fhir/StructureDefinition/textLink
-            extension:
-            - url: htmlid
-              valueString: AAA1234XJ
-            - url: data
-              valueUri: '#AAA1234XJ'
-        identifier:
-          system: urn:oid:2.16.840.1.113883.2.18.7.2
-          value: 59f51f0b-2005-485c-858e-3d3ae9657287
-        status: final
-        type:
-          coding:
-          - system: http://loinc.org
-            code: 60591-5
-            display: Patient summary Document
-        subject:
-          reference: Patient/AAA1234
-        date: '2021-05-03'
-        author:
-        - reference: Organization/03993b0c-87ae-478b-8556-8c52a68c3486
-        title: International Patient Summary
-        confidentiality: N
-        attester:
-        - mode: professional
-          time: '2021-05-03'
-          party:
-            reference: PractitionerRole/1153dc30-cf69-402f-9522-132ec9ec14ac
-        custodian:
-          reference: Organization/15d2d767-48ba-4222-a1ca-8fa34393aed4
-        relatesTo:
-        - code: transforms
-          targetIdentifier:
-            system: urn:oid:2.16.840.1.113883.2.18.7.2
-            value: 59f51f0b-2005-485c-858e-3d3ae9657287
-        event:
-        - code:
-          - coding:
-            - system: http://terminology.hl7.org/CodeSystem/v3-ActClass
-              code: PCPR
-          period:
-            end: '2021-05-03'
-        section:
-        - title: Allergies and Intolerances
-          code:
-            coding:
-            - system: http://loinc.org
-              code: 48765-2
-              display: Allergies and adverse reactions Document
-          text:
-            status: generated
-            div: <div xmlns='http://www.w3.org/1999/xhtml' lang='en-NZ' xml:lang='en-NZ'>There is no information available regarding the subject's
-              allergy conditions.</div>
-          entry:
-          - reference: AllergyIntolerance/d46cc177-5660-46cc-9f55-6c28e1bc3bba
-        - title: Problem List
-          code:
-            coding:
-            - system: http://loinc.org
-              code: 11450-4
-              display: Problem list - Reported
-          text:
-            status: generated
-            div: <div xmlns='http://www.w3.org/1999/xhtml' lang='en-NZ' xml:lang='en-NZ'>There is no information available about the subject's
-              health problems or disabilities.</div>
-          entry:
-          - reference: Condition/20a587fa-239f-49c2-a3c8-ff2f2a18b654
-        - title: Medication Summary
-          code:
-            coding:
-            - system: http://loinc.org
-              code: 10160-0
-              display: History of Medication use Narrative
-          text:
-            status: generated
-            div: <div xmlns='http://www.w3.org/1999/xhtml' lang='en-NZ' xml:lang='en-NZ'>There is no information available about the subject's
-              medication use or administration.</div>
-          entry:
-          - reference: MedicationStatement/4e348646-0375-486a-a33d-d19801e6c7f7
-        - title: Immunizations
-          code:
-            coding:
-            - system: http://loinc.org
-              code: 11369-6
-              display: History of Immunization Narrative
-          text:
-            status: generated
-            div: "<div xmlns=\"http://www.w3.org/1999/xhtml\">\r\n  <table>\r\n    <thead>\r\n      <tr>\r\n        <th>Vaccine</th>\r\n     \
-              \   <th>Status</th>\r\n        <th>Occurance</th>\r\n        <th>Route</th>\r\n        <th>Dose #</th>\r\n        <th>Series</th>\r\
-              \n      </tr>\r\n    </thead>\r\n    <tbody>\r\n      <tr>\r\n        <td>Influenza, split virus, trivalent, preservative</td>\r\
-              \n        <td>Completed</td>\r\n        <td>2020-07-03</td>\r\n        <td>Injection, intramuscular</td>\r\n        <td>2</td>\r\
-              \n        <td>45y (Eligible condition (Influenza))</td>\r\n      </tr>\r\n      <tr>\r\n        <td>Influenza, split virus, trivalent,\
-              \ preservative</td>\r\n        <td>Completed</td>\r\n        <td>2019-06-03</td>\r\n        <td>Injection, intramuscular</td>\r\n\
-              \        <td>1</td>\r\n        <td>45y (Eligible condition (Influenza))</td>\r\n      </tr>\r\n    </tbody>\r\n  </table>\r\n</div>"
-          entry:
-          - reference: Immunization/c5efb4c3-91cf-4f63-b176-a697215d727a
-          - reference: Immunization/f58b2627-eeac-4280-8475-195ae422aa2d
-    - fullUrl: https://terminz.azurewebsites.net/fhir/Patient/AAA1234
-      resource:
-        resourceType: Patient
-        id: AAA1234
-        text:
-          status: generated
-          div: '<div xmlns=''http://www.w3.org/1999/xhtml'' xml:lang=''en-NZ''>Name: James Judge</div>'
-        identifier:
-        - id: AAA1234X
-          system: https://standards.digital.health.nz/ns/nhi-id
-          value: AAA1234
-        name:
-        - use: usual
-          family: Judge
-          given:
-          - James
-        telecom:
-        - system: phone
-          value: tel:+6478532279
-          use: home
-        gender: male
-        birthDate: '1985-04-25'
-        address:
-        - use: home
-          type: physical
-          line:
-          - Bleak House
-          - 3 Worcester Drive
-          - Rototuna North
-          city: Hamilton
-          postalCode: '3210'
-          country: NZ
-        maritalStatus:
-          coding:
-          - system: http://terminology.hl7.org/CodeSystem/v3-MaritalStatus
-            code: M
-            display: Married
-        contact:
-        - relationship:
-          - coding:
-            - system: http://terminology.hl7.org/CodeSystem/v2-0131
-              code: N
-              display: Next-of-Kin
-          name:
-            use: usual
-            family: mother
-            given:
-            - Natural
-            - mother
-        - relationship:
-          - coding:
-            - system: http://terminology.hl7.org/CodeSystem/v2-0131
-              code: C
-              display: Emergency Contact
-          name:
-            use: usual
-            family: Rabbit
-            given:
-            - Peter
-            - Rabbit
-          telecom:
-          - system: phone
-            value: 07 853 9191
-            use: home
-          address:
-            use: home
-            type: physical
-            line:
-            - 9 Worcester Drive
-            - Rototuna
-            city: Hamilton
-            postalCode: '3210'
-            country: NZ
-        communication:
-        - language:
-            text: en-NZ
-    - fullUrl: https://terminz.azurewebsites.net/fhir/Organization/03993b0c-87ae-478b-8556-8c52a68c3486
-      resource:
-        resourceType: Organization
-        id: 03993b0c-87ae-478b-8556-8c52a68c3486
-        identifier:
-        - system: https://standards.digital.health.nz/ns/hpi-facility-id
-          value: F0K068-E
-        name: Northcare, Thomas Road
-    - fullUrl: https://terminz.azurewebsites.net/fhir/PractitionerRole/1153dc30-cf69-402f-9522-132ec9ec14ac
-      resource:
-        resourceType: PractitionerRole
-        id: 1153dc30-cf69-402f-9522-132ec9ec14ac
-        practitioner:
-          reference: Practitioner/944fee7f-7dfd-4f68-84f4-43ca5287f05d
-        code:
-        - coding:
-          - system: http://snomed.info/sct
-            code: '158965000'
-            display: Doctor
-    - fullUrl: https://terminz.azurewebsites.net/fhir/Practitioner/944fee7f-7dfd-4f68-84f4-43ca5287f05d
-      resource:
-        resourceType: Practitioner
-        id: 944fee7f-7dfd-4f68-84f4-43ca5287f05d
-        name:
-        - use: usual
-          family: Kildare
-          given:
-          - Dr
-          - Richard
-          - Kildare
-        telecom:
-        - system: phone
-          value: tel:+6478539191
-          use: work
-        address:
-        - use: work
-          type: physical
-          line:
-          - 12 Thomas Rd
-          - Huntingdon
-          city: Hamilton
-          postalCode: '3211'
-          country: NZ
-    - fullUrl: https://terminz.azurewebsites.net/fhir/Organization/15d2d767-48ba-4222-a1ca-8fa34393aed4
-      resource:
-        resourceType: Organization
-        id: 15d2d767-48ba-4222-a1ca-8fa34393aed4
-        identifier:
-        - system: urn:oid:2.16.840.1.113883.2.18.3
-          value: F2N000-J
-        name: NorthCare Pukete Road
-    - fullUrl: https://terminz.azurewebsites.net/fhir/AllergyIntolerance/d46cc177-5660-46cc-9f55-6c28e1bc3bba
-      resource:
-        resourceType: AllergyIntolerance
-        id: d46cc177-5660-46cc-9f55-6c28e1bc3bba
-        clinicalStatus:
-          coding:
-          - system: http://terminology.hl7.org/CodeSystem/allergyintolerance-clinical
-            code: active
-        code:
-          coding:
-          - system: http://hl7.org/fhir/uv/ips/CodeSystem/absent-unknown-uv-ips
-            code: no-allergy-info
-            display: No information about allergies
-        patient:
-          reference: Patient/AAA1234
-    - fullUrl: https://terminz.azurewebsites.net/fhir/Condition/20a587fa-239f-49c2-a3c8-ff2f2a18b654
-      resource:
-        resourceType: Condition
-        id: 20a587fa-239f-49c2-a3c8-ff2f2a18b654
-        clinicalStatus:
-          coding:
-          - system: http://terminology.hl7.org/CodeSystem/condition-clinical
-            code: active
-        code:
-          coding:
-          - system: http://hl7.org/fhir/uv/ips/CodeSystem/absent-unknown-uv-ips
-            code: no-problem-info
-            display: No information about problems
-        subject:
-          reference: Patient/AAA1234
-    - fullUrl: https://terminz.azurewebsites.net/fhir/MedicationStatement/4e348646-0375-486a-a33d-d19801e6c7f7
-      resource:
-        resourceType: MedicationStatement
-        id: 4e348646-0375-486a-a33d-d19801e6c7f7
-        status: unknown
-        medicationCodeableConcept:
-          coding:
-          - system: http://hl7.org/fhir/uv/ips/CodeSystem/absent-unknown-uv-ips
-            code: no-medication-info
-            display: No information about medications
-        subject:
-          reference: Patient/AAA1234
-        effectiveDateTime: '2023-10-09T02:48:57.467553+00:00'
-    - fullUrl: https://terminz.azurewebsites.net/fhir/Immunization/c5efb4c3-91cf-4f63-b176-a697215d727a
-      resource:
-        resourceType: Immunization
-        id: c5efb4c3-91cf-4f63-b176-a697215d727a
-        status: completed
-        vaccineCode:
-          coding:
-          - system: http://hl7.org/fhir/sid/cvx
-            code: '141'
-            display: Influenza, split virus, trivalent, preservative
-        patient:
-          reference: Patient/AAA1234
-        occurrenceDateTime: '2020-07-03'
-        lotNumber: B52b
-        expirationDate: '2020-07-03'
-        site:
-          coding:
-          - system: http://snomed.info/sct
-            code: '72098002'
-            display: Entire left upper arm
-        route:
-          coding:
-          - system: http://terminology.hl7.org/CodeSystem/v3-RouteOfAdministration
-            code: IM
-            display: Injection, intramuscular
-        performer:
-        - actor:
-            reference: Organization/15d2d767-48ba-4222-a1ca-8fa34393aed4
-        protocolApplied:
-        - series: 45y (Eligible condition (Influenza))
-          doseNumberPositiveInt: 2
-    - fullUrl: https://terminz.azurewebsites.net/fhir/Immunization/f58b2627-eeac-4280-8475-195ae422aa2d
-      resource:
-        resourceType: Immunization
-        id: f58b2627-eeac-4280-8475-195ae422aa2d
-        status: completed
-        vaccineCode:
-          coding:
-          - system: http://hl7.org/fhir/sid/cvx
-            code: '141'
-            display: Influenza, split virus, trivalent, preservative
-        patient:
-          reference: Patient/AAA1234
-        occurrenceDateTime: '2019-06-03'
-        lotNumber: B52
-        expirationDate: '2019-08-03'
-        site:
-          coding:
-          - system: http://snomed.info/sct
-            code: '72098002'
-            display: Entire left upper arm
-        route:
-          coding:
-          - system: http://terminology.hl7.org/CodeSystem/v3-RouteOfAdministration
-            code: IM
-            display: Injection, intramuscular
-        performer:
-        - actor:
-            reference: Organization/15d2d767-48ba-4222-a1ca-8fa34393aed4
-        protocolApplied:
-        - series: 45y (Eligible condition (Influenza))
-          doseNumberPositiveInt: 1
-  _usePackages:
-  - hl7.fhir.uv.ips@1.1.0
-  skip: true
-  _skipReason: 'unmappable Java messages outs=["ERROR: The html id ''AAA1234XJ'' was not found in the xhtml", "ERROR: The target of the textLink
-    data reference ''#AAA1234XJ'' was not found in the resource"] (DESIGN §15)'
+  _skipReason: 'Combination: missing fs206 + surprise fs101 (number-as-code permissive coercion). (DESIGN §15 → permissive coercion)'
 - desc: graham/profile-compliesWith
   schemas: []
   data:
@@ -5637,8 +3874,1928 @@ tests:
         mapping:
         - identity: argonaut-dq-dstu2
           map: Patient.communication.language
+  _usePackages:
+  - hl7.fhir.us.core@8.0.0-ballot
+  valid: true
+- desc: graham/bnd-slicing-cgm
+  schemas: []
+  data:
+    resourceType: Bundle
+    id: cgmDataSubmissionBundle
+    type: transaction
+    timestamp: '2024-05-02T14:30:00Z'
+    entry:
+    - fullUrl: https://example.org/DiagnosticReport/cgmSummaryPDFExample
+      resource:
+        resourceType: DiagnosticReport
+        id: cgmSummaryPDFExample
+        status: final
+        category:
+        - coding:
+          - system: http://terminology.hl7.org/CodeSystem/v2-0074
+            code: LAB
+        code:
+          coding:
+          - system: http://hl7.org/fhir/uv/cgm/CodeSystem/cgm-summary-codes-temporary
+            code: cgm-summary
+        subject:
+          reference: Patient/patientExample
+        effectivePeriod:
+          start: '2024-05-01'
+          end: '2024-05-14'
+        issued: '2024-05-15T14:30:00Z'
+        result:
+        - reference: Observation/cgmSummaryExample
+        presentedForm:
+        - contentType: application/pdf
+          data: JVBERi0xLjAKJcK1wrYKCjEgMCBvYmoKPDwvVHlwZS9DYXRhbG9nL1BhZ2VzIDIgMCBSPj4KZW5kb2JqCgoyIDAgb2JqCjw8L0tpZHNbMyAwIFJdL0NvdW50IDEvVHlwZS9QYWdlcy9NZWRpYUJveFswIDAgNTk1IDc5Ml0+PgplbmRvYmoKCjMgMCBvYmoKPDwvVHlwZS9QYWdlL1BhcmVudCAyIDAgUi9Db250ZW50cyA0IDAgUi9SZXNvdXJjZXM8PD4+Pj4KZW5kb2JqCgo0IDAgb2JqCjw8L0xlbmd0aCA1OD4+CnN0cmVhbQpxCkJUCi8gOTYgVGYKMSAwIDAgMSAzNiA2ODQgVG0KKEZISVIgQ0dNISkgVGoKRVQKUQoKZW5kc3RyZWFtCmVuZG9iagoKeHJlZgowIDUKMDAwMDAwMDAwMCA2NTUzNiBmIAowMDAwMDAwMDE2IDAwMDAwIG4gCjAwMDAwMDAwNjIgMDAwMDAgbiAKMDAwMDAwMDEzNiAwMDAwMCBuIAowMDAwMDAwMjA5IDAwMDAwIG4gCgp0cmFpbGVyCjw8L1NpemUgNS9Sb290IDEgMCBSPj4Kc3RhcnR4cmVmCjMxNgolJUVPRgoK
+      request:
+        method: POST
+        url: DiagnosticReport
+    - fullUrl: https://example.org/Observation/cgmSummaryExample
+      resource:
+        resourceType: Observation
+        id: cgmSummaryExample
+        status: final
+        category:
+        - coding:
+          - system: http://terminology.hl7.org/CodeSystem/observation-category
+            code: laboratory
+        code:
+          coding:
+          - system: http://hl7.org/fhir/uv/cgm/CodeSystem/cgm-summary-codes-temporary
+            code: cgm-summary
+        subject:
+          reference: Patient/patientExample
+        effectivePeriod:
+          start: '2024-05-01'
+          end: '2024-05-31'
+        hasMember:
+        - reference: Observation/cgmSummaryMeanGlucoseMassPerVolumeExample
+        - reference: Observation/cgmSummaryTimesInRangesExample
+        - reference: Observation/cgmSummaryGMIExample
+        - reference: Observation/cgmSummaryCoefficientOfVariationExample
+        - reference: Observation/cgmSummaryDaysOfWearExample
+        - reference: Observation/cgmSummarySensorActivePercentageExample
+      request:
+        method: POST
+        url: Observation
+    - fullUrl: https://example.org/Observation/cgmSummaryMeanGlucoseMassPerVolumeExample
+      resource:
+        resourceType: Observation
+        id: cgmSummaryMeanGlucoseMassPerVolumeExample
+        status: final
+        category:
+        - coding:
+          - system: http://terminology.hl7.org/CodeSystem/observation-category
+            code: laboratory
+        code:
+          coding:
+          - system: http://loinc.org
+            code: 97507-8
+        subject:
+          reference: Patient/patientExample
+        effectivePeriod:
+          start: '2024-05-01'
+          end: '2024-05-31'
+        valueQuantity:
+          value: 145
+          unit: mg/dl
+          system: http://unitsofmeasure.org
+          code: mg/dL
+      request:
+        method: POST
+        url: Observation
+    - fullUrl: https://example.org/Observation/cgmSummaryTimesInRangesExample
+      resource:
+        resourceType: Observation
+        id: cgmSummaryTimesInRangesExample
+        status: final
+        category:
+        - coding:
+          - system: http://terminology.hl7.org/CodeSystem/observation-category
+            code: laboratory
+        code:
+          coding:
+          - system: http://loinc.org
+            code: 106793-3
+        subject:
+          reference: Patient/patientExample
+        effectivePeriod:
+          start: '2024-05-01'
+          end: '2024-05-31'
+        component:
+        - code:
+            coding:
+            - system: http://loinc.org
+              code: 104642-4
+          valueQuantity:
+            value: 3
+            unit: '%'
+            system: http://unitsofmeasure.org
+            code: '%'
+        - code:
+            coding:
+            - system: http://loinc.org
+              code: 104641-6
+          valueQuantity:
+            value: 8
+            unit: '%'
+            system: http://unitsofmeasure.org
+            code: '%'
+        - code:
+            coding:
+            - system: http://loinc.org
+              code: 97510-2
+          valueQuantity:
+            value: 65
+            unit: '%'
+            system: http://unitsofmeasure.org
+            code: '%'
+        - code:
+            coding:
+            - system: http://loinc.org
+              code: 104640-8
+          valueQuantity:
+            value: 20
+            unit: '%'
+            system: http://unitsofmeasure.org
+            code: '%'
+        - code:
+            coding:
+            - system: http://loinc.org
+              code: 104639-0
+          valueQuantity:
+            value: 4
+            unit: '%'
+            system: http://unitsofmeasure.org
+            code: '%'
+      request:
+        method: POST
+        url: Observation
+    - fullUrl: https://example.org/Observation/cgmSummaryGMIExample
+      resource:
+        resourceType: Observation
+        id: cgmSummaryGMIExample
+        status: final
+        category:
+        - coding:
+          - system: http://terminology.hl7.org/CodeSystem/observation-category
+            code: laboratory
+        code:
+          coding:
+          - system: http://loinc.org
+            code: 97506-0
+        subject:
+          reference: Patient/patientExample
+        effectivePeriod:
+          start: '2024-05-01'
+          end: '2024-05-31'
+        valueQuantity:
+          value: 6.8
+          unit: '%'
+          system: http://unitsofmeasure.org
+          code: '%'
+      request:
+        method: POST
+        url: Observation
+    - fullUrl: https://example.org/Observation/cgmSummaryCoefficientOfVariationExample
+      resource:
+        resourceType: Observation
+        id: cgmSummaryCoefficientOfVariationExample
+        status: final
+        category:
+        - coding:
+          - system: http://terminology.hl7.org/CodeSystem/observation-category
+            code: laboratory
+        code:
+          coding:
+          - system: http://loinc.org
+            code: 104638-2
+        subject:
+          reference: Patient/patientExample
+        effectivePeriod:
+          start: '2024-05-01'
+          end: '2024-05-31'
+        valueQuantity:
+          value: 34
+          unit: '%'
+          system: http://unitsofmeasure.org
+          code: '%'
+      request:
+        method: POST
+        url: Observation
+    - fullUrl: https://example.org/Observation/cgmSummaryDaysOfWearExample
+      resource:
+        resourceType: Observation
+        id: cgmSummaryDaysOfWearExample
+        status: final
+        category:
+        - coding:
+          - system: http://terminology.hl7.org/CodeSystem/observation-category
+            code: laboratory
+        code:
+          coding:
+          - system: http://loinc.org
+            code: 104636-6
+        subject:
+          reference: Patient/patientExample
+        effectivePeriod:
+          start: '2024-05-01'
+          end: '2024-05-31'
+        valueQuantity:
+          value: 28
+          unit: days
+          system: http://unitsofmeasure.org
+          code: d
+      request:
+        method: POST
+        url: Observation
+    - fullUrl: https://example.org/Observation/cgmSummarySensorActivePercentageExample
+      resource:
+        resourceType: Observation
+        id: cgmSummarySensorActivePercentageExample
+        status: final
+        category:
+        - coding:
+          - system: http://terminology.hl7.org/CodeSystem/observation-category
+            code: laboratory
+        code:
+          coding:
+          - system: http://loinc.org
+            code: 104637-4
+        subject:
+          reference: Patient/patientExample
+        effectivePeriod:
+          start: '2024-05-01'
+          end: '2024-05-31'
+        valueQuantity:
+          value: 95
+          unit: '%'
+          system: http://unitsofmeasure.org
+          code: '%'
+      request:
+        method: POST
+        url: Observation
+    - fullUrl: https://example.org/Observation/cgmSensorReadingMassPerVolumeExample
+      resource:
+        resourceType: Observation
+        id: cgmSensorReadingMassPerVolumeExample
+        status: final
+        category:
+        - coding:
+          - system: http://terminology.hl7.org/CodeSystem/observation-category
+            code: laboratory
+        code:
+          coding:
+          - system: http://loinc.org
+            code: 99504-3
+        subject:
+          reference: Patient/patientExample
+        effectiveDateTime: '2024-05-02T10:15:00Z'
+        valueQuantity:
+          value: 120
+          unit: mg/dl
+          system: http://unitsofmeasure.org
+          code: mg/dL
+      request:
+        method: POST
+        url: Observation
+  _usePackages:
+  - hl7.fhir.uv.cgm@1.0.0-ballot
+  _applyProfileUrl: http://hl7.org/fhir/uv/cgm/StructureDefinition/cgm-data-submission-bundle
+  valid: true
+- desc: graham/valueset-dependency-version-1
+  schemas: []
+  data:
+    resourceType: Condition
+    id: example
+    meta:
+      profile:
+      - http://hl7.org/fhir/test/StructureDefinition/verB-sd-test-two
+    code:
+      coding:
+      - system: http://hl7.org/fhir/test/CodeSystem/verA-cs-test
+        code: code
+        display: Display X
+    subject:
+      reference: Patient/example
+      display: Amy V. Shaw
+    onsetDateTime: '2016-08-10'
+  _usePackages:
+  - hl7.fhir.test.verA@1.0.0
+  - hl7.fhir.test.verA@2.0.0
+  - hl7.fhir.test.verB@1.0.0
+  valid: true
+- desc: graham/valueset-dependency-version-2
+  schemas: []
+  data:
+    resourceType: Condition
+    id: example
+    meta:
+      profile:
+      - http://hl7.org/fhir/test/StructureDefinition/verB-sd-test-two
+    code:
+      coding:
+      - system: http://hl7.org/fhir/test/CodeSystem/verA-cs-test
+        code: code
+        display: Display X
+    subject:
+      reference: Patient/example
+      display: Amy V. Shaw
+    onsetDateTime: '2016-08-10'
+  _usePackages:
+  - hl7.fhir.test.verA@1.0.0
+  - hl7.fhir.test.verA@2.0.0
+  - hl7.fhir.test.verB@2.0.0
+  valid: true
+- desc: graham/valueset-dependency-version-3
+  schemas: []
+  data:
+    resourceType: Condition
+    id: example
+    meta:
+      profile:
+      - http://hl7.org/fhir/test/StructureDefinition/verB-sd-test-one
+    code:
+      coding:
+      - system: http://hl7.org/fhir/test/CodeSystem/verA-cs-test
+        code: code
+        display: Display X
+    subject:
+      reference: Patient/example
+      display: Amy V. Shaw
+    onsetDateTime: '2016-08-10'
+  _usePackages:
+  - hl7.fhir.test.verA@1.0.0
+  - hl7.fhir.test.verA@2.0.0
+  - hl7.fhir.test.verB@1.0.0
+  valid: true
+- desc: graham/valueset-dependency-version-4
+  schemas: []
+  data:
+    resourceType: Condition
+    id: example
+    meta:
+      profile:
+      - http://hl7.org/fhir/test/StructureDefinition/verB-sd-test-one
+    code:
+      coding:
+      - system: http://hl7.org/fhir/test/CodeSystem/verA-cs-test
+        code: code
+        display: Display X
+    subject:
+      reference: Patient/example
+      display: Amy V. Shaw
+    onsetDateTime: '2016-08-10'
+  _usePackages:
+  - hl7.fhir.test.verA@1.0.0
+  - hl7.fhir.test.verA@2.0.0
+  - hl7.fhir.test.verB@2.0.0
+  valid: true
+- desc: graham/valueset-dependency-version-5
+  schemas: []
+  data:
+    resourceType: Condition
+    id: example
+    meta:
+      profile:
+      - http://hl7.org/fhir/test/StructureDefinition/verC-sd-test-two
+    code:
+      coding:
+      - system: http://hl7.org/fhir/test/CodeSystem/verA-cs-test
+        code: code
+        display: Display X
+    subject:
+      reference: Patient/example
+      display: Amy V. Shaw
+    onsetDateTime: '2016-08-10'
+  _usePackages:
+  - hl7.fhir.test.verA@1.0.0
+  - hl7.fhir.test.verA@2.0.0
+  - hl7.fhir.test.verC@1.0.0
+  valid: true
+- desc: graham/valueset-dependency-version-6
+  schemas: []
+  data:
+    resourceType: Condition
+    id: example
+    meta:
+      profile:
+      - http://hl7.org/fhir/test/StructureDefinition/verC-sd-test-one
+    code:
+      coding:
+      - system: http://hl7.org/fhir/test/CodeSystem/verA-cs-test
+        code: code
+        display: Display X
+    subject:
+      reference: Patient/example
+      display: Amy V. Shaw
+    onsetDateTime: '2016-08-10'
+  _usePackages:
+  - hl7.fhir.test.verA@1.0.0
+  - hl7.fhir.test.verA@2.0.0
+  - hl7.fhir.test.verC@1.0.0
+  valid: true
+- desc: graham/condition-with-extensions-on-pattern
+  schemas: []
+  data:
+    resourceType: Condition
+    id: ExampleConditionWithExtensionsOnPattern
+    meta:
+      profile:
+      - https://www.medizininformatik-initiative.de/fhir/core/modul-diagnose/StructureDefinition/Diagnose
+    code:
+      coding:
+      - extension:
+        - url: http://fhir.de/StructureDefinition/icd-10-gm-primaercode
+          valueCoding:
+            system: http://fhir.de/CodeSystem/dimdi/icd-10-gm
+            version: '2020'
+            code: A54.4
+        - url: http://fhir.de/StructureDefinition/icd-10-gm-manifestationscode
+          valueCoding:
+            system: http://fhir.de/CodeSystem/dimdi/icd-10-gm
+            version: '2020'
+            code: M73.04
+        - url: http://fhir.de/StructureDefinition/icd-10-gm-diagnosesicherheit
+          valueCoding:
+            system: https://fhir.kbv.de/CodeSystem/KBV_CS_SFHIR_ICD_DIAGNOSESICHERHEIT
+            code: G
+        - url: http://fhir.de/StructureDefinition/seitenlokalisation
+          valueCoding:
+            system: https://fhir.kbv.de/CodeSystem/KBV_CS_SFHIR_ICD_SEITENLOKALISATION
+            code: L
+            display: links
+        system: http://fhir.de/CodeSystem/dimdi/icd-10-gm
+        version: '2020'
+        code: A54.4† M73.04*
+        display: Bursitis gonorrhoica
+    subject:
+      reference: Patient/12345
+  _usePackages:
+  - de.medizininformatikinitiative.kerndatensatz.diagnose@1.0.4
   skip: true
-  _skipReason: 'IG fixtures missing: [''hl7.fhir.us.core@8.0.0-ballot''] (DESIGN §15)'
+  _skipReason: 'unmappable Java messages outs=["ERROR: Unknown code ''A54.4† M73.04*'' in the CodeSystem ''http://fhir.de/CodeSystem/dimdi/icd-10-gm''
+    version ''2020''", ''WARNING: Constraint failed: icd-5: \''Wenn die Diagnosesicherheit "G (Gesichert)" verwendet wird, dann muss clinicalStatus
+    auf "active" und verificationStatus auf "confirmed" gesetzt werden.\''''] (DESIGN §15)'
+- desc: graham/no.gastronet
+  schemas: []
+  data:
+    resourceType: Bundle
+    meta:
+      profile:
+      - http://kvalitetsregistre.no/fhir/StructureDefinition/colonoscopyreport-bundle-gastronet
+    identifier:
+      system: http://kreftregisteret.no/fhir/NamingSystem/colonoscopy-report-id
+      value: 1b31da0f-d1d4-40ec-b7a6-59269a8b6549
+    type: collection
+    timestamp: '2021-11-16T13:28:17.239+01:00'
+    entry:
+    - fullUrl: http://testdata.no/fhir/Patient/1
+      resource:
+        resourceType: Patient
+        id: '1'
+        meta:
+          profile:
+          - http://kvalitetsregistre.no/fhir/StructureDefinition/colonoscopyreport-patient-gastronet
+        identifier:
+        - system: urn:oid:2.16.578.1.12.4.1.4.1
+          value: '13116900216'
+        name:
+        - extension:
+          - url: http://hl7.no/fhir/StructureDefinition/no-basis-middlename
+            valueString: Erik
+          family: Line
+          given:
+          - Danser
+        - extension:
+          - url: http://hl7.no/fhir/StructureDefinition/no-basis-middlename
+            valueString: Erik
+          family: Eksempel
+          given:
+          - Espen
+    - fullUrl: http://testdata.no/fhir/Procedure/1
+      resource:
+        resourceType: Procedure
+        id: '1'
+        meta:
+          profile:
+          - http://kvalitetsregistre.no/fhir/StructureDefinition/colonoscopyreport-colonoscopy-gastronet
+        extension:
+        - url: http://kreftregisteret.no/fhir/StructureDefinition/colonoscopyreport-laxatives-extension
+          extension:
+          - url: type
+            valueCodeableConcept:
+              coding:
+              - system: http://ehelse.no/fhir/CodeSystem/colonoscopy-model-specific-codes
+                code: laxabon
+          - url: takenAsSplitDose
+            valueCodeableConcept:
+              coding:
+              - system: http://terminology.hl7.org/CodeSystem/v3-NullFlavor
+                code: NA
+        - url: http://kreftregisteret.no/fhir/StructureDefinition/colonoscopyreport-complicationconsequence-extension
+          valueCodeableConcept:
+            coding:
+            - system: http://snomed.info/sct
+              code: '32485007'
+              display: Hospital admission (procedure)
+        - url: http://kreftregisteret.no/fhir/StructureDefinition/colonoscopyreport-partofbowelreached-extension
+          valueCodeableConcept:
+            coding:
+            - system: http://snomed.info/sct
+              code: '32713005'
+              display: Cecum structure (body structure)
+        - url: http://kreftregisteret.no/fhir/StructureDefinition/colonoscopyreport-withdrawaltime
+          valueDuration:
+            value: 2
+            unit: min
+            system: http://unitsofmeasure.org
+            code: min
+        - url: http://kreftregisteret.no/fhir/StructureDefinition/colonoscopyreport-caecumreacheddocumentation-extension
+          valueBoolean: true
+        - url: http://kreftregisteret.no/fhir/StructureDefinition/colonoscopyreport-medicationgiven-extension
+          valueBoolean: true
+        - url: http://kreftregisteret.no/fhir/StructureDefinition/colonoscopyreport-sedationlevel-extension
+          valueCodeableConcept:
+            coding:
+            - system: http://snomed.info/sct
+              code: '10821000202101'
+              display: Narkose eller dyp sedasjon med anestesistøtte
+        status: completed
+        category:
+          coding:
+          - system: http://snomed.info/sct
+            code: '446745002'
+            display: Diagnostisk med biopsi
+        code:
+          coding:
+          - system: http://snomed.info/sct
+            code: '73761001'
+            display: Colonoscopy (procedure)
+        subject:
+          reference: http://testdata.no/fhir/Patient/1
+        performedDateTime: '2020-11-01T15:00:00+01:00'
+        performer:
+        - function:
+            coding:
+            - system: http://snomed.info/sct
+              code: '8921000202108'
+              display: Primary performing endoscopist (person)
+          actor:
+            reference: http://testdata.no/fhir/Practitioner/2
+        - function:
+            coding:
+            - system: http://snomed.info/sct
+              code: '8951000202101'
+              display: Main nurse assisting procedure (person)
+          actor:
+            reference: http://testdata.no/fhir/Practitioner/3
+        location:
+          reference: http://testdata.no/fhir/Location/1
+        reasonCode:
+        - coding:
+          - system: http://ehelse.no/fhir/CodeSystem/colonoscopy-model-specific-codes
+            code: indikasjon-polyppkontroll
+            display: Polyppkontroll
+        report:
+        - reference: http://testdata.no/fhir/DiagnosticReport/1
+        complication:
+        - coding:
+          - system: http://snomed.info/sct
+            code: '712510007'
+            display: Intestinal hemorrhage (disorder)
+    - fullUrl: http://testdata.no/fhir/DiagnosticReport/1
+      resource:
+        resourceType: DiagnosticReport
+        id: '1'
+        meta:
+          profile:
+          - http://kvalitetsregistre.no/fhir/StructureDefinition/colonoscopyreport-diagnosticreport-gastronet
+        status: final
+        code:
+          coding:
+          - system: http://snomed.info/sct
+            code: '73761001'
+            display: Colonoscopy (procedure)
+        subject:
+          reference: http://testdata.no/fhir/Patient/1
+        result:
+        - reference: http://testdata.no/fhir/Observation/lesion-1
+        - reference: http://testdata.no/fhir/Observation/bbps
+        - reference: http://testdata.no/fhir/Observation/numberoflesions
+        - reference: http://testdata.no/fhir/Observation/lumen
+        conclusionCode:
+        - extension:
+          - url: http://kreftregisteret.no/fhir/StructureDefinition/diagnosticreport-conclusion-ismaindiagnosis
+            valueBoolean: true
+          coding:
+          - system: http://hl7.org/fhir/sid/icd-10
+            code: C18.0
+            display: 'Malignant neoplasm: Caecum'
+    - fullUrl: http://testdata.no/fhir/Observation/numberoflesions
+      resource:
+        resourceType: Observation
+        id: numberoflesions
+        meta:
+          profile:
+          - http://kvalitetsregistre.no/fhir/StructureDefinition/colonoscopyreport-numberoflesions-gastronet
+        status: final
+        code:
+          coding:
+          - system: http://snomed.info/sct
+            code: '246206008'
+        valueQuantity:
+          value: 1
+    - fullUrl: http://testdata.no/fhir/Observation/lesion-1
+      resource:
+        resourceType: Observation
+        id: lesion-1
+        meta:
+          profile:
+          - http://kvalitetsregistre.no/fhir/StructureDefinition/colonoscopyreport-lesion-gastronet
+        identifier:
+        - system: http://kreftregisteret.no/fhir/NamingSystem/lesion-number
+          value: '1'
+        status: final
+        code:
+          coding:
+          - system: http://snomed.info/sct
+            code: '300577008'
+            display: Finding of lesion (finding)
+        component:
+        - code:
+            coding:
+            - system: http://snomed.info/sct
+              code: '10291000202102'
+              display: Lesion size given by largest diameter (observable entity)
+          valueQuantity:
+            value: 3
+            unit: mm
+            system: http://unitsofmeasure.org
+            code: mm
+    - fullUrl: http://testdata.no/fhir/Observation/bbps
+      resource:
+        resourceType: Observation
+        id: bbps
+        meta:
+          profile:
+          - http://kvalitetsregistre.no/fhir/StructureDefinition/colonoscopyreport-bostonbowelpreparationscale-gastronet
+        status: final
+        code:
+          coding:
+          - system: http://snomed.info/sct
+            code: '722818007'
+            display: Boston bowel preparation scale (assessment scale)
+        component:
+        - code:
+            coding:
+            - system: http://snomed.info/sct
+              code: '8901000202102'
+              display: Boston bowel preparation skala høyre kolon
+          valueCodeableConcept:
+            coding:
+            - system: http://snomed.info/sct
+              code: '10291000132101'
+              display: Portion of mucosa of colon segment seen, but other areas of colon segment not well seen due to staining, residual stool
+                and/or opaque liquid (finding)
+        - code:
+            coding:
+            - system: http://snomed.info/sct
+              code: '8911000202100'
+              display: Boston bowel preparation skala kolon transversum
+          valueCodeableConcept:
+            coding:
+            - system: http://snomed.info/sct
+              code: '10301000132102'
+              display: Minor amount of residual staining, small fragments of stool and/or opaque liquid, but mucosa of colon segment seen well
+                (finding)
+        - code:
+            coding:
+            - system: http://snomed.info/sct
+              code: '8891000202103'
+              display: Boston bowel preparation skala venstre kolon
+          valueCodeableConcept:
+            coding:
+            - system: http://snomed.info/sct
+              code: '10311000132100'
+              display: Entire mucosa of colon segment seen well with no residual staining, small fragments of stool or opaque liquid (finding)
+    - fullUrl: http://testdata.no/fhir/Observation/lumen
+      resource:
+        resourceType: Observation
+        id: lumen
+        meta:
+          profile:
+          - http://kvalitetsregistre.no/fhir/StructureDefinition/colonoscopyreport-lumen-gastronet
+        status: final
+        code:
+          coding:
+          - system: http://snomed.info/sct
+            code: '15991000202102'
+            display: Appearance of intestinal lumen
+        valueCodeableConcept:
+          coding:
+          - system: http://snomed.info/sct
+            code: '17621005'
+            display: Normal (qualifier value)
+    - fullUrl: http://testdata.no/fhir/List/medication-list
+      resource:
+        resourceType: List
+        id: medication-list
+        meta:
+          profile:
+          - http://kvalitetsregistre.no/fhir/StructureDefinition/colonoscopyreport-medicationlist-gastronet
+        status: current
+        mode: snapshot
+        code:
+          coding:
+          - system: http://terminology.hl7.org/CodeSystem/list-example-use-codes
+            code: medications
+        subject:
+          reference: http://testdata.no/fhir/Patient/1
+        entry:
+        - item:
+            reference: http://testdata.no/fhir/MedicationStatement/2
+        - item:
+            reference: http://testdata.no/fhir/MedicationStatement/3
+    - fullUrl: http://testdata.no/fhir/MedicationStatement/2
+      resource:
+        resourceType: MedicationStatement
+        id: '2'
+        meta:
+          profile:
+          - http://kvalitetsregistre.no/fhir/StructureDefinition/colonoscopyreport-current-medication-gastronet
+        status: active
+        medicationCodeableConcept:
+          coding:
+          - system: http://snomed.info/sct
+            code: '372756006'
+            display: Warfarin (substance)
+        subject:
+          reference: http://testdata.no/fhir/Patient/1
+    - fullUrl: http://testdata.no/fhir/MedicationStatement/3
+      resource:
+        resourceType: MedicationStatement
+        id: '3'
+        meta:
+          profile:
+          - http://kvalitetsregistre.no/fhir/StructureDefinition/colonoscopyreport-current-medication-gastronet
+        status: active
+        medicationCodeableConcept:
+          coding:
+          - system: http://snomed.info/sct
+            code: '387458008'
+            display: Aspirin (substance)
+        subject:
+          reference: http://testdata.no/fhir/Patient/1
+    - fullUrl: http://testdata.no/fhir/Practitioner/2
+      resource:
+        resourceType: Practitioner
+        id: '2'
+        meta:
+          profile:
+          - http://hl7.no/fhir/StructureDefinition/no-basis-Practitioner
+        identifier:
+        - system: urn:oid:2.16.578.1.12.4.1.4.4
+          value: '958100012'
+    - fullUrl: http://testdata.no/fhir/Practitioner/3
+      resource:
+        resourceType: Practitioner
+        id: '3'
+        meta:
+          profile:
+          - http://hl7.no/fhir/StructureDefinition/no-basis-Practitioner
+        identifier:
+        - system: urn:oid:2.16.578.1.12.4.1.4.4
+          value: 012345678
+    - fullUrl: http://testdata.no/fhir/Location/1
+      resource:
+        resourceType: Location
+        id: '1'
+        meta:
+          profile:
+          - http://hl7.no/fhir/StructureDefinition/no-basis-Location
+        managingOrganization:
+          reference: http://testdata.no/fhir/Organization/1
+    - fullUrl: http://testdata.no/fhir/Organization/1
+      resource:
+        resourceType: Organization
+        id: '1'
+        meta:
+          profile:
+          - http://hl7.no/fhir/StructureDefinition/no-basis-Organization
+        identifier:
+        - system: urn:oid:2.16.578.1.12.4.1.4.102
+          value: '46372864397'
+        name: Test Clinic
+  _usePackages:
+  - colonoscopyreport.no@0.7.4
+  skip: true
+  _skipReason: 'unmappable Java messages outs=[''INFORMATION: Reference to draft CodeSystem http://ehelse.no/fhir/CodeSystem/colonoscopy-model-specific-codes'',
+    "ERROR: Unknown code ''10821000202101'' in the CodeSystem ''http://snomed.info/sct'' version ''http://snomed.info/sct/900000000000207008/version/20250201''
+    (International Edition)"] (DESIGN §15)'
+- desc: graham/no.gastronet.message-limit
+  schemas: []
+  data:
+    resourceType: Bundle
+    meta:
+      profile:
+      - http://kvalitetsregistre.no/fhir/StructureDefinition/colonoscopyreport-bundle-gastronet
+    identifier:
+      system: http://kreftregisteret.no/fhir/NamingSystem/colonoscopy-report-id
+      value: 1b31da0f-d1d4-40ec-b7a6-59269a8b6549
+    type: collection
+    timestamp: '2021-11-16T13:28:17.239+01:00'
+    entry:
+    - fullUrl: http://testdata.no/fhir/Patient/1
+      resource:
+        resourceType: Patient
+        id: '1'
+        meta:
+          profile:
+          - http://kvalitetsregistre.no/fhir/StructureDefinition/colonoscopyreport-patient-gastronet
+        identifier:
+        - system: urn:oid:2.16.578.1.12.4.1.4.1
+          value: '13116900216'
+        name:
+        - extension:
+          - url: http://hl7.no/fhir/StructureDefinition/no-basis-middlename
+            valueString: Erik
+          family: Line
+          given:
+          - Danser
+        - extension:
+          - url: http://hl7.no/fhir/StructureDefinition/no-basis-middlename
+            valueString: Erik
+          family: Eksempel
+          given:
+          - Espen
+    - fullUrl: http://testdata.no/fhir/Procedure/1
+      resource:
+        resourceType: Procedure
+        id: '1'
+        meta:
+          profile:
+          - http://kvalitetsregistre.no/fhir/StructureDefinition/colonoscopyreport-colonoscopy-gastronet
+        extension:
+        - url: http://kreftregisteret.no/fhir/StructureDefinition/colonoscopyreport-laxatives-extension
+          extension:
+          - url: type
+            valueCodeableConcept:
+              coding:
+              - system: http://ehelse.no/fhir/CodeSystem/colonoscopy-model-specific-codes
+                code: laxabon
+          - url: takenAsSplitDose
+            valueCodeableConcept:
+              coding:
+              - system: http://terminology.hl7.org/CodeSystem/v3-NullFlavor
+                code: NA
+        - url: http://kreftregisteret.no/fhir/StructureDefinition/colonoscopyreport-complicationconsequence-extension
+          valueCodeableConcept:
+            coding:
+            - system: http://snomed.info/sct
+              code: '32485007'
+              display: Hospital admission (procedure)
+        - url: http://kreftregisteret.no/fhir/StructureDefinition/colonoscopyreport-partofbowelreached-extension
+          valueCodeableConcept:
+            coding:
+            - system: http://snomed.info/sct
+              code: '32713005'
+              display: Cecum structure (body structure)
+        - url: http://kreftregisteret.no/fhir/StructureDefinition/colonoscopyreport-withdrawaltime
+          valueDuration:
+            value: 2
+            unit: min
+            system: http://unitsofmeasure.org
+            code: min
+        - url: http://kreftregisteret.no/fhir/StructureDefinition/colonoscopyreport-caecumreacheddocumentation-extension
+          valueBoolean: true
+        - url: http://kreftregisteret.no/fhir/StructureDefinition/colonoscopyreport-medicationgiven-extension
+          valueBoolean: true
+        - url: http://kreftregisteret.no/fhir/StructureDefinition/colonoscopyreport-sedationlevel-extension
+          valueCodeableConcept:
+            coding:
+            - system: http://snomed.info/sct
+              code: '10821000202101'
+              display: Narkose eller dyp sedasjon med anestesistøtte
+        status: completed
+        category:
+          coding:
+          - system: http://snomed.info/sct
+            code: '446745002'
+            display: Diagnostisk med biopsi
+        code:
+          coding:
+          - system: http://snomed.info/sct
+            code: '73761001'
+            display: Colonoscopy (procedure)
+        subject:
+          reference: http://testdata.no/fhir/Patient/1
+        performedDateTime: '2020-11-01T15:00:00+01:00'
+        performer:
+        - function:
+            coding:
+            - system: http://snomed.info/sct
+              code: '8921000202108'
+              display: Primary performing endoscopist (person)
+          actor:
+            reference: http://testdata.no/fhir/Practitioner/2
+        - function:
+            coding:
+            - system: http://snomed.info/sct
+              code: '8951000202101'
+              display: Main nurse assisting procedure (person)
+          actor:
+            reference: http://testdata.no/fhir/Practitioner/3
+        location:
+          reference: http://testdata.no/fhir/Location/1
+        reasonCode:
+        - coding:
+          - system: http://ehelse.no/fhir/CodeSystem/colonoscopy-model-specific-codes
+            code: indikasjon-polyppkontroll
+            display: Polyppkontroll
+        report:
+        - reference: http://testdata.no/fhir/DiagnosticReport/1
+        complication:
+        - coding:
+          - system: http://snomed.info/sct
+            code: '712510007'
+            display: Intestinal hemorrhage (disorder)
+    - fullUrl: http://testdata.no/fhir/DiagnosticReport/1
+      resource:
+        resourceType: DiagnosticReport
+        id: '1'
+        meta:
+          profile:
+          - http://kvalitetsregistre.no/fhir/StructureDefinition/colonoscopyreport-diagnosticreport-gastronet
+        status: final
+        code:
+          coding:
+          - system: http://snomed.info/sct
+            code: '73761001'
+            display: Colonoscopy (procedure)
+        subject:
+          reference: http://testdata.no/fhir/Patient/1
+        result:
+        - reference: http://testdata.no/fhir/Observation/lesion-1
+        - reference: http://testdata.no/fhir/Observation/bbps
+        - reference: http://testdata.no/fhir/Observation/numberoflesions
+        - reference: http://testdata.no/fhir/Observation/lumen
+        conclusionCode:
+        - extension:
+          - url: http://kreftregisteret.no/fhir/StructureDefinition/diagnosticreport-conclusion-ismaindiagnosis
+            valueBoolean: true
+          coding:
+          - system: http://hl7.org/fhir/sid/icd-10
+            code: C18.0
+            display: 'Malignant neoplasm: Caecum'
+    - fullUrl: http://testdata.no/fhir/Observation/numberoflesions
+      resource:
+        resourceType: Observation
+        id: numberoflesions
+        meta:
+          profile:
+          - http://kvalitetsregistre.no/fhir/StructureDefinition/colonoscopyreport-numberoflesions-gastronet
+        status: final
+        code:
+          coding:
+          - system: http://snomed.info/sct
+            code: '246206008'
+        valueQuantity:
+          value: 1
+    - fullUrl: http://testdata.no/fhir/Observation/lesion-1
+      resource:
+        resourceType: Observation
+        id: lesion-1
+        meta:
+          profile:
+          - http://kvalitetsregistre.no/fhir/StructureDefinition/colonoscopyreport-lesion-gastronet
+        identifier:
+        - system: http://kreftregisteret.no/fhir/NamingSystem/lesion-number
+          value: '1'
+        status: final
+        code:
+          coding:
+          - system: http://snomed.info/sct
+            code: '300577008'
+            display: Finding of lesion (finding)
+        component:
+        - code:
+            coding:
+            - system: http://snomed.info/sct
+              code: '10291000202102'
+              display: Lesion size given by largest diameter (observable entity)
+          valueQuantity:
+            value: 3
+            unit: mm
+            system: http://unitsofmeasure.org
+            code: mm
+    - fullUrl: http://testdata.no/fhir/Observation/bbps
+      resource:
+        resourceType: Observation
+        id: bbps
+        meta:
+          profile:
+          - http://kvalitetsregistre.no/fhir/StructureDefinition/colonoscopyreport-bostonbowelpreparationscale-gastronet
+        status: final
+        code:
+          coding:
+          - system: http://snomed.info/sct
+            code: '722818007'
+            display: Boston bowel preparation scale (assessment scale)
+        component:
+        - code:
+            coding:
+            - system: http://snomed.info/sct
+              code: '8901000202102'
+              display: Boston bowel preparation skala høyre kolon
+          valueCodeableConcept:
+            coding:
+            - system: http://snomed.info/sct
+              code: '10291000132101'
+              display: Portion of mucosa of colon segment seen, but other areas of colon segment not well seen due to staining, residual stool
+                and/or opaque liquid (finding)
+        - code:
+            coding:
+            - system: http://snomed.info/sct
+              code: '8911000202100'
+              display: Boston bowel preparation skala kolon transversum
+          valueCodeableConcept:
+            coding:
+            - system: http://snomed.info/sct
+              code: '10301000132102'
+              display: Minor amount of residual staining, small fragments of stool and/or opaque liquid, but mucosa of colon segment seen well
+                (finding)
+        - code:
+            coding:
+            - system: http://snomed.info/sct
+              code: '8891000202103'
+              display: Boston bowel preparation skala venstre kolon
+          valueCodeableConcept:
+            coding:
+            - system: http://snomed.info/sct
+              code: '10311000132100'
+              display: Entire mucosa of colon segment seen well with no residual staining, small fragments of stool or opaque liquid (finding)
+    - fullUrl: http://testdata.no/fhir/Observation/lumen
+      resource:
+        resourceType: Observation
+        id: lumen
+        meta:
+          profile:
+          - http://kvalitetsregistre.no/fhir/StructureDefinition/colonoscopyreport-lumen-gastronet
+        status: final
+        code:
+          coding:
+          - system: http://snomed.info/sct
+            code: '15991000202102'
+            display: Appearance of intestinal lumen
+        valueCodeableConcept:
+          coding:
+          - system: http://snomed.info/sct
+            code: '17621005'
+            display: Normal (qualifier value)
+    - fullUrl: http://testdata.no/fhir/List/medication-list
+      resource:
+        resourceType: List
+        id: medication-list
+        meta:
+          profile:
+          - http://kvalitetsregistre.no/fhir/StructureDefinition/colonoscopyreport-medicationlist-gastronet
+        status: current
+        mode: snapshot
+        code:
+          coding:
+          - system: http://terminology.hl7.org/CodeSystem/list-example-use-codes
+            code: medications
+        subject:
+          reference: http://testdata.no/fhir/Patient/1
+        entry:
+        - item:
+            reference: http://testdata.no/fhir/MedicationStatement/2
+        - item:
+            reference: http://testdata.no/fhir/MedicationStatement/3
+    - fullUrl: http://testdata.no/fhir/MedicationStatement/2
+      resource:
+        resourceType: MedicationStatement
+        id: '2'
+        meta:
+          profile:
+          - http://kvalitetsregistre.no/fhir/StructureDefinition/colonoscopyreport-current-medication-gastronet
+        status: active
+        medicationCodeableConcept:
+          coding:
+          - system: http://snomed.info/sct
+            code: '372756006'
+            display: Warfarin (substance)
+        subject:
+          reference: http://testdata.no/fhir/Patient/1
+    - fullUrl: http://testdata.no/fhir/MedicationStatement/3
+      resource:
+        resourceType: MedicationStatement
+        id: '3'
+        meta:
+          profile:
+          - http://kvalitetsregistre.no/fhir/StructureDefinition/colonoscopyreport-current-medication-gastronet
+        status: active
+        medicationCodeableConcept:
+          coding:
+          - system: http://snomed.info/sct
+            code: '387458008'
+            display: Aspirin (substance)
+        subject:
+          reference: http://testdata.no/fhir/Patient/1
+    - fullUrl: http://testdata.no/fhir/Practitioner/2
+      resource:
+        resourceType: Practitioner
+        id: '2'
+        meta:
+          profile:
+          - http://hl7.no/fhir/StructureDefinition/no-basis-Practitioner
+        identifier:
+        - system: urn:oid:2.16.578.1.12.4.1.4.4
+          value: '958100012'
+    - fullUrl: http://testdata.no/fhir/Practitioner/3
+      resource:
+        resourceType: Practitioner
+        id: '3'
+        meta:
+          profile:
+          - http://hl7.no/fhir/StructureDefinition/no-basis-Practitioner
+        identifier:
+        - system: urn:oid:2.16.578.1.12.4.1.4.4
+          value: 012345678
+    - fullUrl: http://testdata.no/fhir/Location/1
+      resource:
+        resourceType: Location
+        id: '1'
+        meta:
+          profile:
+          - http://hl7.no/fhir/StructureDefinition/no-basis-Location
+        managingOrganization:
+          reference: http://testdata.no/fhir/Organization/1
+    - fullUrl: http://testdata.no/fhir/Organization/1
+      resource:
+        resourceType: Organization
+        id: '1'
+        meta:
+          profile:
+          - http://hl7.no/fhir/StructureDefinition/no-basis-Organization
+        identifier:
+        - system: urn:oid:2.16.578.1.12.4.1.4.102
+          value: '46372864397'
+        name: Test Clinic
+  skip: true
+  _skipReason: no java outcome (DESIGN §15)
+- desc: graham/mimic
+  schemas: []
+  data:
+    id: 59bbcf99-d3c2-5224-945e-1d35f73d1ccc
+    meta:
+      profile:
+      - http://fhir.mimic.mit.edu/StructureDefinition/mimic-encounter
+    type:
+    - coding:
+      - system: http://fhir.mimic.mit.edu/CodeSystem/admission-type
+        code: URGENT
+    class:
+      system: http://fhir.mimic.mit.edu/CodeSystem/admission-class
+      code: URGENT
+    period:
+      end: '2158-09-28T12:10:00-04:00'
+      start: '2158-09-28T01:21:00-04:00'
+    status: finished
+    subject:
+      reference: Patient/08fdadd0-70d8-59b4-902b-6b7a3b83d2cc
+    identifier:
+    - use: usual
+      value: '20769698'
+      system: http://fhir.mimic.mit.edu/CodeSystem/identifier-encounter
+      assigner:
+        reference: Organization/ee172322-118b-5716-abbc-18e4c5437e15
+    resourceType: Encounter
+    hospitalization:
+      admitSource:
+        coding:
+        - system: http://fhir.mimic.mit.edu/CodeSystem/admit-source
+          display: EMERGENCY ROOM
+      dischargeDisposition:
+        coding:
+        - system: http://fhir.mimic.mit.edu/CodeSystem/discharge-dispostion
+          display: HOME
+    serviceProvider:
+      reference: Organization/ee172322-118b-5716-abbc-18e4c5437ecc
+  _usePackages:
+  - mimic@0.1.2
+  skip: true
+  _skipReason: 'unmappable Java messages outs=["WARNING: A definition for CodeSystem ''http://fhir.mimic.mit.edu/CodeSystem/admission-class''
+    could not be found, so the code cannot be validated", "WARNING: A definition for CodeSystem ''http://fhir.mimic.mit.edu/CodeSystem/admission-type''
+    could not be found, so the code cannot be validated"] (DESIGN §15)'
+- desc: graham/bundle-urn
+  schemas: []
+  data:
+    resourceType: Bundle
+    identifier:
+      system: urn:ietf:rfc:4122
+      value: 4f0a749d-87af-46ad-adb8-bec181f01106
+    type: document
+    timestamp: '2023-01-15T18:35:00.448+00:00'
+    entry:
+    - fullUrl: urn:uuid:a6a8a8e6-415c-42e1-abf7-f8d876e5908b
+      resource:
+        resourceType: Composition
+        status: final
+        type:
+          coding:
+          - system: http://loinc.org
+            code: 60591-5
+            display: Patient Summary Document
+        subject:
+          reference: Patient/98549f1a-e0d5-4454-849c-f5b97d3ed299
+        date: '2023-01-15T18:35:00+00:00'
+        author:
+        - reference: urn:uuid:5277b703-de58-47a5-8df2-198aa8a8fb72
+        title: Patient Summary as of 01/15/2023
+        confidentiality: N
+        section:
+        - title: Allergies and Intolerances
+          code:
+            coding:
+            - system: http://loinc.org
+              code: 48765-2
+              display: Allergies and adverse reactions Document
+          text:
+            status: generated
+            div: <div xmlns='http://www.w3.org/1999/xhtml' lang='en-NZ' xml:lang='en-NZ'>There is no information available regarding the subject's
+              allergy conditions.</div>
+          entry:
+          - reference: AllergyIntolerance/e198be1e-9861-46af-9d97-841ef9f7c707
+        - title: Medication List
+          code:
+            coding:
+            - system: http://loinc.org
+              code: 10160-0
+              display: History of Medication use Narrative
+          text:
+            status: generated
+            div: '<div xmlns="http://www.w3.org/1999/xhtml"><table class="hapiPropertyTable"><caption>Medication Summary: Medication Statements</caption><thead><tr><th>Medication</th><th>Status</th><th>Route</th><th>Sig</th><th>Date</th></tr></thead><tbody><tr
+              id="MedicationSummary-d41ac499-c7e8-45fa-9246-69028bae178f"><td>Oxymetazoline hydrochloride  0.05 mg / 1 ml Spray</td><td>Active</td><td>
+              Nasal use </td><td /><td /></tr></tbody></table></div>'
+          entry:
+          - reference: MedicationStatement/d41ac499-c7e8-45fa-9246-69028bae178f
+        - title: Problem List
+          code:
+            coding:
+            - system: http://loinc.org
+              code: 11450-4
+              display: Problem list - Reported
+          text:
+            status: generated
+            div: <div xmlns='http://www.w3.org/1999/xhtml' lang='en-NZ' xml:lang='en-NZ'>There is no information available about the subject's
+              health problems or disabilities.</div>
+          entry:
+          - reference: Condition/da138a5d-633f-493f-9485-e5af1320db5b
+    - fullUrl: urn:uuid:98549f1a-e0d5-4454-849c-f5b97d3ed299
+      resource:
+        resourceType: Patient
+        id: 98549f1a-e0d5-4454-849c-f5b97d3ed299
+        meta:
+          versionId: '1'
+          lastUpdated: '2022-09-27T15:21:51.306+00:00'
+          source: '#jFE6f3a0zoZFHfj5'
+        text:
+          status: generated
+          div: <div xmlns="http://www.w3.org/1999/xhtml"><div class="hapiHeaderText">Maria <b>GRAVITATE </b></div><table class="hapiPropertyTable"><tbody><tr><td>Identifier</td><td>maria-1</td></tr><tr><td>Date
+            of birth</td><td><span>05 May 1946</span></td></tr></tbody></table></div>
+        extension:
+        - url: http://hl7.org/fhir/StructureDefinition/patient-citizenship
+          extension:
+          - url: code
+            valueCodeableConcept:
+              coding:
+              - system: urn:iso:std:iso:3166
+                code: 'NO'
+                display: Norway
+        identifier:
+        - system: https://www.gravitatehealth.eu/sid/doc
+          value: maria-1
+        active: true
+        name:
+        - family: Gravitate
+          given:
+          - Maria
+        gender: female
+        birthDate: '1946-05-05'
+    - fullUrl: urn:uuid:d41ac499-c7e8-45fa-9246-69028bae178f
+      resource:
+        resourceType: MedicationStatement
+        id: d41ac499-c7e8-45fa-9246-69028bae178f
+        meta:
+          versionId: '1'
+          lastUpdated: '2022-09-27T15:22:04.319+00:00'
+          source: '#wOHXO3dHsmGHTjyu'
+        extension:
+        - url: http://hl7.org/fhir/StructureDefinition/NarrativeLink
+          valueUri: urn:uuid:a6a8a8e6-415c-42e1-abf7-f8d876e5908b#MedicationSummary-d41ac499-c7e8-45fa-9246-69028bae178f
+        status: active
+        medicationCodeableConcept:
+          coding:
+          - system: http://www.nlm.nih.gov/research/umls/rxnorm
+            code: '1000990'
+            display: oxymetazoline hydrochloride 0.5 MG/ML Nasal Spray
+        subject:
+          reference: Patient/98549f1a-e0d5-4454-849c-f5b97d3ed299
+          display: Maria Gravitate
+        dosage:
+        - route:
+            coding:
+            - system: http://standardterms.edqm.eu
+              code: '20049000'
+              display: Nasal use
+    - fullUrl: urn:uuid:e198be1e-9861-46af-9d97-841ef9f7c707
+      resource:
+        resourceType: AllergyIntolerance
+        id: e198be1e-9861-46af-9d97-841ef9f7c707
+        clinicalStatus:
+          coding:
+          - system: http://terminology.hl7.org/CodeSystem/allergyintolerance-clinical
+            code: active
+        code:
+          coding:
+          - system: http://hl7.org/fhir/uv/ips/CodeSystem/absent-unknown-uv-ips
+            code: no-allergy-info
+            display: No information about allergies
+        patient:
+          reference: Patient/98549f1a-e0d5-4454-849c-f5b97d3ed299
+    - fullUrl: urn:uuid:da138a5d-633f-493f-9485-e5af1320db5b
+      resource:
+        resourceType: Condition
+        id: da138a5d-633f-493f-9485-e5af1320db5b
+        clinicalStatus:
+          coding:
+          - system: http://terminology.hl7.org/CodeSystem/condition-clinical
+            code: active
+        code:
+          coding:
+          - system: http://hl7.org/fhir/uv/ips/CodeSystem/absent-unknown-uv-ips
+            code: no-problem-info
+            display: No information about problems
+        subject:
+          reference: Patient/98549f1a-e0d5-4454-849c-f5b97d3ed299
+    - fullUrl: urn:uuid:5277b703-de58-47a5-8df2-198aa8a8fb72
+      resource:
+        resourceType: Organization
+        name: More Informatics, Inc
+        address:
+        - line:
+          - 59 Washington St.
+          city: Wellesley
+          state: MA
+          postalCode: 02481
+          country: USA
+  _usePackages:
+  - hl7.fhir.uv.ips@1.1.0
+  skip: true
+  _skipReason: 'unmappable Java messages outs=["INFORMATION: The URL value ''#jFE6f3a0zoZFHfj5'' might be wrong because it appears to point to
+    an internal target, but there is no matching target", "INFORMATION: The URL value ''#wOHXO3dHsmGHTjyu'' might be wrong because it appears
+    to point to an internal target, but there is no matching target"] (DESIGN §15)'
+- desc: graham/ips-htmlrefs-forwards
+  schemas: []
+  data:
+    resourceType: Bundle
+    identifier:
+      system: urn:ietf:rfc:4122
+      value: bc0be9cf-b905-4beb-a8f4-8a64e61b92a6
+    type: document
+    timestamp: '2023-11-30T21:41:29.867+00:00'
+    entry:
+    - fullUrl: urn:uuid:8ce7db7b-9b9b-41ae-b1d7-3f2d1c728a13
+      resource:
+        resourceType: Composition
+        text:
+          status: generated
+          div: <div xmlns="http://www.w3.org/1999/xhtml"><div><h1>Allergies and Intolerances</h1><div><div><table class="hapiPropertyTable"><caption>Allergies
+            And Intolerances</caption><thead><tr><th>Allergen</th><th>Status</th><th>Category</th><th>Reaction</th><th>Severity</th><th>Comments</th><th>Onset</th></tr></thead><tbody><tr
+            idref="ai1"><td> Barbituraten </td><td> active </td><td> MEDICATION </td><td></td><td></td><td> erg duizelig en misselijkheid </td><td>Fri
+            May 08 00:00:00 GMT 2020</td></tr><tr idref="ai2"><td> PARACETAMOL </td><td> active </td><td> BIOLOGIC </td><td></td><td></td><td></td><td>Tue
+            May 18 00:00:00 GMT 2021</td></tr></tbody></table></div></div></div></div>
+        status: final
+        type:
+          coding:
+          - system: http://loinc.org
+            code: 60591-5
+            display: Patient Summary Document
+        subject:
+          reference: urn:uuid:0118b1a2-87c0-4c04-b228-cefa3e43d092
+        date: '2023-11-30T21:41:29.691+00:00'
+        author:
+        - reference: urn:uuid:2ce90511-7938-4180-8f58-2c56eadf5ec4
+        title: Patient Summary as of 11/30/2023
+        confidentiality: N
+        section:
+        - title: Allergies and Intolerances
+          code:
+            coding:
+            - system: http://loinc.org
+              code: 48765-2
+              display: Allergies and adverse reactions Document
+          text:
+            status: generated
+            div: <div xmlns="http://www.w3.org/1999/xhtml"><table class="hapiPropertyTable"><caption>Allergies And Intolerances</caption><thead><tr><th>Allergen</th><th>Status</th><th>Category</th><th>Reaction</th><th>Severity</th><th>Comments</th><th>Onset</th></tr></thead><tbody><tr
+              idref="ai1"><td> Barbituraten </td><td> active </td><td> MEDICATION </td><td></td><td></td><td> erg duizelig en misselijkheid </td><td>Fri
+              May 08 00:00:00 GMT 2020</td></tr><tr idref="ai2"><td> PARACETAMOL </td><td> active </td><td> BIOLOGIC </td><td></td><td></td><td></td><td>Tue
+              May 18 00:00:00 GMT 2021</td></tr></tbody></table></div>
+          entry:
+          - id: ai1
+            reference: urn:uuid:edf25255-bfcd-4e29-a797-e89ea4ef000c
+          - id: ai2x
+            reference: urn:uuid:01ea6a58-df5f-4455-b6b2-7a31492be6b1
+    - fullUrl: urn:uuid:0118b1a2-87c0-4c04-b228-cefa3e43d092
+      resource:
+        resourceType: Patient
+        meta:
+          versionId: '1'
+          lastUpdated: '2023-09-05T14:05:45.414+00:00'
+          source: '#vAYMXrU9Wzm3Px0s'
+        text:
+          status: extensions
+          div: <div xmlns="http://www.w3.org/1999/xhtml"><div>Id <i>afgeschermd (ontbrekend gegeven)</i> (BSN), OG O.O. Persoon1, Man, 1 januari
+            1954</div><div>Lomanstraat 1, 1075PW Amsterdam</div></div>
+        identifier:
+        - system: http://fhir.nl/fhir/NamingSystem/bsn
+          _value:
+            extension:
+            - url: http://hl7.org/fhir/StructureDefinition/data-absent-reason
+              valueCode: masked
+        name:
+        - extension:
+          - url: http://hl7.org/fhir/StructureDefinition/humanname-assembly-order
+            valueCode: UNK
+          family: Persoon1
+          _family:
+            extension:
+            - url: http://hl7.org/fhir/StructureDefinition/humanname-own-name
+              valueString: Persoon1
+          given:
+          - OG
+          - O.O.
+          _given:
+          - extension:
+            - url: http://hl7.org/fhir/StructureDefinition/iso21090-EN-qualifier
+              valueCode: BR
+          - extension:
+            - url: http://hl7.org/fhir/StructureDefinition/iso21090-EN-qualifier
+              valueCode: IN
+        gender: male
+        birthDate: '1954-01-01'
+        address:
+        - line:
+          - Lomanstraat 1
+          _line:
+          - extension:
+            - url: http://hl7.org/fhir/StructureDefinition/iso21090-ADXP-streetName
+              valueString: Lomanstraat
+            - url: http://hl7.org/fhir/StructureDefinition/iso21090-ADXP-houseNumber
+              valueString: '1'
+          city: Amsterdam
+          postalCode: 1075PW
+    - fullUrl: urn:uuid:edf25255-bfcd-4e29-a797-e89ea4ef000c
+      resource:
+        resourceType: AllergyIntolerance
+        meta:
+          versionId: '1'
+          lastUpdated: '2023-09-05T14:05:45.615+00:00'
+          source: '#aiS4FNzTwJ2qSkJU'
+        text:
+          status: extensions
+          div: '<div xmlns="http://www.w3.org/1999/xhtml"><table><caption>Allergie/intolerantie. Patiënt: OG O.O. Persoon1. Id: ef61e1263243ef3276f06dde345eee32
+            (urn:oid:2.16.528.1.1007.3.3.90000382.418.3), Categorie: <span title="neiging tot ongewenste reactie op geneesmiddel (419511003 -
+            SNOMED CT)">neiging tot ongewenste reactie op geneesmiddel</span>, Status: actief / <i>onbekend (ontbrekend gegeven)</i></caption><tfoot><tr><td
+            colspan="2">erg duizelig en misselijkheid</td></tr></tfoot><tbody><tr><th>Code</th><td><span title="Barbituraten (6 - G-Standaard
+            Tabel 122)">Barbituraten</span></td></tr><tr><th>Eerste symptomen</th><td>8 mei 2020</td></tr></tbody></table></div>'
+        identifier:
+        - system: urn:oid:2.16.528.1.1007.3.3.90000382.418.3
+          value: ef61e1263243ef3276f06dde345eee32
+        clinicalStatus:
+          coding:
+          - system: http://terminology.hl7.org/CodeSystem/allergyintolerance-clinical
+            code: active
+        category:
+        - medication
+        code:
+          text: Barbituraten
+        patient:
+          reference: urn:uuid:0118b1a2-87c0-4c04-b228-cefa3e43d092
+        onsetDateTime: '2020-05-08'
+        note:
+        - text: erg duizelig en misselijkheid
+    - fullUrl: urn:uuid:01ea6a58-df5f-4455-b6b2-7a31492be6b1
+      resource:
+        resourceType: AllergyIntolerance
+        meta:
+          versionId: '1'
+          lastUpdated: '2023-09-05T14:05:45.653+00:00'
+          source: '#1njrRvLievK86CqZ'
+        text:
+          status: extensions
+          div: '<div xmlns="http://www.w3.org/1999/xhtml"><table><caption>Allergie/intolerantie. Patiënt: H. Henç Méldërs. Id: 1343 (urn:oid:2.16.528.1.1007.3.3.90000384.231.1),
+            Categorie: <span title="allergie voor substantie (419199007 - SNOMED CT)">allergie voor substantie</span>, Status: actief / <i>onbekend
+            (ontbrekend gegeven)</i></caption><tbody><tr><th>Code</th><td><span title="PARACETAMOL (906 - G-Standaard Bestand 750)">PARACETAMOL</span></td></tr><tr><th>Eerste
+            symptomen</th><td>18 mei 2021</td></tr></tbody></table></div>'
+        identifier:
+        - system: urn:oid:2.16.528.1.1007.3.3.90000384.231.1
+          value: '1343'
+        clinicalStatus:
+          coding:
+          - system: http://terminology.hl7.org/CodeSystem/allergyintolerance-clinical
+            code: active
+        category:
+        - biologic
+        code:
+          text: PARACETAMOL
+        patient:
+          reference: urn:uuid:0118b1a2-87c0-4c04-b228-cefa3e43d092
+        onsetDateTime: '2021-05-18'
+    - fullUrl: urn:uuid:2ce90511-7938-4180-8f58-2c56eadf5ec4
+      resource:
+        resourceType: Organization
+        name: eHealthLab - University of Cyprus
+        address:
+        - line:
+          - 1 University Avenue
+          city: Nicosia
+          postalCode: '2109'
+          country: CY
+  _usePackages:
+  - hl7.fhir.us.core@3.1.1
+  skip: true
+  _skipReason: 'unmappable Java messages outs=["ERROR: Constraint failed: txt-1: ''The narrative SHALL contain only the basic html formatting
+    elements and attributes described in chapters 7-11 (except section 4 of chapter 9) and 15 of the HTML 4.0 standard, <a> elements (either name
+    or href), images and internally contained style attributes''", "ERROR: Invalid attribute name in the XHTML (''idref'' on ''tr'')"] (DESIGN
+    §15)'
+- desc: graham/ips-link
+  schemas: []
+  data:
+    resourceType: Bundle
+    id: NZ-IPS-20231009024857
+    language: en-NZ
+    identifier:
+      system: urn:oid:2.16.724.4.8.10.200.10
+      value: 59f51f0b-2005-485c-858e-3d3ae9657287
+    type: document
+    timestamp: '2023-10-09T02:48:57.4219686+00:00'
+    entry:
+    - fullUrl: https://terminz.azurewebsites.net/fhir/Composition/d2d5d4dd-4e86-41c6-98d2-e412882e9b4c
+      resource:
+        resourceType: Composition
+        id: d2d5d4dd-4e86-41c6-98d2-e412882e9b4c
+        meta:
+          versionId: '1'
+        language: en-NZ
+        text:
+          status: generated
+          div: <div xmlns='http://www.w3.org/1999/xhtml' lang='en-NZ' xml:lang='en-NZ'>International Patient Summary for <span id="AAA1234">James</span>
+            Judge, <span id="AAA1234X">NHI AAA1234</span></div>
+          extension:
+          - url: http://hl7.org/fhir/StructureDefinition/textLink
+            extension:
+            - url: htmlid
+              valueString: AAA1234
+            - url: data
+              valueUri: '#AAA1234'
+          - url: http://hl7.org/fhir/StructureDefinition/textLink
+            extension:
+            - url: htmlid
+              valueString: AAA1234XJ
+            - url: data
+              valueUri: '#AAA1234XJ'
+        identifier:
+          system: urn:oid:2.16.840.1.113883.2.18.7.2
+          value: 59f51f0b-2005-485c-858e-3d3ae9657287
+        status: final
+        type:
+          coding:
+          - system: http://loinc.org
+            code: 60591-5
+            display: Patient summary Document
+        subject:
+          reference: Patient/AAA1234
+        date: '2021-05-03'
+        author:
+        - reference: Organization/03993b0c-87ae-478b-8556-8c52a68c3486
+        title: International Patient Summary
+        confidentiality: N
+        attester:
+        - mode: professional
+          time: '2021-05-03'
+          party:
+            reference: PractitionerRole/1153dc30-cf69-402f-9522-132ec9ec14ac
+        custodian:
+          reference: Organization/15d2d767-48ba-4222-a1ca-8fa34393aed4
+        relatesTo:
+        - code: transforms
+          targetIdentifier:
+            system: urn:oid:2.16.840.1.113883.2.18.7.2
+            value: 59f51f0b-2005-485c-858e-3d3ae9657287
+        event:
+        - code:
+          - coding:
+            - system: http://terminology.hl7.org/CodeSystem/v3-ActClass
+              code: PCPR
+          period:
+            end: '2021-05-03'
+        section:
+        - title: Allergies and Intolerances
+          code:
+            coding:
+            - system: http://loinc.org
+              code: 48765-2
+              display: Allergies and adverse reactions Document
+          text:
+            status: generated
+            div: <div xmlns='http://www.w3.org/1999/xhtml' lang='en-NZ' xml:lang='en-NZ'>There is no information available regarding the subject's
+              allergy conditions.</div>
+          entry:
+          - reference: AllergyIntolerance/d46cc177-5660-46cc-9f55-6c28e1bc3bba
+        - title: Problem List
+          code:
+            coding:
+            - system: http://loinc.org
+              code: 11450-4
+              display: Problem list - Reported
+          text:
+            status: generated
+            div: <div xmlns='http://www.w3.org/1999/xhtml' lang='en-NZ' xml:lang='en-NZ'>There is no information available about the subject's
+              health problems or disabilities.</div>
+          entry:
+          - reference: Condition/20a587fa-239f-49c2-a3c8-ff2f2a18b654
+        - title: Medication Summary
+          code:
+            coding:
+            - system: http://loinc.org
+              code: 10160-0
+              display: History of Medication use Narrative
+          text:
+            status: generated
+            div: <div xmlns='http://www.w3.org/1999/xhtml' lang='en-NZ' xml:lang='en-NZ'>There is no information available about the subject's
+              medication use or administration.</div>
+          entry:
+          - reference: MedicationStatement/4e348646-0375-486a-a33d-d19801e6c7f7
+        - title: Immunizations
+          code:
+            coding:
+            - system: http://loinc.org
+              code: 11369-6
+              display: History of Immunization Narrative
+          text:
+            status: generated
+            div: "<div xmlns=\"http://www.w3.org/1999/xhtml\">\r\n  <table>\r\n    <thead>\r\n      <tr>\r\n        <th>Vaccine</th>\r\n     \
+              \   <th>Status</th>\r\n        <th>Occurance</th>\r\n        <th>Route</th>\r\n        <th>Dose #</th>\r\n        <th>Series</th>\r\
+              \n      </tr>\r\n    </thead>\r\n    <tbody>\r\n      <tr>\r\n        <td>Influenza, split virus, trivalent, preservative</td>\r\
+              \n        <td>Completed</td>\r\n        <td>2020-07-03</td>\r\n        <td>Injection, intramuscular</td>\r\n        <td>2</td>\r\
+              \n        <td>45y (Eligible condition (Influenza))</td>\r\n      </tr>\r\n      <tr>\r\n        <td>Influenza, split virus, trivalent,\
+              \ preservative</td>\r\n        <td>Completed</td>\r\n        <td>2019-06-03</td>\r\n        <td>Injection, intramuscular</td>\r\n\
+              \        <td>1</td>\r\n        <td>45y (Eligible condition (Influenza))</td>\r\n      </tr>\r\n    </tbody>\r\n  </table>\r\n</div>"
+          entry:
+          - reference: Immunization/c5efb4c3-91cf-4f63-b176-a697215d727a
+          - reference: Immunization/f58b2627-eeac-4280-8475-195ae422aa2d
+    - fullUrl: https://terminz.azurewebsites.net/fhir/Patient/AAA1234
+      resource:
+        resourceType: Patient
+        id: AAA1234
+        text:
+          status: generated
+          div: '<div xmlns=''http://www.w3.org/1999/xhtml'' xml:lang=''en-NZ''>Name: James Judge</div>'
+        identifier:
+        - id: AAA1234X
+          system: https://standards.digital.health.nz/ns/nhi-id
+          value: AAA1234
+        name:
+        - use: usual
+          family: Judge
+          given:
+          - James
+        telecom:
+        - system: phone
+          value: tel:+6478532279
+          use: home
+        gender: male
+        birthDate: '1985-04-25'
+        address:
+        - use: home
+          type: physical
+          line:
+          - Bleak House
+          - 3 Worcester Drive
+          - Rototuna North
+          city: Hamilton
+          postalCode: '3210'
+          country: NZ
+        maritalStatus:
+          coding:
+          - system: http://terminology.hl7.org/CodeSystem/v3-MaritalStatus
+            code: M
+            display: Married
+        contact:
+        - relationship:
+          - coding:
+            - system: http://terminology.hl7.org/CodeSystem/v2-0131
+              code: N
+              display: Next-of-Kin
+          name:
+            use: usual
+            family: mother
+            given:
+            - Natural
+            - mother
+        - relationship:
+          - coding:
+            - system: http://terminology.hl7.org/CodeSystem/v2-0131
+              code: C
+              display: Emergency Contact
+          name:
+            use: usual
+            family: Rabbit
+            given:
+            - Peter
+            - Rabbit
+          telecom:
+          - system: phone
+            value: 07 853 9191
+            use: home
+          address:
+            use: home
+            type: physical
+            line:
+            - 9 Worcester Drive
+            - Rototuna
+            city: Hamilton
+            postalCode: '3210'
+            country: NZ
+        communication:
+        - language:
+            text: en-NZ
+    - fullUrl: https://terminz.azurewebsites.net/fhir/Organization/03993b0c-87ae-478b-8556-8c52a68c3486
+      resource:
+        resourceType: Organization
+        id: 03993b0c-87ae-478b-8556-8c52a68c3486
+        identifier:
+        - system: https://standards.digital.health.nz/ns/hpi-facility-id
+          value: F0K068-E
+        name: Northcare, Thomas Road
+    - fullUrl: https://terminz.azurewebsites.net/fhir/PractitionerRole/1153dc30-cf69-402f-9522-132ec9ec14ac
+      resource:
+        resourceType: PractitionerRole
+        id: 1153dc30-cf69-402f-9522-132ec9ec14ac
+        practitioner:
+          reference: Practitioner/944fee7f-7dfd-4f68-84f4-43ca5287f05d
+        code:
+        - coding:
+          - system: http://snomed.info/sct
+            code: '158965000'
+            display: Doctor
+    - fullUrl: https://terminz.azurewebsites.net/fhir/Practitioner/944fee7f-7dfd-4f68-84f4-43ca5287f05d
+      resource:
+        resourceType: Practitioner
+        id: 944fee7f-7dfd-4f68-84f4-43ca5287f05d
+        name:
+        - use: usual
+          family: Kildare
+          given:
+          - Dr
+          - Richard
+          - Kildare
+        telecom:
+        - system: phone
+          value: tel:+6478539191
+          use: work
+        address:
+        - use: work
+          type: physical
+          line:
+          - 12 Thomas Rd
+          - Huntingdon
+          city: Hamilton
+          postalCode: '3211'
+          country: NZ
+    - fullUrl: https://terminz.azurewebsites.net/fhir/Organization/15d2d767-48ba-4222-a1ca-8fa34393aed4
+      resource:
+        resourceType: Organization
+        id: 15d2d767-48ba-4222-a1ca-8fa34393aed4
+        identifier:
+        - system: urn:oid:2.16.840.1.113883.2.18.3
+          value: F2N000-J
+        name: NorthCare Pukete Road
+    - fullUrl: https://terminz.azurewebsites.net/fhir/AllergyIntolerance/d46cc177-5660-46cc-9f55-6c28e1bc3bba
+      resource:
+        resourceType: AllergyIntolerance
+        id: d46cc177-5660-46cc-9f55-6c28e1bc3bba
+        clinicalStatus:
+          coding:
+          - system: http://terminology.hl7.org/CodeSystem/allergyintolerance-clinical
+            code: active
+        code:
+          coding:
+          - system: http://hl7.org/fhir/uv/ips/CodeSystem/absent-unknown-uv-ips
+            code: no-allergy-info
+            display: No information about allergies
+        patient:
+          reference: Patient/AAA1234
+    - fullUrl: https://terminz.azurewebsites.net/fhir/Condition/20a587fa-239f-49c2-a3c8-ff2f2a18b654
+      resource:
+        resourceType: Condition
+        id: 20a587fa-239f-49c2-a3c8-ff2f2a18b654
+        clinicalStatus:
+          coding:
+          - system: http://terminology.hl7.org/CodeSystem/condition-clinical
+            code: active
+        code:
+          coding:
+          - system: http://hl7.org/fhir/uv/ips/CodeSystem/absent-unknown-uv-ips
+            code: no-problem-info
+            display: No information about problems
+        subject:
+          reference: Patient/AAA1234
+    - fullUrl: https://terminz.azurewebsites.net/fhir/MedicationStatement/4e348646-0375-486a-a33d-d19801e6c7f7
+      resource:
+        resourceType: MedicationStatement
+        id: 4e348646-0375-486a-a33d-d19801e6c7f7
+        status: unknown
+        medicationCodeableConcept:
+          coding:
+          - system: http://hl7.org/fhir/uv/ips/CodeSystem/absent-unknown-uv-ips
+            code: no-medication-info
+            display: No information about medications
+        subject:
+          reference: Patient/AAA1234
+        effectiveDateTime: '2023-10-09T02:48:57.467553+00:00'
+    - fullUrl: https://terminz.azurewebsites.net/fhir/Immunization/c5efb4c3-91cf-4f63-b176-a697215d727a
+      resource:
+        resourceType: Immunization
+        id: c5efb4c3-91cf-4f63-b176-a697215d727a
+        status: completed
+        vaccineCode:
+          coding:
+          - system: http://hl7.org/fhir/sid/cvx
+            code: '141'
+            display: Influenza, split virus, trivalent, preservative
+        patient:
+          reference: Patient/AAA1234
+        occurrenceDateTime: '2020-07-03'
+        lotNumber: B52b
+        expirationDate: '2020-07-03'
+        site:
+          coding:
+          - system: http://snomed.info/sct
+            code: '72098002'
+            display: Entire left upper arm
+        route:
+          coding:
+          - system: http://terminology.hl7.org/CodeSystem/v3-RouteOfAdministration
+            code: IM
+            display: Injection, intramuscular
+        performer:
+        - actor:
+            reference: Organization/15d2d767-48ba-4222-a1ca-8fa34393aed4
+        protocolApplied:
+        - series: 45y (Eligible condition (Influenza))
+          doseNumberPositiveInt: 2
+    - fullUrl: https://terminz.azurewebsites.net/fhir/Immunization/f58b2627-eeac-4280-8475-195ae422aa2d
+      resource:
+        resourceType: Immunization
+        id: f58b2627-eeac-4280-8475-195ae422aa2d
+        status: completed
+        vaccineCode:
+          coding:
+          - system: http://hl7.org/fhir/sid/cvx
+            code: '141'
+            display: Influenza, split virus, trivalent, preservative
+        patient:
+          reference: Patient/AAA1234
+        occurrenceDateTime: '2019-06-03'
+        lotNumber: B52
+        expirationDate: '2019-08-03'
+        site:
+          coding:
+          - system: http://snomed.info/sct
+            code: '72098002'
+            display: Entire left upper arm
+        route:
+          coding:
+          - system: http://terminology.hl7.org/CodeSystem/v3-RouteOfAdministration
+            code: IM
+            display: Injection, intramuscular
+        performer:
+        - actor:
+            reference: Organization/15d2d767-48ba-4222-a1ca-8fa34393aed4
+        protocolApplied:
+        - series: 45y (Eligible condition (Influenza))
+          doseNumberPositiveInt: 1
+  _usePackages:
+  - hl7.fhir.uv.ips@1.1.0
+  skip: true
+  _skipReason: 'unmappable Java messages outs=["ERROR: The html id ''AAA1234XJ'' was not found in the xhtml", "ERROR: The target of the textLink
+    data reference ''#AAA1234XJ'' was not found in the resource"] (DESIGN §15)'
 - desc: graham/scoring-test
   schemas: []
   data:
@@ -5822,122 +5979,14 @@ tests:
           code: es
           display: Spanish
       preferred: true
+  _usePackages:
+  - hl7.fhir.us.core@8.0.0
   skip: true
-  _skipReason: 'IG fixtures missing: [''hl7.fhir.us.core@8.0.0''] (DESIGN §15)'
-- desc: graham/valueset-dependency-version-1
-  schemas: []
-  data:
-    resourceType: Condition
-    id: example
-    meta:
-      profile:
-      - http://hl7.org/fhir/test/StructureDefinition/verB-sd-test-two
-    code:
-      coding:
-      - system: http://hl7.org/fhir/test/CodeSystem/verA-cs-test
-        code: code
-        display: Display X
-    subject:
-      reference: Patient/example
-      display: Amy V. Shaw
-    onsetDateTime: '2016-08-10'
-  skip: true
-  _skipReason: no java outcome (DESIGN §15)
-- desc: graham/valueset-dependency-version-2
-  schemas: []
-  data:
-    resourceType: Condition
-    id: example
-    meta:
-      profile:
-      - http://hl7.org/fhir/test/StructureDefinition/verB-sd-test-two
-    code:
-      coding:
-      - system: http://hl7.org/fhir/test/CodeSystem/verA-cs-test
-        code: code
-        display: Display X
-    subject:
-      reference: Patient/example
-      display: Amy V. Shaw
-    onsetDateTime: '2016-08-10'
-  skip: true
-  _skipReason: no java outcome (DESIGN §15)
-- desc: graham/valueset-dependency-version-3
-  schemas: []
-  data:
-    resourceType: Condition
-    id: example
-    meta:
-      profile:
-      - http://hl7.org/fhir/test/StructureDefinition/verB-sd-test-one
-    code:
-      coding:
-      - system: http://hl7.org/fhir/test/CodeSystem/verA-cs-test
-        code: code
-        display: Display X
-    subject:
-      reference: Patient/example
-      display: Amy V. Shaw
-    onsetDateTime: '2016-08-10'
-  skip: true
-  _skipReason: no java outcome (DESIGN §15)
-- desc: graham/valueset-dependency-version-4
-  schemas: []
-  data:
-    resourceType: Condition
-    id: example
-    meta:
-      profile:
-      - http://hl7.org/fhir/test/StructureDefinition/verB-sd-test-one
-    code:
-      coding:
-      - system: http://hl7.org/fhir/test/CodeSystem/verA-cs-test
-        code: code
-        display: Display X
-    subject:
-      reference: Patient/example
-      display: Amy V. Shaw
-    onsetDateTime: '2016-08-10'
-  skip: true
-  _skipReason: no java outcome (DESIGN §15)
-- desc: graham/valueset-dependency-version-5
-  schemas: []
-  data:
-    resourceType: Condition
-    id: example
-    meta:
-      profile:
-      - http://hl7.org/fhir/test/StructureDefinition/verC-sd-test-two
-    code:
-      coding:
-      - system: http://hl7.org/fhir/test/CodeSystem/verA-cs-test
-        code: code
-        display: Display X
-    subject:
-      reference: Patient/example
-      display: Amy V. Shaw
-    onsetDateTime: '2016-08-10'
-  skip: true
-  _skipReason: no java outcome (DESIGN §15)
-- desc: graham/valueset-dependency-version-6
-  schemas: []
-  data:
-    resourceType: Condition
-    id: example
-    meta:
-      profile:
-      - http://hl7.org/fhir/test/StructureDefinition/verC-sd-test-one
-    code:
-      coding:
-      - system: http://hl7.org/fhir/test/CodeSystem/verA-cs-test
-        code: code
-        display: Display X
-    subject:
-      reference: Patient/example
-      display: Amy V. Shaw
-    onsetDateTime: '2016-08-10'
-  skip: true
-  _skipReason: no java outcome (DESIGN §15)
+  _skipReason: 'unmappable Java messages outs=[''ERROR: Cannot process resource http://cts.nlm.nih.gov/fhir/ValueSet/2.16.840.1.114222.4.11.877|20240606
+    at "exclude[0].filter" due to the presence of the modifier extension vsacOpModifier'', ''ERROR: The code provided (urn:oid:2.16.840.1.113883.6.238#2184-0)
+    was not found in the value set \''Detailed Ethnicity Including Absence Reasons\'' (http://cts.nlm.nih.gov/fhir/ValueSet/2.16.840.1.113883.4.642.40.2.48.1|20250419),
+    and a code from this value set is required: Cannot process resource http://cts.nlm.nih.gov/fhir/ValueSet/2.16.840.1.114222.4.11.877|20240606
+    at "exclude[0].filter" due to the presence of the modifier extension vsacOpModifier''] (DESIGN §15)'
 - desc: graham/sdc-inv-1
   schemas: []
   data:
@@ -5967,5 +6016,10 @@ tests:
           expression: 1 + 1
       answerValueSet: http://hl7.org/a/1
       type: decimal
+  _usePackages:
+  - hl7.fhir.uv.sdc@4.0.0-ballot
   skip: true
-  _skipReason: 'IG fixtures missing: [''hl7.fhir.uv.sdc@4.0.0-ballot''] / no java outcome (DESIGN §15)'
+  _skipReason: 'unmappable Java messages outs=["ERROR: Constraint failed: sdc-1: ''An item cannot have an answerExpression if answerOption or
+    answerValueSet is already present.'' (defined in http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnairecommon)", "INFORMATION: This
+    element does not match any known slice defined in the profile http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire|4.0.0 (this
+    may not be a problem, but you should check that it''s not intended to match a slice)"] (DESIGN §15)'
