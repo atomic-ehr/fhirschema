@@ -1,0 +1,290 @@
+suite: Slicing (fs901, fs902) — partition arrays via deep-partial match
+
+# Slicing routes each array item into a named slice by deep-partial match,
+# then enforces per-slice cardinality and applies the slice's `schema` as
+# an additional overlay for items in that slice. See DESIGN.md §10.
+
+tests:
+  # ─── open slicing: unmatched items pass under base schema ────────────
+  - desc: open slicing — matched items routed, unmatched ones still validate against base
+    schemas:
+      - elements:
+          tags:
+            type: code
+            array: true
+            slicing:
+              rules: open
+              slices:
+                official:
+                  match: official
+                draft:
+                  match: draft
+    data: { tags: [official, draft, random] }
+    valid: true
+
+  # ─── closed slicing: unmatched items error out ────────────────────────
+  - desc: closed slicing — unmatched item → fs901
+    schemas:
+      - elements:
+          tags:
+            type: code
+            array: true
+            slicing:
+              rules: closed
+              slices:
+                official:
+                  match: official
+                draft:
+                  match: draft
+    data: { tags: [official, random] }
+    issues:
+      - { code: fs901, path: [tags, 1] }
+
+  - desc: closed slicing — all items matched → valid
+    schemas:
+      - elements:
+          tags:
+            type: code
+            array: true
+            slicing:
+              rules: closed
+              slices:
+                official: { match: official }
+                draft:    { match: draft }
+    data: { tags: [official, draft, official] }
+    valid: true
+
+  # ─── per-slice cardinality (fs902) ────────────────────────────────────
+  - desc: slice min not met → fs902
+    schemas:
+      - elements:
+          tags:
+            type: code
+            array: true
+            slicing:
+              rules: open
+              slices:
+                official:
+                  match: official
+                  min: 1
+                  max: 1
+    data: { tags: [draft] }
+    issues:
+      - { code: fs902, path: [tags] }
+
+  - desc: slice max exceeded → fs902
+    schemas:
+      - elements:
+          tags:
+            type: code
+            array: true
+            slicing:
+              rules: open
+              slices:
+                official:
+                  match: official
+                  min: 0
+                  max: 1
+    data: { tags: [official, official] }
+    issues:
+      - { code: fs902, path: [tags] }
+
+  - desc: slice within bounds — valid
+    schemas:
+      - elements:
+          tags:
+            type: code
+            array: true
+            slicing:
+              rules: open
+              slices:
+                official:
+                  match: official
+                  min: 1
+                  max: 2
+    data: { tags: [official, official, draft] }
+    valid: true
+
+  # ─── ambiguous slice (multiple match) ─────────────────────────────────
+  - desc: item matches multiple slices → fs901 (ambiguous)
+    schemas:
+      - elements:
+          tags:
+            type: code
+            array: true
+            slicing:
+              rules: open
+              slices:
+                a: { match: x }
+                b: { match: x }   # same match — ambiguous on purpose
+    data: { tags: [x] }
+    issues:
+      - { code: fs901, path: [tags, 0] }
+
+  # ─── slice schema overlay applies to matched items ────────────────────
+  - desc: matched item carries slice schema as overlay (slice-specific required)
+    schemas:
+      - elements:
+          identifiers:
+            type: Identifier
+            array: true
+            slicing:
+              rules: open
+              slices:
+                ssn:
+                  match: { system: 'http://hl7.org/fhir/sid/us-ssn' }
+                  schema:
+                    required: [value]
+    registry:
+      - url: Identifier
+        name: Identifier
+        type: Identifier
+        kind: complex-type
+        class: complex-type
+        elements:
+          system: { type: uri }
+          value: { type: string }
+    data:
+      identifiers:
+        - { system: 'http://hl7.org/fhir/sid/us-ssn' }
+    issues:
+      # ssn slice matched, schema requires `value` which is missing
+      - { code: fs301, path: [identifiers, 0, value] }
+
+  - desc: slice schema constraint not applied to non-matching items
+    schemas:
+      - elements:
+          identifiers:
+            type: Identifier
+            array: true
+            slicing:
+              rules: open
+              slices:
+                ssn:
+                  match: { system: 'http://hl7.org/fhir/sid/us-ssn' }
+                  schema:
+                    required: [value]
+    registry:
+      - url: Identifier
+        name: Identifier
+        type: Identifier
+        kind: complex-type
+        class: complex-type
+        elements:
+          system: { type: uri }
+          value: { type: string }
+    data:
+      identifiers:
+        - { system: 'http://other' }   # doesn't match ssn → required:value doesn't apply
+    valid: true
+
+  # ─── object pattern match for slicing ────────────────────────────────
+  - desc: object slicing on Observation.component-style structure
+    schemas:
+      - elements:
+          component:
+            type: ObservationComponent
+            array: true
+            slicing:
+              rules: open
+              slices:
+                systolic:
+                  match:
+                    code:
+                      coding:
+                        - { system: 'http://loinc.org', code: '8480-6' }
+                  min: 1
+                  max: 1
+                diastolic:
+                  match:
+                    code:
+                      coding:
+                        - { system: 'http://loinc.org', code: '8462-4' }
+                  min: 1
+                  max: 1
+    registry:
+      - url: ObservationComponent
+        name: ObservationComponent
+        type: ObservationComponent
+        kind: complex-type
+        class: complex-type
+        elements:
+          code: { type: CodeableConcept }
+          valueQuantity: { type: Quantity }
+      - url: CodeableConcept
+        name: CodeableConcept
+        type: CodeableConcept
+        kind: complex-type
+        class: complex-type
+        elements:
+          coding: { type: Coding, array: true }
+      - url: Coding
+        name: Coding
+        type: Coding
+        kind: complex-type
+        class: complex-type
+        elements:
+          system: { type: uri }
+          code: { type: code }
+      - url: Quantity
+        name: Quantity
+        type: Quantity
+        kind: complex-type
+        class: complex-type
+        elements:
+          value: { type: decimal }
+          unit: { type: string }
+    data:
+      component:
+        - code: { coding: [{ system: 'http://loinc.org', code: '8480-6' }] }
+          valueQuantity: { value: 120, unit: mmHg }
+        - code: { coding: [{ system: 'http://loinc.org', code: '8462-4' }] }
+          valueQuantity: { value: 80, unit: mmHg }
+    valid: true
+
+  - desc: missing required slice — diastolic absent → fs902
+    schemas:
+      - elements:
+          component:
+            type: ObservationComponent
+            array: true
+            slicing:
+              rules: open
+              slices:
+                systolic:
+                  match:
+                    code: { coding: [{ code: '8480-6' }] }
+                  min: 1
+                  max: 1
+                diastolic:
+                  match:
+                    code: { coding: [{ code: '8462-4' }] }
+                  min: 1
+                  max: 1
+    registry:
+      - url: ObservationComponent
+        name: ObservationComponent
+        type: ObservationComponent
+        kind: complex-type
+        class: complex-type
+        elements:
+          code: { type: CodeableConcept }
+      - url: CodeableConcept
+        name: CodeableConcept
+        type: CodeableConcept
+        kind: complex-type
+        class: complex-type
+        elements:
+          coding: { type: Coding, array: true }
+      - url: Coding
+        name: Coding
+        type: Coding
+        kind: complex-type
+        class: complex-type
+        elements:
+          code: { type: code }
+    data:
+      component:
+        - code: { coding: [{ code: '8480-6' }] }
+    issues:
+      - { code: fs902, path: [component] }   # diastolic min not met

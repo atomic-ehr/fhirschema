@@ -1,0 +1,202 @@
+suite: HL7 fhir-test-cases (Grahame Grieve, curated) — R5 samples
+# Imported from github.com/FHIR/fhir-test-cases/validator/manifest.json.
+# Each test names its source file. Expected outputs are mapped from java
+# validator messages to our fsNNN codes:
+#   "Unrecognized property X"                          → fs201
+#   "minimum required = N, but only found 0"           → fs301
+#   "Array cannot be empty"                            → fs303
+#   "Object must have some content"                    → fs202
+#   "Boolean values must be 'true' or 'false'"         → fs103 (json type) or fs108 (date)
+#   "Error parsing JSON: the primitive value must be"  → fs101 / fs102 / fs103
+
+defaults:
+  usePackages:
+    - hl7.fhir.r5.core
+
+tests:
+  # ─── good (errorCount=0) ──────────────────────────────────────────────
+  - desc: 'graham/patient-good: minimal valid Patient with narrative'
+    schemas: []
+    data:
+      resourceType: Patient
+      id: pat-good
+      text:
+        status: generated
+        div: '<div xmlns="http://www.w3.org/1999/xhtml">some text</div>'
+    valid: true
+
+  - desc: 'graham/group-choice-good: Group with valid characteristic.value[x]'
+    schemas: []
+    data:
+      resourceType: Group
+      type: person
+      membership: definitional
+      characteristic:
+        - code: { text: test }
+          valueBoolean: true
+          exclude: false
+    valid: true
+
+  - desc: 'graham/group-minimal: minimal Group'
+    schemas: []
+    data:
+      resourceType: Group
+      type: person
+      membership: definitional
+    valid: true
+
+  # ─── bad (errorCount>0) — clear mappings ──────────────────────────────
+  - desc: 'graham/list-empty2: List.entry is empty array → fs303'
+    # "ERROR: List.entry: Array cannot be empty - the property should not be
+    #  present if it has no values"
+    schemas: []
+    data:
+      resourceType: List
+      id: val1
+      status: current
+      mode: changes
+      entry: []
+    issues:
+      - { code: fs303, path: [entry] }
+
+  - desc: 'graham/group-choice-bad1: characteristic[0].value (no [x]) → fs201 + fs301'
+    # Source: group-choice-bad1.json. Java reports:
+    #   "Unrecognized property 'value'"        → fs201 (virtual choice parent)
+    #   "value[x]: minimum required = 1"       → fs301 on the choice
+    schemas: []
+    data:
+      resourceType: Group
+      type: person
+      membership: definitional
+      characteristic:
+        - code: { text: test }
+          value: true
+          exclude: false
+    issues:
+      - { code: fs201, path: [characteristic, 0, value] }
+      - { code: fs301, path: [characteristic, 0, value] }
+
+  # SKIP — list-minimal uses `fhir_comments` JSON5 extension which is not
+  # standard FHIR JSON. The reference java validator filters it out before
+  # validation; our validator (correctly per FHIR JSON spec) reports it as
+  # unknown. Importable once we add a "tolerate fhir_comments" option.
+  - desc: 'graham/list-minimal: List with fhir_comments (non-standard JSON5)'
+    skip: true
+    schemas: []
+    data:
+      resourceType: List
+      id: val1
+      status: current
+      mode: changes
+    valid: true
+
+  # ─── unblocked by inner-resource walk ────────────────────────────────
+  - desc: 'graham/bundle-good: Bundle with two Patient entries (refs by fullUrl)'
+    schemas: []
+    data:
+      resourceType: Bundle
+      id: bundle
+      type: collection
+      entry:
+        - fullUrl: 'http://acme.com/Patient/pat1'
+          resource:
+            resourceType: Patient
+            id: pat1
+            link:
+              - type: refer
+                other: { reference: 'Patient/pat2' }
+        - fullUrl: 'http://acme.com/Patient/pat2'
+          resource:
+            resourceType: Patient
+            id: pat2
+    valid: true
+
+  # ─── batch 2 (after local-clone scan of fhir-test-cases repo) ────────
+  - desc: 'graham/patient-lang1: Patient with language (xhtml lang warning is N/A for us)'
+    schemas: []
+    data:
+      resourceType: Patient
+      id: pat-good
+      language: en-AU
+      text:
+        status: generated
+        div: '<div xmlns="http://www.w3.org/1999/xhtml">some text</div>'
+    valid: true
+
+  - desc: 'graham/group-minimal-tiny: minimal Group'
+    schemas: []
+    data: { resourceType: Group, type: person, membership: definitional }
+    valid: true
+
+  - desc: 'graham/list-unknown-prop: List.other unknown → fs201'
+    schemas: []
+    data:
+      resourceType: List
+      id: val1
+      other: nothing
+      status: current
+      mode: changes
+    issues:
+      - { code: fs201, path: [other] }
+
+  - desc: 'graham/list-empty1: List.entry[0] = {} → fs202 + fs301 on item'
+    schemas: []
+    data:
+      resourceType: List
+      id: val1
+      status: current
+      mode: changes
+      entry: [{}]
+    issues:
+      - { code: fs202, path: [entry, 0] }
+      - { code: fs301, path: [entry, 0, item] }
+
+  - desc: 'graham/patient-id-bad-1: id with underscore → fs110'
+    # Java reports "Invalid Resource id: Invalid Characters ('bad-id_1')"
+    schemas: []
+    data: { resourceType: Patient, id: 'bad-id_1' }
+    issues:
+      - { code: fs110, path: [id] }
+
+  - desc: 'graham/group-choice-bad3: characteristic[0].value=string but type narrowed to boolean → fs1xx'
+    # Java reports primitive value type mismatch on value[x] resolved-as-boolean
+    schemas: []
+    data:
+      resourceType: Group
+      type: person
+      membership: definitional
+      characteristic:
+        - code: { text: x }
+          valueBoolean: 'not-bool'
+          exclude: false
+    issues:
+      - { code: fs103, path: [characteristic, 0, valueBoolean] }
+
+  # KNOWN DIVERGENCE (NOT IMPORTED AS-IS) — Graham's `list-contained`
+  # has `subject: { reference: '#pat' }` (scalar) in R5 where
+  # List.subject cardinality is 0..*. Per FHIR JSON spec, arrays MUST be
+  # used for repeating elements even when there's a single value. We emit
+  # fs203 "expected array" — spec-correct.
+  #
+  # The Java reference validator is permissive by default and accepts the
+  # scalar; the same shape is flagged as "must be a JSON Array, not an
+  # Object" only under the `fmt` module (strict JSON format) — see
+  # list-contained-bad-json. So Java has implicit dual-mode (permissive
+  # default + strict-fmt opt-in).
+  #
+  # We choose spec-strict by default (see DESIGN §15 — "JSON array
+  # leniency" future option). If we ever need a permissive opt-in
+  # (matching Java's default), we'd add `options.permissiveArrayShape`.
+  - desc: 'graham/list-contained: List with contained Patient'
+    skip: true
+    schemas: []
+    data:
+      resourceType: List
+      id: val1
+      contained:
+        - resourceType: Patient
+          id: pat
+      status: current
+      mode: changes
+      subject: { reference: '#pat' }
+    valid: true

@@ -1,0 +1,11 @@
+{
+  "name": "string",
+  "type": "string",
+  "kind": "primitive-type",
+  "class": "primitive-type",
+  "url": "http://hl7.org/fhir/StructureDefinition/string",
+  "version": "4.0.1",
+  "description": "Base StructureDefinition for string Type: A sequence of Unicode characters",
+  "derivation": "specialization",
+  "base": "http://hl7.org/fhir/StructureDefinition/Element"
+}

@@ -1,0 +1,188 @@
+suite: Pattern / fixed value matching (fs205)
+
+# `pattern[X]` and `fixed[X]` are both translated by the converter into
+# `pattern: { type, value }` on the element. Validation uses deep-partial
+# match: every key in pattern.value must be present in data with the same
+# (deeply matching) value; extras in data are allowed.
+
+tests:
+  # ─── primitive pattern (string) ───────────────────────────────────────
+  - desc: primitive pattern matches exact value
+    schemas:
+      - elements:
+          status:
+            type: code
+            pattern: { type: code, value: active }
+    data: { status: active }
+    valid: true
+
+  - desc: primitive pattern fails on different value
+    schemas:
+      - elements:
+          status:
+            type: code
+            pattern: { type: code, value: active }
+    data: { status: completed }
+    issues:
+      - { code: fs205, path: [status] }
+
+  # ─── primitive pattern (uri) ──────────────────────────────────────────
+  - desc: uri pattern locks down system URL
+    schemas:
+      - elements:
+          system:
+            type: uri
+            pattern: { type: uri, value: 'http://loinc.org' }
+    data: { system: 'http://loinc.org' }
+    valid: true
+
+  - desc: uri pattern rejects other URL
+    schemas:
+      - elements:
+          system:
+            type: uri
+            pattern: { type: uri, value: 'http://loinc.org' }
+    data: { system: 'http://snomed.info/sct' }
+    issues:
+      - { code: fs205, path: [system] }
+
+  # ─── object pattern (Coding) ──────────────────────────────────────────
+  - desc: CodeableConcept pattern matches via deep-partial
+    schemas:
+      - elements:
+          code:
+            type: CodeableConcept
+            pattern:
+              type: CodeableConcept
+              value:
+                coding:
+                  - { system: 'http://loinc.org', code: '85354-9' }
+    registry:
+      - url: CodeableConcept
+        name: CodeableConcept
+        type: CodeableConcept
+        kind: complex-type
+        class: complex-type
+        elements:
+          coding:
+            type: Coding
+            array: true
+          text: { type: string }
+      - url: Coding
+        name: Coding
+        type: Coding
+        kind: complex-type
+        class: complex-type
+        elements:
+          system: { type: uri }
+          code: { type: code }
+          display: { type: string }
+    data:
+      code:
+        coding:
+          - system: 'http://loinc.org'
+            code: '85354-9'
+            display: 'Blood pressure panel'
+        text: 'Blood pressure'
+    valid: true
+
+  - desc: pattern requires the specific coding to be present
+    schemas:
+      - elements:
+          code:
+            type: CodeableConcept
+            pattern:
+              type: CodeableConcept
+              value:
+                coding:
+                  - { system: 'http://loinc.org', code: '85354-9' }
+    registry:
+      - url: CodeableConcept
+        name: CodeableConcept
+        type: CodeableConcept
+        kind: complex-type
+        class: complex-type
+        elements:
+          coding: { type: Coding, array: true }
+          text: { type: string }
+      - url: Coding
+        name: Coding
+        type: Coding
+        kind: complex-type
+        class: complex-type
+        elements:
+          system: { type: uri }
+          code: { type: code }
+    data:
+      code:
+        coding:
+          - { system: 'http://snomed.info/sct', code: '38341003' }
+    issues:
+      - { code: fs205, path: [code] }
+
+  - desc: array pattern allows extra entries beyond the required one
+    schemas:
+      - elements:
+          code:
+            type: CodeableConcept
+            pattern:
+              type: CodeableConcept
+              value:
+                coding:
+                  - { system: 'http://loinc.org', code: '85354-9' }
+    registry:
+      - url: CodeableConcept
+        name: CodeableConcept
+        type: CodeableConcept
+        kind: complex-type
+        class: complex-type
+        elements:
+          coding: { type: Coding, array: true }
+      - url: Coding
+        name: Coding
+        type: Coding
+        kind: complex-type
+        class: complex-type
+        elements:
+          system: { type: uri }
+          code: { type: code }
+    data:
+      code:
+        coding:
+          - { system: 'http://snomed.info/sct', code: '38341003' }
+          - { system: 'http://loinc.org', code: '85354-9' }   # required one is here
+    valid: true
+
+  # ─── pattern on array element (per-item) ──────────────────────────────
+  - desc: pattern on array applies per item — all items match
+    schemas:
+      - elements:
+          tags:
+            type: code
+            array: true
+            pattern: { type: code, value: official }
+    data: { tags: [official, official] }
+    valid: true
+
+  - desc: pattern on array applies per item — one item fails
+    schemas:
+      - elements:
+          tags:
+            type: code
+            array: true
+            pattern: { type: code, value: official }
+    data: { tags: [official, draft] }
+    issues:
+      - { code: fs205, path: [tags, 1] }
+
+  # ─── pattern + type mismatch fire independently ───────────────────────
+  - desc: pattern miss AND type miss both reported
+    schemas:
+      - elements:
+          status:
+            type: code
+            pattern: { type: code, value: active }
+    data: { status: 42 }
+    issues:
+      - { code: fs205, path: [status] }
+      - { code: fs101, path: [status] }

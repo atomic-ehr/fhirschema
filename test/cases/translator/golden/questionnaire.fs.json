@@ -1,0 +1,610 @@
+{
+  "name": "Questionnaire",
+  "type": "Questionnaire",
+  "kind": "resource",
+  "class": "resource",
+  "url": "http://hl7.org/fhir/StructureDefinition/Questionnaire",
+  "version": "4.0.1",
+  "description": "A structured set of questions intended to guide the collection of answers from end-users. Questionnaires provide detailed control over order, presentation, phraseology and grouping to allow coherent, consistent data collection.",
+  "derivation": "specialization",
+  "base": "http://hl7.org/fhir/StructureDefinition/DomainResource",
+  "elements": {
+    "url": {
+      "short": "Canonical identifier for this questionnaire, represented as a URI (globally unique)",
+      "type": "uri",
+      "isSummary": true,
+      "index": 0
+    },
+    "identifier": {
+      "short": "Additional identifier for the questionnaire",
+      "type": "Identifier",
+      "isSummary": true,
+      "array": true,
+      "index": 1
+    },
+    "version": {
+      "short": "Business version of the questionnaire",
+      "type": "string",
+      "isSummary": true,
+      "index": 2
+    },
+    "name": {
+      "short": "Name for this questionnaire (computer friendly)",
+      "type": "string",
+      "isSummary": true,
+      "index": 3
+    },
+    "title": {
+      "short": "Name for this questionnaire (human friendly)",
+      "type": "string",
+      "isSummary": true,
+      "index": 4
+    },
+    "derivedFrom": {
+      "short": "Instantiates protocol or definition",
+      "type": "canonical",
+      "array": true,
+      "index": 5
+    },
+    "status": {
+      "binding": {
+        "strength": "required",
+        "valueSet": "http://hl7.org/fhir/ValueSet/publication-status|4.0.1",
+        "bindingName": "PublicationStatus"
+      },
+      "short": "draft | active | retired | unknown",
+      "type": "code",
+      "isSummary": true,
+      "isModifierReason": "This is labeled as \"Is Modifier\" because applications should not use a retired {{title}} without due consideration",
+      "isModifier": true,
+      "index": 6
+    },
+    "experimental": {
+      "short": "For testing purposes, not real usage",
+      "type": "boolean",
+      "isSummary": true,
+      "index": 7
+    },
+    "subjectType": {
+      "binding": {
+        "strength": "required",
+        "valueSet": "http://hl7.org/fhir/ValueSet/resource-types|4.0.1",
+        "bindingName": "ResourceType"
+      },
+      "short": "Resource that can be subject of QuestionnaireResponse",
+      "type": "code",
+      "isSummary": true,
+      "array": true,
+      "index": 8
+    },
+    "date": {
+      "short": "Date last changed",
+      "type": "dateTime",
+      "isSummary": true,
+      "index": 9
+    },
+    "publisher": {
+      "short": "Name of the publisher (organization or individual)",
+      "type": "string",
+      "isSummary": true,
+      "index": 10
+    },
+    "contact": {
+      "short": "Contact details for the publisher",
+      "type": "ContactDetail",
+      "isSummary": true,
+      "array": true,
+      "index": 11
+    },
+    "description": {
+      "short": "Natural language description of the questionnaire",
+      "type": "markdown",
+      "index": 12
+    },
+    "useContext": {
+      "short": "The context that the content is intended to support",
+      "type": "UsageContext",
+      "isSummary": true,
+      "array": true,
+      "index": 13
+    },
+    "jurisdiction": {
+      "binding": {
+        "strength": "extensible",
+        "valueSet": "http://hl7.org/fhir/ValueSet/jurisdiction",
+        "bindingName": "Jurisdiction"
+      },
+      "short": "Intended jurisdiction for questionnaire (if applicable)",
+      "type": "CodeableConcept",
+      "isSummary": true,
+      "array": true,
+      "index": 14
+    },
+    "purpose": {
+      "short": "Why this questionnaire is defined",
+      "type": "markdown",
+      "index": 15
+    },
+    "copyright": {
+      "short": "Use and/or publishing restrictions",
+      "type": "markdown",
+      "index": 16
+    },
+    "approvalDate": {
+      "short": "When the questionnaire was approved by publisher",
+      "type": "date",
+      "index": 17
+    },
+    "lastReviewDate": {
+      "short": "When the questionnaire was last reviewed",
+      "type": "date",
+      "index": 18
+    },
+    "effectivePeriod": {
+      "short": "When the questionnaire is expected to be used",
+      "type": "Period",
+      "isSummary": true,
+      "index": 19
+    },
+    "code": {
+      "binding": {
+        "strength": "example",
+        "valueSet": "http://hl7.org/fhir/ValueSet/questionnaire-questions",
+        "bindingName": "QuestionnaireConcept"
+      },
+      "short": "Concept that represents the overall questionnaire",
+      "type": "Coding",
+      "isSummary": true,
+      "array": true,
+      "index": 20
+    },
+    "item": {
+      "short": "Questions and sections within the Questionnaire",
+      "type": "BackboneElement",
+      "constraint": {
+        "que-9": {
+          "expression": "type!='display' or readOnly.empty()",
+          "human": "Read-only can't be specified for \"display\" items",
+          "severity": "error"
+        },
+        "que-8": {
+          "expression": "(type!='group' and type!='display') or initial.empty()",
+          "human": "Initial values can't be specified for groups or display items",
+          "severity": "error"
+        },
+        "que-6": {
+          "expression": "type!='display' or (required.empty() and repeats.empty())",
+          "human": "Required and repeat aren't permitted for display items",
+          "severity": "error"
+        },
+        "que-5": {
+          "expression": "(type ='choice' or type = 'open-choice' or type = 'decimal' or type = 'integer' or type = 'date' or type = 'dateTime' or type = 'time' or type = 'string' or type = 'quantity') or (answerValueSet.empty() and answerOption.empty())",
+          "human": "Only 'choice' and 'open-choice' items can have answerValueSet",
+          "severity": "error"
+        },
+        "que-4": {
+          "expression": "answerOption.empty() or answerValueSet.empty()",
+          "human": "A question cannot have both answerOption and answerValueSet",
+          "severity": "error"
+        },
+        "que-3": {
+          "expression": "type!='display' or code.empty()",
+          "human": "Display items cannot have a \"code\" asserted",
+          "severity": "error"
+        },
+        "que-10": {
+          "expression": "(type in ('boolean' | 'decimal' | 'integer' | 'string' | 'text' | 'url' | 'open-choice')) or maxLength.empty()",
+          "human": "Maximum length can only be declared for simple question types",
+          "severity": "error"
+        },
+        "que-1": {
+          "expression": "(type='group' implies item.empty().not()) and (type.trace('type')='display' implies item.trace('item').empty())",
+          "human": "Group items must have nested items, display items cannot have nested items",
+          "severity": "error"
+        },
+        "que-13": {
+          "expression": "repeats=true or initial.count() <= 1",
+          "human": "Can only have multiple initial values for repeating items",
+          "severity": "error"
+        },
+        "que-11": {
+          "expression": "answerOption.empty() or initial.empty()",
+          "human": "If one or more answerOption is present, initial[x] must be missing",
+          "severity": "error"
+        },
+        "que-12": {
+          "expression": "enableWhen.count() > 2 implies enableBehavior.exists()",
+          "human": "If there are more than one enableWhen, enableBehavior must be specified",
+          "severity": "error"
+        }
+      },
+      "array": true,
+      "index": 21,
+      "elements": {
+        "linkId": {
+          "short": "Unique id for item in questionnaire",
+          "type": "string",
+          "index": 22
+        },
+        "definition": {
+          "short": "ElementDefinition - details for the item",
+          "type": "uri",
+          "index": 23
+        },
+        "code": {
+          "binding": {
+            "strength": "example",
+            "valueSet": "http://hl7.org/fhir/ValueSet/questionnaire-questions",
+            "bindingName": "QuestionnaireConcept"
+          },
+          "short": "Corresponding concept for this item in a terminology",
+          "type": "Coding",
+          "array": true,
+          "index": 24
+        },
+        "prefix": {
+          "short": "E.g. \"1(a)\", \"2.5.3\"",
+          "type": "string",
+          "index": 25
+        },
+        "text": {
+          "short": "Primary text for the item",
+          "type": "string",
+          "index": 26
+        },
+        "type": {
+          "binding": {
+            "strength": "required",
+            "valueSet": "http://hl7.org/fhir/ValueSet/item-type|4.0.1",
+            "bindingName": "QuestionnaireItemType"
+          },
+          "short": "group | display | boolean | decimal | integer | date | dateTime +",
+          "type": "code",
+          "index": 27
+        },
+        "enableWhen": {
+          "short": "Only allow data when",
+          "type": "BackboneElement",
+          "isModifierReason": "If enableWhen is present and the condition evaluates to false, then the Questionnaire behaves as though the elements weren't actually present",
+          "isModifier": true,
+          "constraint": {
+            "que-7": {
+              "expression": "operator = 'exists' implies (answer is Boolean)",
+              "human": "If the operator is 'exists', the value must be a boolean",
+              "severity": "error"
+            }
+          },
+          "array": true,
+          "index": 28,
+          "elements": {
+            "question": {
+              "short": "Question that determines whether item is enabled",
+              "type": "string",
+              "index": 29
+            },
+            "operator": {
+              "binding": {
+                "strength": "required",
+                "valueSet": "http://hl7.org/fhir/ValueSet/questionnaire-enable-operator|4.0.1",
+                "bindingName": "QuestionnaireItemOperator"
+              },
+              "short": "exists | = | != | > | < | >= | <=",
+              "type": "code",
+              "index": 30
+            },
+            "answer": {
+              "short": "Value for question comparison based on operator",
+              "choices": [
+                "answerBoolean",
+                "answerDecimal",
+                "answerInteger",
+                "answerDate",
+                "answerDateTime",
+                "answerTime",
+                "answerString",
+                "answerCoding",
+                "answerQuantity",
+                "answerReference"
+              ],
+              "index": 32
+            },
+            "answerBoolean": {
+              "short": "Value for question comparison based on operator",
+              "type": "boolean",
+              "choiceOf": "answer",
+              "index": 33
+            },
+            "answerDecimal": {
+              "short": "Value for question comparison based on operator",
+              "type": "decimal",
+              "choiceOf": "answer",
+              "index": 34
+            },
+            "answerInteger": {
+              "short": "Value for question comparison based on operator",
+              "type": "integer",
+              "choiceOf": "answer",
+              "index": 35
+            },
+            "answerDate": {
+              "short": "Value for question comparison based on operator",
+              "type": "date",
+              "choiceOf": "answer",
+              "index": 36
+            },
+            "answerDateTime": {
+              "short": "Value for question comparison based on operator",
+              "type": "dateTime",
+              "choiceOf": "answer",
+              "index": 37
+            },
+            "answerTime": {
+              "short": "Value for question comparison based on operator",
+              "type": "time",
+              "choiceOf": "answer",
+              "index": 38
+            },
+            "answerString": {
+              "short": "Value for question comparison based on operator",
+              "type": "string",
+              "choiceOf": "answer",
+              "index": 39
+            },
+            "answerCoding": {
+              "short": "Value for question comparison based on operator",
+              "type": "Coding",
+              "choiceOf": "answer",
+              "index": 40
+            },
+            "answerQuantity": {
+              "short": "Value for question comparison based on operator",
+              "type": "Quantity",
+              "choiceOf": "answer",
+              "index": 41
+            },
+            "answerReference": {
+              "short": "Value for question comparison based on operator",
+              "type": "Reference",
+              "choiceOf": "answer",
+              "refers": [
+                "http://hl7.org/fhir/StructureDefinition/Resource"
+              ],
+              "index": 42
+            }
+          },
+          "required": [
+            "answer",
+            "operator",
+            "question"
+          ]
+        },
+        "enableBehavior": {
+          "binding": {
+            "strength": "required",
+            "valueSet": "http://hl7.org/fhir/ValueSet/questionnaire-enable-behavior|4.0.1",
+            "bindingName": "EnableWhenBehavior"
+          },
+          "short": "all | any",
+          "type": "code",
+          "index": 43
+        },
+        "required": {
+          "meaningWhenMissing": "Items are generally assumed not to be required unless explicitly specified. Systems SHOULD always populate this value",
+          "short": "Whether the item must be included in data results",
+          "type": "boolean",
+          "index": 44
+        },
+        "repeats": {
+          "meaningWhenMissing": "Items are generally assumed not to repeat unless explicitly specified. Systems SHOULD always populate this value",
+          "short": "Whether the item may repeat",
+          "type": "boolean",
+          "index": 45
+        },
+        "readOnly": {
+          "short": "Don't allow human editing",
+          "type": "boolean",
+          "index": 46
+        },
+        "maxLength": {
+          "short": "No more than this many characters",
+          "type": "integer",
+          "index": 47
+        },
+        "answerValueSet": {
+          "short": "Valueset containing permitted answers",
+          "type": "canonical",
+          "index": 48
+        },
+        "answerOption": {
+          "short": "Permitted answer",
+          "type": "BackboneElement",
+          "array": true,
+          "index": 49,
+          "elements": {
+            "value": {
+              "short": "Answer value",
+              "choices": [
+                "valueInteger",
+                "valueDate",
+                "valueTime",
+                "valueString",
+                "valueCoding",
+                "valueReference"
+              ],
+              "index": 51
+            },
+            "valueInteger": {
+              "short": "Answer value",
+              "type": "integer",
+              "choiceOf": "value",
+              "index": 52
+            },
+            "valueDate": {
+              "short": "Answer value",
+              "type": "date",
+              "choiceOf": "value",
+              "index": 53
+            },
+            "valueTime": {
+              "short": "Answer value",
+              "type": "time",
+              "choiceOf": "value",
+              "index": 54
+            },
+            "valueString": {
+              "short": "Answer value",
+              "type": "string",
+              "choiceOf": "value",
+              "index": 55
+            },
+            "valueCoding": {
+              "short": "Answer value",
+              "type": "Coding",
+              "choiceOf": "value",
+              "index": 56
+            },
+            "valueReference": {
+              "short": "Answer value",
+              "type": "Reference",
+              "choiceOf": "value",
+              "refers": [
+                "http://hl7.org/fhir/StructureDefinition/Resource"
+              ],
+              "index": 57
+            },
+            "initialSelected": {
+              "meaningWhenMissing": "Only selected items explicitly marked to be selected",
+              "short": "Whether option is selected by default",
+              "type": "boolean",
+              "index": 58
+            }
+          },
+          "required": [
+            "value"
+          ]
+        },
+        "initial": {
+          "short": "Initial value(s) when item is first rendered",
+          "type": "BackboneElement",
+          "array": true,
+          "index": 59,
+          "elements": {
+            "value": {
+              "short": "Actual value for initializing the question",
+              "choices": [
+                "valueBoolean",
+                "valueDecimal",
+                "valueInteger",
+                "valueDate",
+                "valueDateTime",
+                "valueTime",
+                "valueString",
+                "valueUri",
+                "valueAttachment",
+                "valueCoding",
+                "valueQuantity",
+                "valueReference"
+              ],
+              "index": 61
+            },
+            "valueBoolean": {
+              "short": "Actual value for initializing the question",
+              "type": "boolean",
+              "choiceOf": "value",
+              "index": 62
+            },
+            "valueDecimal": {
+              "short": "Actual value for initializing the question",
+              "type": "decimal",
+              "choiceOf": "value",
+              "index": 63
+            },
+            "valueInteger": {
+              "short": "Actual value for initializing the question",
+              "type": "integer",
+              "choiceOf": "value",
+              "index": 64
+            },
+            "valueDate": {
+              "short": "Actual value for initializing the question",
+              "type": "date",
+              "choiceOf": "value",
+              "index": 65
+            },
+            "valueDateTime": {
+              "short": "Actual value for initializing the question",
+              "type": "dateTime",
+              "choiceOf": "value",
+              "index": 66
+            },
+            "valueTime": {
+              "short": "Actual value for initializing the question",
+              "type": "time",
+              "choiceOf": "value",
+              "index": 67
+            },
+            "valueString": {
+              "short": "Actual value for initializing the question",
+              "type": "string",
+              "choiceOf": "value",
+              "index": 68
+            },
+            "valueUri": {
+              "short": "Actual value for initializing the question",
+              "type": "uri",
+              "choiceOf": "value",
+              "index": 69
+            },
+            "valueAttachment": {
+              "short": "Actual value for initializing the question",
+              "type": "Attachment",
+              "choiceOf": "value",
+              "index": 70
+            },
+            "valueCoding": {
+              "short": "Actual value for initializing the question",
+              "type": "Coding",
+              "choiceOf": "value",
+              "index": 71
+            },
+            "valueQuantity": {
+              "short": "Actual value for initializing the question",
+              "type": "Quantity",
+              "choiceOf": "value",
+              "index": 72
+            },
+            "valueReference": {
+              "short": "Actual value for initializing the question",
+              "type": "Reference",
+              "choiceOf": "value",
+              "refers": [
+                "http://hl7.org/fhir/StructureDefinition/Resource"
+              ],
+              "index": 73
+            }
+          },
+          "required": [
+            "value"
+          ]
+        },
+        "item": {
+          "short": "Nested questionnaire items",
+          "elementReference": [
+            "http://hl7.org/fhir/StructureDefinition/Questionnaire",
+            "elements",
+            "item"
+          ],
+          "array": true,
+          "index": 74
+        }
+      },
+      "required": [
+        "linkId",
+        "type"
+      ]
+    }
+  },
+  "required": [
+    "status"
+  ]
+}

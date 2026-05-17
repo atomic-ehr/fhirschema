@@ -1,0 +1,183 @@
+suite: Reference target sync check (fs1001)
+# A `Reference` element with `refers: [canonical, ...]` constrains its
+# target resource type. We do a syntactic check: parse the
+# `reference.reference` string, extract the resource type, compare against
+# `refers` (a canonical's tail is the type name).
+#
+# Out of scope (deferred per DESIGN §12): actually fetching the target and
+# verifying it exists / conforms. That would emit fs1002.
+
+defaults:
+  useR4: true
+
+tests:
+  # ─── inline schema with refers constraint ─────────────────────────────
+  - desc: allowed target type
+    schemas:
+      - elements:
+          subject:
+            type: Reference
+            refers:
+              - http://hl7.org/fhir/StructureDefinition/Patient
+              - http://hl7.org/fhir/StructureDefinition/Group
+    registry:
+      - url: Reference
+        name: Reference
+        type: Reference
+        kind: complex-type
+        class: complex-type
+        elements:
+          reference: { type: string }
+          type: { type: uri }
+          display: { type: string }
+    data:
+      subject: { reference: 'Patient/123' }
+    valid: true
+
+  - desc: disallowed target type → fs1001
+    schemas:
+      - elements:
+          subject:
+            type: Reference
+            refers:
+              - http://hl7.org/fhir/StructureDefinition/Patient
+    registry:
+      - url: Reference
+        name: Reference
+        type: Reference
+        kind: complex-type
+        class: complex-type
+        elements:
+          reference: { type: string }
+    data:
+      subject: { reference: 'Organization/1' }
+    issues:
+      - { code: fs1001, path: [subject, reference] }
+
+  - desc: absolute URL — type extracted from path
+    schemas:
+      - elements:
+          subject:
+            type: Reference
+            refers:
+              - http://hl7.org/fhir/StructureDefinition/Patient
+    registry:
+      - url: Reference
+        name: Reference
+        type: Reference
+        kind: complex-type
+        class: complex-type
+        elements:
+          reference: { type: string }
+    data:
+      subject: { reference: 'http://example.org/fhir/Patient/123' }
+    valid: true
+
+  - desc: versioned reference (Patient/123/_history/2) — base type matched
+    schemas:
+      - elements:
+          subject:
+            type: Reference
+            refers: [http://hl7.org/fhir/StructureDefinition/Patient]
+    registry:
+      - url: Reference
+        name: Reference
+        type: Reference
+        kind: complex-type
+        class: complex-type
+        elements:
+          reference: { type: string }
+    data:
+      subject: { reference: 'Patient/123/_history/2' }
+    valid: true
+
+  - desc: internal fragment reference (#contained-id) — type unknown, no check
+    schemas:
+      - elements:
+          subject:
+            type: Reference
+            refers: [http://hl7.org/fhir/StructureDefinition/Patient]
+    registry:
+      - url: Reference
+        name: Reference
+        type: Reference
+        kind: complex-type
+        class: complex-type
+        elements:
+          reference: { type: string }
+    data:
+      subject: { reference: '#pat-1' }
+    valid: true
+
+  - desc: URN reference — type unknown, no check
+    schemas:
+      - elements:
+          subject:
+            type: Reference
+            refers: [http://hl7.org/fhir/StructureDefinition/Patient]
+    registry:
+      - url: Reference
+        name: Reference
+        type: Reference
+        kind: complex-type
+        class: complex-type
+        elements:
+          reference: { type: string }
+    data:
+      subject: { reference: 'urn:uuid:01234567-89ab-cdef-0123-456789abcdef' }
+    valid: true
+
+  - desc: no `refers` constraint — any target type accepted
+    schemas:
+      - elements:
+          subject:
+            type: Reference
+    registry:
+      - url: Reference
+        name: Reference
+        type: Reference
+        kind: complex-type
+        class: complex-type
+        elements:
+          reference: { type: string }
+    data:
+      subject: { reference: 'AnythingGoes/1' }
+    valid: true
+
+  # ─── via real R4 schemas ──────────────────────────────────────────────
+  - desc: Encounter.subject = Patient — allowed
+    schemas: []
+    data:
+      resourceType: Encounter
+      status: in-progress
+      class: { system: 'http://terminology.hl7.org/CodeSystem/v3-ActCode', code: IMP }
+      subject: { reference: 'Patient/123' }
+    valid: true
+
+  - desc: Encounter.subject = Organization — Encounter.subject refers Patient/Group only
+    schemas: []
+    data:
+      resourceType: Encounter
+      status: in-progress
+      class: { system: 'http://terminology.hl7.org/CodeSystem/v3-ActCode', code: IMP }
+      subject: { reference: 'Organization/1' }
+    issues:
+      - { code: fs1001, path: [subject, reference] }
+
+  - desc: Observation.subject = Patient — allowed
+    schemas: []
+    data:
+      resourceType: Observation
+      status: final
+      code: { coding: [{ code: c }] }
+      subject: { reference: 'Patient/p1' }
+    valid: true
+
+  - desc: Patient.generalPractitioner accepts Organization/Practitioner/PractitionerRole; reject Patient
+    schemas: []
+    data:
+      resourceType: Patient
+      generalPractitioner:
+        - reference: 'Patient/other'
+    issues:
+      - { code: fs1001, path: [generalPractitioner, 0, reference] }

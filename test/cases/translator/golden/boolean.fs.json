@@ -1,0 +1,11 @@
+{
+  "name": "boolean",
+  "type": "boolean",
+  "kind": "primitive-type",
+  "class": "primitive-type",
+  "url": "http://hl7.org/fhir/StructureDefinition/boolean",
+  "version": "4.0.1",
+  "description": "Base StructureDefinition for boolean Type: Value of \"true\" or \"false\"",
+  "derivation": "specialization",
+  "base": "http://hl7.org/fhir/StructureDefinition/Element"
+}

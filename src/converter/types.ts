@@ -439,6 +439,10 @@ export type FHIRSchemaElement = {
     type: string;
     value: FHIRValue; // Changed from any to FHIRValue
   };
+  fixed?: {
+    type: string;
+    value: FHIRValue;
+  };
   constraint?: Record<
     string,
     {

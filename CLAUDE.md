@@ -1,42 +1,44 @@
 # CLAUDE.md
 
-When you are generating code prefer to be concise and to the point.
-Make comments only if needed.
+Project conventions for AI contributors. Be concise; comment only when
+non-obvious *why*.
 
-This is a design project for a new unit library in typescript.
-Please be concise and to the point.
-* ./spec is official spec of FHIRPath
-* ./adr is a folder for Architecture Decision Records. (read ./adr/README.md for more details)
-* ./concepts is a wiki like knowledge base for the project.
-* ./tasks is a folder for task management (read ./tasks/README.md for more details)
-   Task file name convention is [00<X>-<task-name>].md
-   When creating new tasks, create them in ./tasks/todo/<filename>.md
-   When working on tasks move files to ./tasks/in-progress/<filename>.md
-   When task finished move files to ./tasks/done/<filename>.md and write what was done in this file.
-* ./test is a folder for tests - tests should be named as ./test/<filename>.test.ts by convention.
-* ./scripts - for debug and utils you can write typescript scripts in this directory and run them with `bun run <filename.ts>`
+This is a TypeScript implementation of **FHIRSchema** (translator + validator)
+running on Bun.
 
-## Architecture Decisions
+## Where the knowledge lives
 
-* Before making significant architectural changes, check existing ADRs in ./adr
-* Create new ADRs for important design decisions using ./adr/template.md
-* Document alternatives considered and rationale for choices
+* **`DESIGN.md` — canonical design document.** Single source of truth for
+  architecture, IR, validator semantics, error codes, and design decisions.
+  Read it before touching the code. If your change shifts the design,
+  update DESIGN.md in the same PR.
+* `transcripts/` — recorded design conversations. Background only; DESIGN.md
+  is the synthesised current truth. Do not cite transcripts in code or
+  user-facing docs.
+* `spec/examples/` — example FHIRSchema JSON used by tests.
+* `tasks/` — lightweight task workflow.
+  * `tasks/todo/<NNN-name>.md` → `tasks/in-progress/<NNN-name>.md` →
+    `tasks/done/<NNN-name>.md` (with a short note about what shipped).
 
 ## Coding
 
-* While importing files, remember about import type for types.
-* Use `bun run <filename.ts>` to run files
-* When you create or update typescript file, run `bun tsc --noEmit` to check for errors and fix them.
-* Create tests for new functionality. Put test file as ./test/<filename>.test.ts by convention.
-* Use `import {describe, it, expect} from 'bun:test'` and `bun run test` to run tests.
+* Runtime is Bun. Run files with `bun run <file.ts>`, tests with
+  `bun test`, typecheck with `bunx tsc --noEmit`.
+* When you create or modify a TypeScript file, run `bunx tsc --noEmit` and
+  fix errors before declaring done.
+* Use `import type` for type-only imports.
+* Tests use `bun:test`: `import { describe, it, expect } from 'bun:test'`.
+  Test files live at `test/<area>/<name>.test.ts`.
+* Debug/utility scripts go in `scripts/` (create if needed); run with
+  `bun run scripts/<file.ts>`.
+* No comments that restate what the code does. Comments are for non-obvious
+  *why* — a hidden invariant, a workaround, a subtle ordering constraint.
 
+## Architectural changes
 
-## Tasks
-
-When working on tasks move files to ./tasks/in-progress/<filename>.md
-When task finished move files to ./tasks/done/<filename>.md and write what was done in this file.
-
-
-
-
-
+* The translator is **stateless** (no I/O, no caches, no other-schema
+  peeking) and the validator is **snapshot-less** (resolves inheritance at
+  runtime via `ctx.resolve`). These two properties are load-bearing; if a
+  proposed change would violate either, stop and discuss.
+* Error codes follow the `fsNNN` scheme defined in DESIGN.md §13. Codes are
+  stable identifiers; tests assert on `code` + `path`, never on messages.

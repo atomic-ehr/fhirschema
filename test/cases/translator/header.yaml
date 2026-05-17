@@ -1,0 +1,62 @@
+suite: Header mapping (StructureDefinition metadata → FHIRSchema header)
+
+defaults:
+  sd:
+    resourceType: StructureDefinition
+    status: active
+    kind: resource
+    derivation: specialization
+    url: http://test/T
+    name: T
+    type: T
+    differential:
+      element: []
+
+tests:
+  - desc: minimal SD produces header with name, type, kind, class
+    sd: {}
+    expected:
+      name: T
+      type: T
+      kind: resource
+      class: resource
+      derivation: specialization
+
+  - desc: baseDefinition becomes base
+    sd:
+      baseDefinition: http://test/Parent
+    expected:
+      base: http://test/Parent
+
+  - desc: kind=resource + derivation=constraint produces class=profile
+    sd:
+      kind: resource
+      derivation: constraint
+    expected:
+      class: profile
+
+  - desc: type=Extension produces class=extension
+    sd:
+      type: Extension
+    expected:
+      class: extension
+
+  - desc: kind=complex-type passes through as class=complex-type
+    sd:
+      kind: complex-type
+    expected:
+      class: complex-type
+
+  - desc: version and description pass through
+    sd:
+      version: '1.0.0'
+      description: A test schema
+    expected:
+      version: '1.0.0'
+      description: A test schema
+
+  - desc: abstract=true is preserved
+    sd:
+      abstract: true
+    expected:
+      abstract: true

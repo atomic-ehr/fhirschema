@@ -1,0 +1,77 @@
+suite: Strict mode for unresolved profiles (fs701)
+# Imported from sansara `unknown-schemas-test` (core_test.clj:2929).
+# By default, unresolved profiles in `data.meta.profile` are silent
+# (matches reference validators' non-strict mode). With `options.strict:
+# true`, they become fs701 errors.
+
+defaults:
+  usePackages:
+    - hl7.fhir.r4.core
+    - hl7.fhir.us.core
+
+tests:
+  # ─── sansara: without strict mode ─────────────────────────────────────
+  - desc: 'sansara/unknown-schemas: known profile (us-core-patient) → valid'
+    schemas: []
+    data:
+      resourceType: Patient
+      meta:
+        profile: ['http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient']
+      name: [{ family: fa }]
+      gender: male
+      identifier: [{ system: sys, value: v1, use: someuse }]
+    valid: true
+
+  - desc: 'sansara/unknown-schemas: unknown profile, no strict mode → silent valid'
+    schemas: []
+    data:
+      resourceType: Patient
+      meta:
+        profile: ['http://unresolvable-profile']
+      name: [{ family: fa }]
+      gender: male
+      identifier: [{ system: sys, value: v1, use: someuse }]
+    valid: true
+
+  # ─── sansara: with strict mode ────────────────────────────────────────
+  - desc: 'sansara/unknown-schemas: known profile + strict → valid'
+    schemas: []
+    options: { strict: true }
+    data:
+      resourceType: Patient
+      meta:
+        profile: ['http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient']
+      name: [{ family: fa }]
+      gender: male
+      identifier: [{ system: sys, value: v1, use: someuse }]
+    valid: true
+
+  - desc: 'sansara/unknown-schemas: unknown profile + strict → fs701'
+    schemas: []
+    options: { strict: true }
+    data:
+      resourceType: Patient
+      meta:
+        profile: ['http://unresolvable-profile']
+      name: [{ family: fa }]
+      gender: male
+      identifier: [{ system: sys, value: v1, use: someuse }]
+    issues:
+      - { code: fs701, path: [meta, profile] }
+
+  # ─── unresolved resourceType under strict mode ────────────────────────
+  - desc: 'strict: unknown resourceType → fs701'
+    schemas: []
+    options: { strict: true }
+    data:
+      resourceType: NotARealResource
+      foo: 1
+    issues:
+      - { code: fs701, path: [] }
+
+  - desc: 'non-strict: unknown resourceType → silent (current default)'
+    schemas: []
+    data:
+      resourceType: NotARealResource
+      foo: 1
+    valid: true

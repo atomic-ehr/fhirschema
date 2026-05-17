@@ -1,0 +1,54 @@
+suite: US Core profile validation (imported from sansara)
+
+defaults:
+  usePackages:
+    - hl7.fhir.r4.core
+    - hl7.fhir.us.core
+
+tests:
+  # ─── sansara `extension-test` (core_test.clj:2189) — us-core-race ────
+  - desc: 'us-core-race: valid Patient with ombCategory + text extensions'
+    schemas: []
+    data:
+      resourceType: Patient
+      meta:
+        profile: ['http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient']
+      extension:
+        - url: 'http://hl7.org/fhir/us/core/StructureDefinition/us-core-race'
+          extension:
+            - url: ombCategory
+              valueCoding:
+                system: 'urn:oid:2.16.840.1.113883.6.238'
+                code: '2106-3'
+            - url: text
+              valueString: someText
+      identifier: [{ system: someSystem, value: someValue }]
+      name: [{ given: [given], family: family }]
+      gender: male
+    valid: true
+
+  # SKIP: This case checks the INNER slicing of us-core-race (sub-extension
+  # `text` is required). To detect that, the validator must dereference the
+  # extension URL to load us-core-race's own schema and apply its internal
+  # extension slicing. We don't yet do that — see DESIGN.md §15
+  # "deep extension validation". Sansara passes thanks to its
+  # extension-URL → schema deref logic.
+  - desc: 'us-core-race: invalid — missing required `text` sub-extension → fs902'
+    skip: true
+    schemas: []
+    data:
+      resourceType: Patient
+      meta:
+        profile: ['http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient']
+      extension:
+        - url: 'http://hl7.org/fhir/us/core/StructureDefinition/us-core-race'
+          extension:
+            - url: ombCategory
+              valueCoding:
+                system: 'urn:oid:2.16.840.1.113883.6.238'
+                code: '2106-3'
+      identifier: [{ system: someSystem, value: someValue }]
+      name: [{ given: [given], family: family }]
+      gender: male
+    issues:
+      - { code: fs902, path: [extension, 0, extension] }

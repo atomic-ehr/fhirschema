@@ -240,6 +240,7 @@ export interface FHIRSchemaElement {
 
   // Pattern/Fixed values
   pattern?: FHIRSchemaPattern;
+  fixed?: FHIRSchemaPattern;
 
   // Constraints
   constraint?: Record<string, FHIRSchemaConstraint>;

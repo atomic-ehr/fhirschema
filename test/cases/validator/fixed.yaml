@@ -1,0 +1,139 @@
+suite: fixed[X] strict equality (fs206)
+# Unlike pattern[X] (deep-partial), fixed[X] requires EXACT equality:
+# - object: same keys, same values (no extras allowed)
+# - array: same length, same items in same order
+# - primitive: same value
+
+tests:
+  # ─── primitive: same as pattern semantics ─────────────────────────────
+  - desc: fixed primitive matches exact
+    schemas:
+      - elements:
+          status:
+            type: code
+            fixed: { type: code, value: active }
+    data: { status: active }
+    valid: true
+
+  - desc: fixed primitive rejects different value
+    schemas:
+      - elements:
+          status:
+            type: code
+            fixed: { type: code, value: active }
+    data: { status: completed }
+    issues:
+      - { code: fs206, path: [status] }
+
+  # ─── object: STRICT (extras forbidden, unlike pattern) ────────────────
+  - desc: fixed object rejects extra keys (pattern would accept)
+    schemas:
+      - elements:
+          code:
+            type: CodeableConcept
+            fixed:
+              type: CodeableConcept
+              value:
+                coding:
+                  - { system: 'http://loinc.org', code: '85354-9' }
+    registry:
+      - url: CodeableConcept
+        name: CodeableConcept
+        type: CodeableConcept
+        kind: complex-type
+        class: complex-type
+        elements:
+          coding: { type: Coding, array: true }
+          text: { type: string }
+      - url: Coding
+        name: Coding
+        type: Coding
+        kind: complex-type
+        class: complex-type
+        elements:
+          system: { type: uri }
+          code: { type: code }
+          display: { type: string }
+    data:
+      code:
+        coding:
+          - { system: 'http://loinc.org', code: '85354-9', display: 'extra!' }
+    issues:
+      - { code: fs206, path: [code] }
+
+  - desc: fixed object accepts exact match
+    schemas:
+      - elements:
+          code:
+            type: CodeableConcept
+            fixed:
+              type: CodeableConcept
+              value:
+                coding:
+                  - { system: 'http://loinc.org', code: '85354-9' }
+    registry:
+      - url: CodeableConcept
+        name: CodeableConcept
+        type: CodeableConcept
+        kind: complex-type
+        class: complex-type
+        elements:
+          coding: { type: Coding, array: true }
+      - url: Coding
+        name: Coding
+        type: Coding
+        kind: complex-type
+        class: complex-type
+        elements:
+          system: { type: uri }
+          code: { type: code }
+    data:
+      code:
+        coding:
+          - { system: 'http://loinc.org', code: '85354-9' }
+    valid: true
+
+  # ─── array: order + length matter ─────────────────────────────────────
+  - desc: fixed array rejects additional items
+    schemas:
+      - elements:
+          code:
+            type: CodeableConcept
+            fixed:
+              type: CodeableConcept
+              value:
+                coding:
+                  - { system: 'http://loinc.org', code: 'X' }
+    registry:
+      - url: CodeableConcept
+        name: CodeableConcept
+        type: CodeableConcept
+        kind: complex-type
+        class: complex-type
+        elements:
+          coding: { type: Coding, array: true }
+      - url: Coding
+        name: Coding
+        type: Coding
+        kind: complex-type
+        class: complex-type
+        elements:
+          system: { type: uri }
+          code: { type: code }
+    data:
+      code:
+        coding:
+          - { system: 'http://loinc.org', code: 'X' }
+          - { system: 'http://other', code: 'Y' }
+    issues:
+      - { code: fs206, path: [code] }
+
+  # ─── pattern still works as deep-partial alongside fixed ──────────────
+  - desc: pattern (not fixed) still allows extras
+    schemas:
+      - elements:
+          status:
+            type: code
+            pattern: { type: code, value: active }
+    data: { status: active }
+    valid: true

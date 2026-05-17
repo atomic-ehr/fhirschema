@@ -1,0 +1,482 @@
+suite: Real FHIR R4 resource validation (resourceType + meta.profile resolution)
+# These tests load the full hl7.fhir.r4.core fixture set into ctx and rely on:
+#   1. `data.resourceType` → auto-resolve the base schema
+#   2. `data.meta.profile[]` → auto-resolve declared profiles
+# Both implemented in src/validator/index.ts.
+
+defaults:
+  useR4: true
+
+tests:
+  # ─── basic resource discovery ──────────────────────────────────────────
+  - desc: empty Patient has no resourceType-level required fields
+    schemas: []
+    data: { resourceType: Patient }
+    valid: true
+
+  - desc: Patient with unknown top-level key
+    schemas: []
+    data: { resourceType: Patient, surprise: yes }
+    issues:
+      - { code: fs201, path: [surprise] }
+
+  - desc: unknown resourceType → silent pass (matches sansara default; strict mode is future work)
+    schemas: []
+    data: { resourceType: NotARealResource, foo: 1 }
+    valid: true
+
+  # ─── required (imported from sansara `required-element`) ───────────────
+  # ../sansara/box/libs/fhir-clj/test/fhir/validator/core_test.clj:3029
+  - desc: ServiceRequest missing status, intent, subject
+    schemas: []
+    data: { resourceType: ServiceRequest }
+    issues:
+      - { code: fs301, path: [status] }
+      - { code: fs301, path: [intent] }
+      - { code: fs301, path: [subject] }
+
+  - desc: ServiceRequest with primitive extension on status counts as present
+    # FHIR rule: a required primitive can be satisfied by `_field` alone
+    # (data-absent-reason extension pattern).
+    schemas: []
+    data:
+      resourceType: ServiceRequest
+      _status:
+        extension:
+          - url: http://hl7.org/fhir/StructureDefinition/data-absent-reason
+            valueCode: unknown
+      _intent:
+        extension:
+          - url: http://hl7.org/fhir/StructureDefinition/data-absent-reason
+            valueCode: unknown
+    issues:
+      # subject still missing
+      - { code: fs301, path: [subject] }
+
+  # ─── meta.profile-driven resolution ────────────────────────────────────
+  - desc: Patient with unknown profile + strict mode → fs701
+    schemas: []
+    options: { strict: true }
+    data:
+      resourceType: Patient
+      meta:
+        profile: ['http://unresolvable-profile']
+    issues:
+      - { code: fs701, path: [meta, profile] }
+
+  - desc: Patient with known profile is validated
+    # Use the core US Core Patient profile (translated by prepare-fixtures
+    # only if US Core was added to packages list; for now we just check the
+    # base resource resolution works).
+    schemas: []
+    data:
+      resourceType: Patient
+      meta:
+        profile: ['http://hl7.org/fhir/StructureDefinition/Patient']
+      name: [{ family: Doe }]
+    valid: true
+
+  # ─── primitive type checks bubble through real schema ──────────────────
+  - desc: Patient.birthDate wrong type
+    schemas: []
+    data: { resourceType: Patient, birthDate: 12345 }
+    issues:
+      - { code: fs101, path: [birthDate] }
+
+  - desc: Patient.active wrong type
+    schemas: []
+    data: { resourceType: Patient, active: 'yes' }
+    issues:
+      - { code: fs103, path: [active] }
+
+  - desc: Patient.gender accepts a string code
+    schemas: []
+    data: { resourceType: Patient, gender: male }
+    valid: true
+
+  # ─── arrays from real schemas ──────────────────────────────────────────
+  - desc: Patient.name expects array, got scalar
+    schemas: []
+    data: { resourceType: Patient, name: { family: Doe } }
+    issues:
+      - { code: fs203, path: [name] }
+
+  - desc: Patient.name valid as array
+    schemas: []
+    data:
+      resourceType: Patient
+      name:
+        - { family: Doe, given: [John] }
+    valid: true
+
+  # ─── nested object via type ref ────────────────────────────────────────
+  - desc: Patient.name[0].given expects array of strings
+    schemas: []
+    data:
+      resourceType: Patient
+      name: [{ given: ['John', 42] }]
+    issues:
+      - { code: fs101, path: [name, 0, given, 1] }
+
+  # ─── choice types in real resources ───────────────────────────────────
+  - desc: Observation with single valueQuantity is valid
+    schemas: []
+    data:
+      resourceType: Observation
+      status: final
+      code: { coding: [{ system: 'http://loinc.org', code: '85354-9' }] }
+      valueQuantity: { value: 120, unit: mmHg, system: 'http://unitsofmeasure.org', code: 'mm[Hg]' }
+    valid: true
+
+  - desc: Observation with two value[x] variants → fs802
+    schemas: []
+    data:
+      resourceType: Observation
+      status: final
+      code: { coding: [{ code: x }] }
+      valueQuantity: { value: 120 }
+      valueString: 'something'
+    issues:
+      - { code: fs802, path: [] }
+
+  - desc: Patient.deceased[x] — deceasedBoolean alone is valid
+    schemas: []
+    data:
+      resourceType: Patient
+      deceasedBoolean: false
+    valid: true
+
+  - desc: Patient.deceased[x] — both deceasedBoolean and deceasedDateTime → fs802
+    schemas: []
+    data:
+      resourceType: Patient
+      deceasedBoolean: false
+      deceasedDateTime: '2020-01-01T00:00:00Z'
+    issues:
+      - { code: fs802, path: [] }
+
+  # ─── sansara `cardinality-test` (core_test.clj:3109) ──────────────────
+  # Profile narrows Patient.address to min=2 max=3
+  - desc: 'sansara/cardinality-test: Patient.name.given scalar where array expected'
+    schemas: []
+    data:
+      resourceType: Patient
+      name: [{ given: 'test' }]
+    issues:
+      - { code: fs203, path: [name, 0, given] }
+
+  - desc: 'sansara/cardinality-test: profile narrows address min=2 — within bounds'
+    schemas: []
+    registry:
+      - url: https://example/cardinality-profile
+        name: cardinality-profile
+        type: Patient
+        kind: resource
+        class: profile
+        base: http://hl7.org/fhir/StructureDefinition/Patient
+        elements:
+          address:
+            min: 2
+            max: 3
+    data:
+      resourceType: Patient
+      meta: { profile: ['https://example/cardinality-profile'] }
+      address: [{ text: t1 }, { text: t2 }]
+    valid: true
+
+  - desc: 'sansara/cardinality-test: profile address min=2, actual=1 → fs303'
+    schemas: []
+    registry:
+      - url: https://example/cardinality-profile
+        name: cardinality-profile
+        type: Patient
+        kind: resource
+        class: profile
+        base: http://hl7.org/fhir/StructureDefinition/Patient
+        elements:
+          address:
+            min: 2
+            max: 3
+    data:
+      resourceType: Patient
+      meta: { profile: ['https://example/cardinality-profile'] }
+      address: [{ text: t1 }]
+    issues:
+      - { code: fs303, path: [address] }
+
+  # ─── sansara `slicing-validation/Simple slicings` (core_test.clj:1015) ──
+  - desc: 'sansara/slicing: Observation conforms to vitalsigns with VSCat category'
+    schemas: []
+    data:
+      resourceType: Observation
+      meta: { profile: ['http://hl7.org/fhir/StructureDefinition/vitalsigns'] }
+      status: final
+      valueString: a
+      subject: { reference: 'http://someserver/some-path' }
+      effectiveDateTime: '2000-01-01T00:00:00Z'
+      code: { text: '123' }
+      category:
+        - coding:
+            - system: 'http://terminology.hl7.org/CodeSystem/observation-category'
+              code: vital-signs
+    valid: true
+
+  - desc: 'sansara/slicing: missing required VSCat slice → fs902'
+    schemas: []
+    data:
+      resourceType: Observation
+      meta: { profile: ['http://hl7.org/fhir/StructureDefinition/vitalsigns'] }
+      status: final
+      valueString: a
+      subject: { reference: 'http://someserver/some-path' }
+      effectiveDateTime: '2000-01-01T00:00:00Z'
+      code: { text: '123' }
+      category:
+        - coding:
+            - system: 'http://terminology.hl7.org/CodeSystem/observation-category'
+              code: foo
+    issues:
+      - { code: fs902, path: [category] }
+
+  - desc: 'sansara/slicing: too many VSCat → fs902'
+    schemas: []
+    data:
+      resourceType: Observation
+      meta: { profile: ['http://hl7.org/fhir/StructureDefinition/vitalsigns'] }
+      status: final
+      valueString: a
+      subject: { reference: 'http://someserver/some-path' }
+      effectiveDateTime: '2000-01-01T00:00:00Z'
+      code: { text: '123' }
+      category:
+        - coding: [{ system: 'http://terminology.hl7.org/CodeSystem/observation-category', code: vital-signs }]
+        - coding: [{ system: 'http://terminology.hl7.org/CodeSystem/observation-category', code: vital-signs }]
+    issues:
+      - { code: fs902, path: [category] }
+
+  - desc: 'sansara/slicing: missing category entirely → fs301'
+    schemas: []
+    data:
+      resourceType: Observation
+      meta: { profile: ['http://hl7.org/fhir/StructureDefinition/vitalsigns'] }
+      status: final
+      valueString: A
+      subject: { reference: 'http://someserver/some-path' }
+      effectiveDateTime: '2000-01-01T00:00:00Z'
+      code: { text: '123' }
+    issues:
+      - { code: fs301, path: [category] }
+
+  # ─── sansara `validation-c/empty complex type` (core_test.clj:720) ────
+  - desc: 'sansara/validation-c: empty array on collection (Patient.name = [])'
+    schemas: []
+    data:
+      resourceType: Patient
+      name: []
+    issues:
+      - { code: fs303, path: [name] }
+
+  - desc: 'sansara/validation-c: empty composite on complex field (maritalStatus = {})'
+    schemas: []
+    data:
+      resourceType: Patient
+      maritalStatus: {}
+    issues:
+      - { code: fs202, path: [maritalStatus] }
+
+  - desc: 'sansara/validation-c: empty string on primitive (birthDate = "")'
+    schemas: []
+    data:
+      resourceType: Patient
+      birthDate: ''
+    issues:
+      # birthDate is type `date`; empty string → fs107 invalid-date
+      - { code: fs107, path: [birthDate] }
+
+  # ─── sansara `validation-c/Primitive types` (core_test.clj:767) ──────
+  - desc: 'sansara/validation-c: birthDate "14:00" is not a valid date'
+    schemas: []
+    data:
+      resourceType: Patient
+      birthDate: '14:00'
+    issues:
+      - { code: fs107, path: [birthDate] }
+
+  - desc: 'sansara/validation-c: birthDate "2000-04-30" is valid'
+    schemas: []
+    data:
+      resourceType: Patient
+      birthDate: '2000-04-30'
+    valid: true
+
+  - desc: 'sansara/validation-c: positiveInt -5 on Immunization protocolApplied'
+    schemas: []
+    data:
+      resourceType: Immunization
+      patient: { reference: 'pt/1' }
+      occurrenceString: someString
+      vaccineCode: { coding: [{ code: '1' }] }
+      status: active
+      protocolApplied:
+        - doseNumberPositiveInt: -5
+    issues:
+      - { code: fs116, path: [protocolApplied, 0, doseNumberPositiveInt] }
+
+  - desc: 'sansara/validation-c: unknown top-level key → fs201'
+    schemas: []
+    data:
+      resourceType: Patient
+      unexist-key: true
+    issues:
+      - { code: fs201, path: [unexist-key] }
+
+  - desc: 'sansara/validation-c: Patient.active = 42 (number where boolean expected)'
+    schemas: []
+    data:
+      resourceType: Patient
+      active: 42
+    issues:
+      - { code: fs103, path: [active] }
+
+  - desc: 'sansara/validation-c: Patient.gender = ["male"] (array where scalar expected)'
+    schemas: []
+    data:
+      resourceType: Patient
+      gender: [male]
+    issues:
+      - { code: fs203, path: [gender] }
+
+  # ─── sansara `validation-c/poly` (core_test.clj:918) ──────────────────
+  - desc: 'sansara/validation-c: deceased + deceasedDateTime/Boolean → fs802'
+    schemas: []
+    data:
+      resourceType: Patient
+      deceasedDateTime: '2202-02-12'
+      deceasedBoolean: true
+    issues:
+      - { code: fs802, path: [] }
+
+  - desc: 'sansara/validation-c: bare `deceased` key (not a variant) → fs201 at [deceased]'
+    # `deceased[x]` is a virtual choice parent — only `deceasedBoolean` /
+    # `deceasedDateTime` are real JSON fields. Literal `deceased` is not a
+    # FHIR field and should be flagged as unknown.
+    schemas: []
+    data:
+      resourceType: Patient
+      deceased: { foo: 1 }
+    issues:
+      - { code: fs201, path: [deceased] }
+
+  # ─── sansara `validation-c/unexpected object` (core_test.clj:946) ────
+  - desc: 'sansara/validation-c: object where array expected (Patient.name = {family})'
+    schemas: []
+    data:
+      resourceType: Patient
+      name: { family: Ivan }
+    issues:
+      - { code: fs203, path: [name] }
+
+  # ─── inner-resource walk: Bundle.entry.resource ───────────────────────
+  - desc: 'inner-resource: Bundle with valid Patient + Observation entries'
+    # sansara validation-c/Bundle line 954
+    schemas: []
+    data:
+      resourceType: Bundle
+      type: transaction
+      entry:
+        - request: { method: POST, url: /Patient }
+          resource: { resourceType: Patient, gender: male }
+        - request: { method: POST, url: /Observation }
+          resource:
+            resourceType: Observation
+            status: active
+            code: { coding: [{ code: code }] }
+    valid: true
+
+  - desc: 'inner-resource: Bundle with Observation missing required code/status'
+    # sansara validation-c/Bundle line 966 (simplified)
+    schemas: []
+    data:
+      resourceType: Bundle
+      type: transaction
+      entry:
+        - request: { method: POST, url: /Observation }
+          resource:
+            resourceType: Observation
+            # missing both code and status (both required by Observation)
+    issues:
+      - { code: fs301, path: [entry, 0, resource, code] }
+      - { code: fs301, path: [entry, 0, resource, status] }
+
+  # ─── inner-resource walk: Patient.contained ───────────────────────────
+  - desc: 'inner-resource: Patient.contained DiagnosticReport missing code → fs301'
+    # sansara validation-c/contained line 996 (simplified — without excluded)
+    schemas: []
+    data:
+      resourceType: Patient
+      contained:
+        - resourceType: DiagnosticReport
+          status: active
+    issues:
+      - { code: fs301, path: [contained, 0, code] }
+
+  - desc: 'inner-resource: Patient.contained valid Practitioner'
+    schemas: []
+    data:
+      resourceType: Patient
+      contained:
+        - resourceType: Practitioner
+          id: pract-1
+    valid: true
+
+  - desc: 'inner-resource: Patient.contained Observation with wrong type'
+    # The inner resource gets validated by its own type. Observation requires
+    # status — missing here.
+    schemas: []
+    data:
+      resourceType: Patient
+      contained:
+        - resourceType: Observation
+          code: { coding: [{ code: c }] }
+    issues:
+      - { code: fs301, path: [contained, 0, status] }
+
+  - desc: 'inner-resource: Bundle entry resource with primitive type error bubbles up'
+    schemas: []
+    data:
+      resourceType: Bundle
+      type: collection
+      entry:
+        - resource:
+            resourceType: Patient
+            active: 'yes'   # wrong type — should be boolean
+    issues:
+      - { code: fs103, path: [entry, 0, resource, active] }
+
+  - desc: 'sansara/validation-c: Patient.active = "true" (string where boolean expected)'
+    schemas: []
+    data:
+      resourceType: Patient
+      active: 'true'
+    issues:
+      - { code: fs103, path: [active] }
+
+  - desc: 'sansara/cardinality-test: profile address max=3, actual=4 → fs302'
+    schemas: []
+    registry:
+      - url: https://example/cardinality-profile
+        name: cardinality-profile
+        type: Patient
+        kind: resource
+        class: profile
+        base: http://hl7.org/fhir/StructureDefinition/Patient
+        elements:
+          address:
+            min: 2
+            max: 3
+    data:
+      resourceType: Patient
+      meta: { profile: ['https://example/cardinality-profile'] }
+      address: [{ text: t1 }, { text: t2 }, { text: t3 }, { text: t4 }]
+    issues:
+      - { code: fs302, path: [address] }

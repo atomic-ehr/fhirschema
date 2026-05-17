@@ -1,115 +1,88 @@
 # FHIRSchema
 
-[![CI](https://github.com/fhir-schema/fhirschema-ts/actions/workflows/ci.yml/badge.svg)](https://github.com/fhir-schema/fhirschema-ts/actions/workflows/ci.yml)
-[![Type Check](https://github.com/fhir-schema/fhirschema-ts/actions/workflows/typecheck.yml/badge.svg)](https://github.com/fhir-schema/fhirschema-ts/actions/workflows/typecheck.yml)
+TypeScript implementation of the FHIRSchema translator and validator.
 
-TypeScript implementation of FHIRSchema converter and validator.
+**Design authority:** [DESIGN.md](DESIGN.md) — single canonical document covering
+architecture, IR shape, validator algorithm, error codes, and design decisions.
 
-## Overview
+## What it does
 
-This project provides:
-- **Converter**: Transforms FHIR StructureDefinitions into FHIRSchema format
-- **Validator**: Validates FHIR resources against FHIRSchema definitions
+Two pure halves:
 
-## Installation
+- **Translator** — `StructureDefinition` → `FHIRSchema` (stateless, single-input)
+- **Validator** — `FHIRSchema[]` + resource + resolver → `ValidationIssue[]`
+  (single-pass, data-driven, snapshot-less)
+
+## Install
 
 ```bash
 npm install @atomic-ehr/fhirschema
 ```
 
-Or install the latest canary version:
-
-```bash
-npm install @atomic-ehr/fhirschema@canary
-```
-
 ## Usage
 
-### Converting StructureDefinition to FHIRSchema
+### Translate a StructureDefinition
 
-```typescript
+```ts
 import { translate } from '@atomic-ehr/fhirschema';
-
-const structureDefinition = {
-  resourceType: 'StructureDefinition',
-  name: 'Patient',
-  // ... rest of the StructureDefinition
-};
 
 const fhirSchema = translate(structureDefinition);
 ```
 
-### Validating FHIR Resources
+The translator is a pure function — no I/O, no caches, no other-schema
+peeking. See [DESIGN.md §3](DESIGN.md#3-translator-structuredefinition--fhirschema).
 
-```typescript
+### Validate a resource
+
+```ts
 import { validate } from '@atomic-ehr/fhirschema';
 
-const resource = {
-  resourceType: 'Patient',
-  // ... patient data
+const ctx = {
+  resolve: (canonical) => schemaCache[canonical],   // your registry
 };
 
-const schema = { /* FHIRSchema */ };
-const context = { schemas: { Patient: schema } };
-
-const result = validate(context, [], resource);
-if (result.valid) {
-  console.log('Resource is valid');
-} else {
-  console.log('Validation errors:', result.errors);
+const result = validate(ctx, [patientProfile], resource);
+if (!result.valid) {
+  for (const issue of result.issues) {
+    console.log(issue.code, issue.path.join('.'), issue.message);
+  }
 }
 ```
 
-## Development
-
-### Running Tests
-
-```bash
-bun test
-```
-
-### Type Checking
-
-```bash
-bun run typecheck
-```
-
-### Building
-
-```bash
-bun run build
-```
-
-## Project Structure
-
-```
-├── src/
-│   ├── converter/     # StructureDefinition to FHIRSchema converter
-│   ├── validator/     # FHIRSchema validator
-│   └── types.ts       # Shared TypeScript types
-├── test/
-│   ├── unit/          # Unit tests
-│   └── golden/        # Golden tests with expected outputs
-├── spec/              # Specifications and documentation
-├── adr/               # Architecture Decision Records
-└── tasks/             # Task management
-```
+The validator iterates over **data**, not schema; inheritance and type
+references resolve at runtime via `ctx.resolve`. See [DESIGN.md §5](DESIGN.md#5-validator-data-driven-single-pass).
 
 ## Development
 
-This project uses:
-- **Bun** as the runtime and test runner
-- **TypeScript** for type safety
-- **GitHub Actions** for CI/CD
+Runtime is [Bun](https://bun.sh).
+
+```bash
+bun test                # run all tests
+bunx tsc --noEmit       # typecheck
+bun run build           # build dist/
+```
+
+## Layout
+
+```text
+DESIGN.md             ← canonical design document (read this first)
+README.md             ← this file
+CLAUDE.md             ← project conventions for AI contributors
+src/
+  converter/          ← SD → FHIRSchema translator
+  validator/          ← FHIRSchema validator
+  types.ts            ← shared TypeScript types
+test/
+  unit/               ← translator unit tests
+  golden/             ← translator golden tests
+  validator/          ← validator tests
+spec/examples/        ← sample schemas used in tests
+transcripts/          ← design-conversation transcripts (background)
+tasks/                ← task-tracking workflow
+```
 
 ## Contributing
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## License
-
-[License information to be added]
+Read [DESIGN.md](DESIGN.md) before proposing changes. Implementation must
+match the design; if a change requires a design shift, update DESIGN.md in
+the same PR.

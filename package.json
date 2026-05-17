@@ -17,6 +17,8 @@
   ],
   "scripts": {
     "test": "bun test",
+    "pretest": "bun run scripts/prepare-fixtures.ts",
+    "prepare-fixtures": "bun run scripts/prepare-fixtures.ts",
     "typecheck": "bunx tsc --noEmit",
     "build": "bun run build:clean && bun run build:types",
     "build:clean": "rm -rf dist",
@@ -49,6 +51,8 @@
   "devDependencies": {
     "@biomejs/biome": "2.2.4",
     "@types/bun": "latest",
+    "@types/js-yaml": "^4.0.9",
+    "js-yaml": "^4.1.1",
     "turndown": "^7.2.1",
     "typescript": "^5.9.3"
   },

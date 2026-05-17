@@ -1,0 +1,60 @@
+suite: Type mapping (type[0].code, refers, primitive vs complex)
+
+defaults:
+  sd:
+    resourceType: StructureDefinition
+    status: active
+    kind: resource
+    derivation: specialization
+    url: http://test/T
+    name: T
+    type: T
+
+tests:
+  - desc: primitive type code maps directly
+    sd:
+      differential:
+        element:
+          - path: T.a
+            type: [{ code: string }]
+    expected:
+      elements:
+        a: { type: string }
+
+  - desc: complex type code (HumanName) maps directly
+    sd:
+      differential:
+        element:
+          - path: T.a
+            type: [{ code: HumanName }]
+    expected:
+      elements:
+        a: { type: HumanName }
+
+  - desc: Reference targetProfile → refers array of canonical URLs
+    sd:
+      differential:
+        element:
+          - path: T.a
+            type:
+              - code: Reference
+                targetProfile:
+                  - http://hl7.org/fhir/StructureDefinition/Patient
+                  - http://hl7.org/fhir/StructureDefinition/Practitioner
+    expected:
+      elements:
+        a:
+          type: Reference
+          refers:
+            - http://hl7.org/fhir/StructureDefinition/Patient
+            - http://hl7.org/fhir/StructureDefinition/Practitioner
+
+  - desc: Reference without targetProfile → no refers
+    sd:
+      differential:
+        element:
+          - path: T.a
+            type: [{ code: Reference }]
+    expected:
+      elements:
+        a: { type: Reference }

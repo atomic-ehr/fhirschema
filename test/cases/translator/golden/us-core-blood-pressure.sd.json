@@ -1,0 +1,154 @@
+{
+  "resourceType": "StructureDefinition",
+  "url": "http://hl7.org/fhir/StructureDefinition/Profile",
+  "baseDefinition": "http://hl7.org/fhir/StructureDefinition/Observation",
+  "kind": "resource",
+  "derivation": "specialization",
+  "name": "USCoreBloodPressureProfile",
+  "type": "Observation",
+  "status": "active",
+  "differential": {
+    "element": [
+      { "id": "Observation", "path": "Observation", "short": "US Core Blood Pressure Profile" },
+      {
+        "id": "Observation.code",
+        "path": "Observation.code",
+        "short": "Blood Pressure",
+        "type": [{ "code": "CodeableConcept" }],
+        "patternCodeableConcept": { "coding": [{ "system": "http://loinc.org", "code": "85354-9" }] },
+        "mustSupport": true
+      },
+      {
+        "id": "Observation.component",
+        "path": "Observation.component",
+        "slicing": {
+          "discriminator": [{ "type": "pattern", "path": "code" }],
+          "ordered": false,
+          "rules": "open"
+        },
+        "short": "Component observations",
+        "min": 2,
+        "max": "*",
+        "mustSupport": true
+      },
+      {
+        "id": "Observation.component:systolic",
+        "path": "Observation.component",
+        "sliceName": "systolic",
+        "short": "Systolic Blood Pressure",
+        "min": 1,
+        "max": "1",
+        "mustSupport": true
+      },
+      {
+        "id": "Observation.component:systolic.code",
+        "path": "Observation.component.code",
+        "short": "Systolic Blood Pressure Code",
+        "min": 1,
+        "max": "1",
+        "patternCodeableConcept": { "coding": [{ "system": "http://loinc.org", "code": "8480-6" }] },
+        "mustSupport": true
+      },
+      {
+        "id": "Observation.component:systolic.valueQuantity",
+        "path": "Observation.component.valueQuantity",
+        "short": "Vital Sign Component Value",
+        "type": [{ "code": "Quantity" }],
+        "mustSupport": true
+      },
+      {
+        "id": "Observation.component:systolic.valueQuantity.value",
+        "path": "Observation.component.valueQuantity.value",
+        "min": 1,
+        "max": "1",
+        "type": [{ "code": "decimal" }],
+        "mustSupport": true
+      },
+      {
+        "id": "Observation.component:systolic.valueQuantity.unit",
+        "path": "Observation.component.valueQuantity.unit",
+        "min": 1,
+        "max": "1",
+        "type": [{ "code": "string" }],
+        "mustSupport": true
+      },
+      {
+        "id": "Observation.component:systolic.valueQuantity.system",
+        "path": "Observation.component.valueQuantity.system",
+        "min": 1,
+        "max": "1",
+        "type": [{ "code": "uri" }],
+        "fixedUri": "http://unitsofmeasure.org",
+        "mustSupport": true
+      },
+      {
+        "id": "Observation.component:systolic.valueQuantity.code",
+        "path": "Observation.component.valueQuantity.code",
+        "min": 1,
+        "max": "1",
+        "type": [{ "code": "code" }],
+        "fixedCode": "mm[Hg]",
+        "mustSupport": true
+      },
+      {
+        "id": "Observation.component:diastolic",
+        "path": "Observation.component",
+        "sliceName": "diastolic",
+        "short": "Diastolic Blood Pressure",
+        "min": 1,
+        "max": "1",
+        "mustSupport": true
+      },
+      {
+        "id": "Observation.component:diastolic.code",
+        "path": "Observation.component.code",
+        "short": "Diastolic Blood Pressure Code",
+        "min": 1,
+        "max": "1",
+        "patternCodeableConcept": { "coding": [{ "system": "http://loinc.org", "code": "8462-4" }] },
+        "mustSupport": true
+      },
+      {
+        "id": "Observation.component:diastolic.valueQuantity",
+        "path": "Observation.component.valueQuantity",
+        "short": "Vital Sign Component Value",
+        "type": [{ "code": "Quantity" }],
+        "mustSupport": true
+      },
+      {
+        "id": "Observation.component:diastolic.valueQuantity.value",
+        "path": "Observation.component.valueQuantity.value",
+        "min": 1,
+        "max": "1",
+        "type": [{ "code": "decimal" }],
+        "mustSupport": true
+      },
+      {
+        "id": "Observation.component:diastolic.valueQuantity.unit",
+        "path": "Observation.component.valueQuantity.unit",
+        "min": 1,
+        "max": "1",
+        "type": [{ "code": "string" }],
+        "mustSupport": true
+      },
+      {
+        "id": "Observation.component:diastolic.valueQuantity.system",
+        "path": "Observation.component.valueQuantity.system",
+        "min": 1,
+        "max": "1",
+        "type": [{ "code": "uri" }],
+        "fixedUri": "http://unitsofmeasure.org",
+        "mustSupport": true
+      },
+      {
+        "id": "Observation.component:diastolic.valueQuantity.code",
+        "path": "Observation.component.valueQuantity.code",
+        "min": 1,
+        "max": "1",
+        "type": [{ "code": "code" }],
+        "fixedCode": "mm[Hg]",
+        "mustSupport": true
+      }
+    ]
+  }
+}

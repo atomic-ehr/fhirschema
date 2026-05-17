@@ -1,0 +1,490 @@
+suite: Primitive validation (fs1xx)
+# Imported from atomic-ehr/sansara fhir-clj `primitives-test`
+# (../sansara/box/libs/fhir-clj/test/fhir/validator/core_test.clj:376-712).
+# Coverage mirrors the reference Clojure validator.
+#
+# Mapping table sansara → ours:
+#   invalid-type (wrong JSON kind)   → fs101 expected-string | fs102 expected-number | fs103 expected-boolean
+#   invalid-type (wrong literal)     → fs104..fs123 invalid-<TYPE>
+#   empty-value                      → fs1xx invalid-* (string-like) or fs204
+#   unexpected-object                → fs204 expected-primitive
+
+tests:
+  # ─── boolean ──────────────────────────────────────────────────────────
+  - desc: boolean true
+    schemas: [{ elements: { value: { type: boolean } } }]
+    data: { value: true }
+    valid: true
+  - desc: boolean false
+    schemas: [{ elements: { value: { type: boolean } } }]
+    data: { value: false }
+    valid: true
+  - desc: boolean rejects string
+    schemas: [{ elements: { value: { type: boolean } } }]
+    data: { value: 'true' }
+    issues: [{ code: fs103, path: [value] }]
+  - desc: boolean rejects number
+    schemas: [{ elements: { value: { type: boolean } } }]
+    data: { value: 1 }
+    issues: [{ code: fs103, path: [value] }]
+  - desc: boolean rejects object
+    schemas: [{ elements: { value: { type: boolean } } }]
+    data: { value: { id: '1' } }
+    issues: [{ code: fs204, path: [value] }]
+
+  # ─── integer (int32) ──────────────────────────────────────────────────
+  - desc: integer accepts whole number
+    schemas: [{ elements: { value: { type: integer } } }]
+    data: { value: 12 }
+    valid: true
+  - desc: integer accepts negative
+    schemas: [{ elements: { value: { type: integer } } }]
+    data: { value: -300 }
+    valid: true
+  - desc: integer rejects 3.1
+    schemas: [{ elements: { value: { type: integer } } }]
+    data: { value: 3.1 }
+    issues: [{ code: fs112, path: [value] }]
+  - desc: integer rejects string
+    schemas: [{ elements: { value: { type: integer } } }]
+    data: { value: '42' }
+    issues: [{ code: fs102, path: [value] }]
+  - desc: integer accepts INT32_MAX
+    schemas: [{ elements: { value: { type: integer } } }]
+    data: { value: 2147483647 }
+    valid: true
+  - desc: integer accepts INT32_MIN
+    schemas: [{ elements: { value: { type: integer } } }]
+    data: { value: -2147483648 }
+    valid: true
+  - desc: integer rejects INT32_MAX+1
+    schemas: [{ elements: { value: { type: integer } } }]
+    data: { value: 2147483648 }
+    issues: [{ code: fs112, path: [value] }]
+  - desc: integer rejects INT32_MIN-1
+    schemas: [{ elements: { value: { type: integer } } }]
+    data: { value: -2147483649 }
+    issues: [{ code: fs112, path: [value] }]
+  # Note: sansara also rejects `1.0` for integer. JS cannot distinguish
+  # `1.0` from `1` after JSON.parse (Number.isInteger(1.0) === true), so
+  # this case is not expressible here. Documented as a JS-platform limit.
+
+  # ─── integer64 (JSON string per FHIR R5) ──────────────────────────────
+  - desc: integer64 accepts "0"
+    schemas: [{ elements: { value: { type: integer64 } } }]
+    data: { value: '0' }
+    valid: true
+  - desc: integer64 accepts "123"
+    schemas: [{ elements: { value: { type: integer64 } } }]
+    data: { value: '123' }
+    valid: true
+  - desc: integer64 accepts "-123"
+    schemas: [{ elements: { value: { type: integer64 } } }]
+    data: { value: '-123' }
+    valid: true
+  - desc: integer64 accepts max int64
+    schemas: [{ elements: { value: { type: integer64 } } }]
+    data: { value: '9223372036854775807' }
+    valid: true
+  - desc: integer64 rejects empty
+    schemas: [{ elements: { value: { type: integer64 } } }]
+    data: { value: '' }
+    issues: [{ code: fs113, path: [value] }]
+  - desc: integer64 rejects leading zero "01"
+    schemas: [{ elements: { value: { type: integer64 } } }]
+    data: { value: '01' }
+    issues: [{ code: fs113, path: [value] }]
+  - desc: integer64 rejects "+123"
+    schemas: [{ elements: { value: { type: integer64 } } }]
+    data: { value: '+123' }
+    issues: [{ code: fs113, path: [value] }]
+  - desc: integer64 rejects "-0"
+    schemas: [{ elements: { value: { type: integer64 } } }]
+    data: { value: '-0' }
+    issues: [{ code: fs113, path: [value] }]
+  - desc: integer64 rejects "abc"
+    schemas: [{ elements: { value: { type: integer64 } } }]
+    data: { value: 'abc' }
+    issues: [{ code: fs113, path: [value] }]
+  - desc: integer64 rejects "1.5"
+    schemas: [{ elements: { value: { type: integer64 } } }]
+    data: { value: '1.5' }
+    issues: [{ code: fs113, path: [value] }]
+  - desc: integer64 rejects whitespace
+    schemas: [{ elements: { value: { type: integer64 } } }]
+    data: { value: ' 1' }
+    issues: [{ code: fs113, path: [value] }]
+  - desc: integer64 rejects overflow
+    schemas: [{ elements: { value: { type: integer64 } } }]
+    data: { value: '9223372036854775808' }
+    issues: [{ code: fs113, path: [value] }]
+  - desc: integer64 rejects JSON number
+    schemas: [{ elements: { value: { type: integer64 } } }]
+    data: { value: 123 }
+    issues: [{ code: fs101, path: [value] }]
+
+  # ─── unsignedInt ──────────────────────────────────────────────────────
+  - desc: unsignedInt accepts 0
+    schemas: [{ elements: { value: { type: unsignedInt } } }]
+    data: { value: 0 }
+    valid: true
+  - desc: unsignedInt accepts 1
+    schemas: [{ elements: { value: { type: unsignedInt } } }]
+    data: { value: 1 }
+    valid: true
+  - desc: unsignedInt rejects -1
+    schemas: [{ elements: { value: { type: unsignedInt } } }]
+    data: { value: -1 }
+    issues: [{ code: fs119, path: [value] }]
+  - desc: unsignedInt rejects 9.2
+    schemas: [{ elements: { value: { type: unsignedInt } } }]
+    data: { value: 9.2 }
+    issues: [{ code: fs112, path: [value] }]
+  - desc: unsignedInt accepts INT32_MAX
+    schemas: [{ elements: { value: { type: unsignedInt } } }]
+    data: { value: 2147483647 }
+    valid: true
+
+  # ─── positiveInt ──────────────────────────────────────────────────────
+  - desc: positiveInt accepts 1
+    schemas: [{ elements: { value: { type: positiveInt } } }]
+    data: { value: 1 }
+    valid: true
+  - desc: positiveInt accepts INT32_MAX
+    schemas: [{ elements: { value: { type: positiveInt } } }]
+    data: { value: 2147483647 }
+    valid: true
+  - desc: positiveInt rejects 0
+    schemas: [{ elements: { value: { type: positiveInt } } }]
+    data: { value: 0 }
+    issues: [{ code: fs116, path: [value] }]
+  - desc: positiveInt rejects -1
+    schemas: [{ elements: { value: { type: positiveInt } } }]
+    data: { value: -1 }
+    issues: [{ code: fs116, path: [value] }]
+  - desc: positiveInt rejects 9.2
+    schemas: [{ elements: { value: { type: positiveInt } } }]
+    data: { value: 9.2 }
+    issues: [{ code: fs112, path: [value] }]
+
+  # ─── decimal ──────────────────────────────────────────────────────────
+  - desc: decimal accepts integer
+    schemas: [{ elements: { value: { type: decimal } } }]
+    data: { value: 12 }
+    valid: true
+  - desc: decimal accepts 3.14
+    schemas: [{ elements: { value: { type: decimal } } }]
+    data: { value: 3.14 }
+    valid: true
+  - desc: decimal accepts -62e+3
+    schemas: [{ elements: { value: { type: decimal } } }]
+    data: { value: -62e+3 }
+    valid: true
+  - desc: decimal rejects string "9.2"
+    schemas: [{ elements: { value: { type: decimal } } }]
+    data: { value: '9.2' }
+    issues: [{ code: fs102, path: [value] }]
+
+  # ─── dateTime ─────────────────────────────────────────────────────────
+  - desc: dateTime accepts year only
+    schemas: [{ elements: { value: { type: dateTime } } }]
+    data: { value: '2018' }
+    valid: true
+  - desc: dateTime accepts yyyy-mm
+    schemas: [{ elements: { value: { type: dateTime } } }]
+    data: { value: '1973-06' }
+    valid: true
+  - desc: dateTime accepts yyyy-mm-dd
+    schemas: [{ elements: { value: { type: dateTime } } }]
+    data: { value: '1905-08-23' }
+    valid: true
+  - desc: dateTime accepts full with negative offset
+    schemas: [{ elements: { value: { type: dateTime } } }]
+    data: { value: '2015-02-07T13:28:17-05:00' }
+    valid: true
+  - desc: dateTime accepts full with positive offset
+    schemas: [{ elements: { value: { type: dateTime } } }]
+    data: { value: '2015-02-07T13:28:17+05:00' }
+    valid: true
+  - desc: dateTime accepts Z
+    schemas: [{ elements: { value: { type: dateTime } } }]
+    data: { value: '2017-01-01T00:00:00Z' }
+    valid: true
+  - desc: dateTime accepts millisecond fraction
+    schemas: [{ elements: { value: { type: dateTime } } }]
+    data: { value: '2017-01-01T00:00:00.000Z' }
+    valid: true
+  - desc: dateTime accepts +14:00 offset (boundary)
+    schemas: [{ elements: { value: { type: dateTime } } }]
+    data: { value: '2015-02-07T13:28:17+14:00' }
+    valid: true
+  - desc: dateTime rejects "201" (short year)
+    schemas: [{ elements: { value: { type: dateTime } } }]
+    data: { value: '201' }
+    issues: [{ code: fs108, path: [value] }]
+  - desc: dateTime rejects "0000"
+    schemas: [{ elements: { value: { type: dateTime } } }]
+    data: { value: '0000' }
+    issues: [{ code: fs108, path: [value] }]
+  - desc: dateTime rejects "000a"
+    schemas: [{ elements: { value: { type: dateTime } } }]
+    data: { value: '000a' }
+    issues: [{ code: fs108, path: [value] }]
+  - desc: dateTime rejects "2000-00" (zero month)
+    schemas: [{ elements: { value: { type: dateTime } } }]
+    data: { value: '2000-00' }
+    issues: [{ code: fs108, path: [value] }]
+  - desc: dateTime rejects "2000-13" (out-of-range month)
+    schemas: [{ elements: { value: { type: dateTime } } }]
+    data: { value: '2000-13' }
+    issues: [{ code: fs108, path: [value] }]
+  - desc: dateTime rejects "2024-02-31" (impossible day)
+    schemas: [{ elements: { value: { type: dateTime } } }]
+    data: { value: '2024-02-31' }
+    issues: [{ code: fs108, path: [value] }]
+  - desc: dateTime rejects "2023-02-29" (non-leap)
+    schemas: [{ elements: { value: { type: dateTime } } }]
+    data: { value: '2023-02-29' }
+    issues: [{ code: fs108, path: [value] }]
+  - desc: dateTime rejects "2015-02-07T15:15" (missing seconds)
+    schemas: [{ elements: { value: { type: dateTime } } }]
+    data: { value: '2015-02-07T15:15' }
+    issues: [{ code: fs108, path: [value] }]
+  - desc: dateTime rejects "2015-02-07T15:15:15" (missing tz)
+    schemas: [{ elements: { value: { type: dateTime } } }]
+    data: { value: '2015-02-07T15:15:15' }
+    issues: [{ code: fs108, path: [value] }]
+  - desc: dateTime rejects hour 25
+    schemas: [{ elements: { value: { type: dateTime } } }]
+    data: { value: '2017-01-01T25:00:00Z' }
+    issues: [{ code: fs108, path: [value] }]
+  - desc: dateTime rejects minute 60
+    schemas: [{ elements: { value: { type: dateTime } } }]
+    data: { value: '2017-01-01T00:60:00Z' }
+    issues: [{ code: fs108, path: [value] }]
+  - desc: dateTime rejects offset +14:01 (boundary+1)
+    schemas: [{ elements: { value: { type: dateTime } } }]
+    data: { value: '2015-02-07T13:28:17+14:01' }
+    issues: [{ code: fs108, path: [value] }]
+  - desc: dateTime rejects offset +24:00
+    schemas: [{ elements: { value: { type: dateTime } } }]
+    data: { value: '2015-02-07T13:28:17+24:00' }
+    issues: [{ code: fs108, path: [value] }]
+
+  # ─── time ─────────────────────────────────────────────────────────────
+  - desc: time accepts hh:mm:ss
+    schemas: [{ elements: { value: { type: time } } }]
+    data: { value: '12:03:00' }
+    valid: true
+  - desc: time rejects "23:02" (missing seconds)
+    schemas: [{ elements: { value: { type: time } } }]
+    data: { value: '23:02' }
+    issues: [{ code: fs118, path: [value] }]
+  - desc: time rejects full dateTime
+    schemas: [{ elements: { value: { type: time } } }]
+    data: { value: '2015-02-07T13:28:17' }
+    issues: [{ code: fs118, path: [value] }]
+
+  # ─── date ─────────────────────────────────────────────────────────────
+  - desc: date accepts year only
+    schemas: [{ elements: { value: { type: date } } }]
+    data: { value: '2018' }
+    valid: true
+  - desc: date accepts yyyy-mm
+    schemas: [{ elements: { value: { type: date } } }]
+    data: { value: '1973-06' }
+    valid: true
+  - desc: date accepts full
+    schemas: [{ elements: { value: { type: date } } }]
+    data: { value: '1905-08-23' }
+    valid: true
+  - desc: date rejects "2012-13-42" (out-of-range)
+    schemas: [{ elements: { value: { type: date } } }]
+    data: { value: '2012-13-42' }
+    issues: [{ code: fs107, path: [value] }]
+
+  # ─── instant ──────────────────────────────────────────────────────────
+  - desc: instant accepts millisecond + offset
+    schemas: [{ elements: { value: { type: instant } } }]
+    data: { value: '2015-02-07T13:28:17.239+02:00' }
+    valid: true
+  - desc: instant accepts Z
+    schemas: [{ elements: { value: { type: instant } } }]
+    data: { value: '2017-01-01T00:00:00Z' }
+    valid: true
+  - desc: instant rejects no tz
+    schemas: [{ elements: { value: { type: instant } } }]
+    data: { value: '2015-02-07T13:28:17.239' }
+    issues: [{ code: fs111, path: [value] }]
+  - desc: instant rejects partial date
+    schemas: [{ elements: { value: { type: instant } } }]
+    data: { value: '2018' }
+    issues: [{ code: fs111, path: [value] }]
+  - desc: instant rejects yyyy-mm
+    schemas: [{ elements: { value: { type: instant } } }]
+    data: { value: '1973-06' }
+    issues: [{ code: fs111, path: [value] }]
+  - desc: instant rejects yyyy-mm-dd only
+    schemas: [{ elements: { value: { type: instant } } }]
+    data: { value: '1905-08-23' }
+    issues: [{ code: fs111, path: [value] }]
+  - desc: instant rejects hour 24
+    schemas: [{ elements: { value: { type: instant } } }]
+    data: { value: '2017-01-01T24:00:00Z' }
+    issues: [{ code: fs111, path: [value] }]
+  - desc: instant rejects "2017-01-01T23:59:61Z" (out-of-range second)
+    schemas: [{ elements: { value: { type: instant } } }]
+    data: { value: '2017-01-01T23:59:61Z' }
+    issues: [{ code: fs111, path: [value] }]
+
+  # ─── url ──────────────────────────────────────────────────────────────
+  - desc: 'url accepts mailto:'
+    schemas: [{ elements: { value: { type: url } } }]
+    data: { value: 'mailto:a@example.com' }
+    valid: true
+  - desc: 'url accepts http://'
+    schemas: [{ elements: { value: { type: url } } }]
+    data: { value: 'http://example.com' }
+    valid: true
+  - desc: url accepts with port/path/query
+    schemas: [{ elements: { value: { type: url } } }]
+    data: { value: 'http://example.com:1337/hello?name=joe' }
+    valid: true
+
+  # ─── xhtml ────────────────────────────────────────────────────────────
+  - desc: xhtml accepts simple div
+    schemas: [{ elements: { value: { type: xhtml } } }]
+    data: { value: '<div xmlns="http://www.w3.org/1999/xhtml">hi</div>' }
+    valid: true
+  - desc: xhtml rejects empty
+    schemas: [{ elements: { value: { type: xhtml } } }]
+    data: { value: '' }
+    issues: [{ code: fs123, path: [value] }]
+
+  # ─── uri ──────────────────────────────────────────────────────────────
+  - desc: 'uri accepts ftp://'
+    schemas: [{ elements: { value: { type: uri } } }]
+    data: { value: 'ftp://ftp.example.org/file.txt' }
+    valid: true
+  - desc: 'uri accepts mailto:'
+    schemas: [{ elements: { value: { type: uri } } }]
+    data: { value: 'mailto:user@example.com' }
+    valid: true
+  - desc: 'uri accepts tel:'
+    schemas: [{ elements: { value: { type: uri } } }]
+    data: { value: 'tel:+1234567890' }
+    valid: true
+  - desc: uri rejects empty
+    schemas: [{ elements: { value: { type: uri } } }]
+    data: { value: '' }
+    issues: [{ code: fs120, path: [value] }]
+
+  # ─── id ───────────────────────────────────────────────────────────────
+  - desc: id accepts hyphen
+    schemas: [{ elements: { value: { type: id } } }]
+    data: { value: 'user-name' }
+    valid: true
+  - desc: id accepts dots
+    schemas: [{ elements: { value: { type: id } } }]
+    data: { value: 'a.b.c.d.e.f.g.h.i.j.k' }
+    valid: true
+  - desc: id rejects empty
+    schemas: [{ elements: { value: { type: id } } }]
+    data: { value: '' }
+    issues: [{ code: fs110, path: [value] }]
+
+  # ─── oid ──────────────────────────────────────────────────────────────
+  - desc: 'oid accepts urn:oid:1.2.3.4.5'
+    schemas: [{ elements: { value: { type: oid } } }]
+    data: { value: 'urn:oid:1.2.3.4.5' }
+    valid: true
+  - desc: oid rejects empty
+    schemas: [{ elements: { value: { type: oid } } }]
+    data: { value: '' }
+    issues: [{ code: fs115, path: [value] }]
+
+  # ─── uuid ─────────────────────────────────────────────────────────────
+  - desc: 'uuid accepts urn:uuid:'
+    schemas: [{ elements: { value: { type: uuid } } }]
+    data: { value: 'urn:uuid:c757873d-ec9a-4326-a141-556f43239520' }
+    valid: true
+  - desc: uuid rejects empty
+    schemas: [{ elements: { value: { type: uuid } } }]
+    data: { value: '' }
+    issues: [{ code: fs122, path: [value] }]
+
+  # ─── string ───────────────────────────────────────────────────────────
+  - desc: string accepts plain
+    schemas: [{ elements: { value: { type: string } } }]
+    data: { value: 'text' }
+    valid: true
+  - desc: string accepts newlines
+    schemas: [{ elements: { value: { type: string } } }]
+    data: { value: "text \n text" }
+    valid: true
+  - desc: string rejects empty
+    schemas: [{ elements: { value: { type: string } } }]
+    data: { value: '' }
+    issues: [{ code: fs117, path: [value] }]
+
+  # ─── code ─────────────────────────────────────────────────────────────
+  - desc: code accepts single token
+    schemas: [{ elements: { value: { type: code } } }]
+    data: { value: 'text' }
+    valid: true
+  - desc: code accepts two tokens
+    schemas: [{ elements: { value: { type: code } } }]
+    data: { value: 'text text' }
+    valid: true
+  - desc: code rejects empty
+    schemas: [{ elements: { value: { type: code } } }]
+    data: { value: '' }
+    issues: [{ code: fs106, path: [value] }]
+
+  # ─── base64Binary ─────────────────────────────────────────────────────
+  - desc: base64Binary accepts 4-char block
+    schemas: [{ elements: { value: { type: base64Binary } } }]
+    data: { value: 'TWFu' }
+    valid: true
+  - desc: base64Binary accepts padded
+    schemas: [{ elements: { value: { type: base64Binary } } }]
+    data: { value: 'SGVsbG8gV29ybGQ=' }
+    valid: true
+  - desc: base64Binary rejects empty
+    schemas: [{ elements: { value: { type: base64Binary } } }]
+    data: { value: '' }
+    issues: [{ code: fs104, path: [value] }]
+
+  # ─── markdown ─────────────────────────────────────────────────────────
+  - desc: markdown accepts bold
+    schemas: [{ elements: { value: { type: markdown } } }]
+    data: { value: '**Bold Text**' }
+    valid: true
+  - desc: markdown accepts newlines
+    schemas: [{ elements: { value: { type: markdown } } }]
+    data: { value: "\nCode block\n" }
+    valid: true
+  - desc: markdown rejects empty
+    schemas: [{ elements: { value: { type: markdown } } }]
+    data: { value: '' }
+    issues: [{ code: fs114, path: [value] }]
+
+  # ─── canonical ────────────────────────────────────────────────────────
+  - desc: canonical accepts plain URL
+    schemas: [{ elements: { value: { type: canonical } } }]
+    data: { value: 'http://example.org/fhir/ValueSet/x' }
+    valid: true
+  - desc: canonical accepts with version/fragment
+    schemas: [{ elements: { value: { type: canonical } } }]
+    data: { value: 'http://example.org/fhir/ValueSet/x|1.2.3#definition' }
+    valid: true
+  - desc: canonical rejects empty
+    schemas: [{ elements: { value: { type: canonical } } }]
+    data: { value: '' }
+    issues: [{ code: fs105, path: [value] }]
+
+  # ─── primitive vs object collision ────────────────────────────────────
+  - desc: object where primitive expected — fs204
+    schemas: [{ elements: { active: { type: boolean } } }]
+    data: { active: { id: '1' } }
+    issues: [{ code: fs204, path: [active] }]

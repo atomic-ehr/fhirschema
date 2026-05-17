@@ -1,6 +1,5 @@
-// Export converter functionality
+// SD -> FHIRSchema translator (stateless)
 export { translate } from './converter/index.js';
-// Re-export specific converter types that might be useful
 export type {
   Action,
   ConversionContext,
@@ -8,42 +7,19 @@ export type {
   StructureDefinition,
   StructureDefinitionElement,
   FHIRSchema,
+  FHIRSchemaElement,
   OperationOutcome,
   OperationOutcomeIssue,
   Resource,
 } from './converter/types.js';
 
-// Export all types
 export * from './types.js';
 
-// Export validator functionality
-export { validate, slice } from './validator/resource.js';
-export type { Slicing, Slices, ValidationOutput } from './validator/resource.js';
-
-// Export draft new pipeline alongside the current implementation
-export { translate as translateNew } from './new/translator.js';
-export { validate as validateNew } from './new/validator.js';
+// Validator (single-pass, data-driven, snapshot-less)
+export { validate } from './validator/index.js';
 export type {
-  NewContext,
-  NewData,
-  NewSchemaList,
-  NewSourceSchema,
-  NewTranslateOptions,
-  NewTranslationResult,
-  NewValidateOptions,
-  NewValidationResult,
-} from './new/types.js';
-
-// Re-export validator types (for FHIRSchema element types)
-export type {
-  FHIRSchemaElement,
-  FHIRSchemaPattern,
-  FHIRValue,
-  ValidationContext,
-  ValidationError,
+  ValidateContext,
+  ValidateOptions,
+  ValidationIssue,
   ValidationResult,
-  Deferred,
-  TerminologyDeferred,
-  ReferenceDeferred,
-  BindingStrength,
-} from './validator/types.js';
+} from './validator/index.js';

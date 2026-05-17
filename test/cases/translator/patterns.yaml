@@ -1,0 +1,74 @@
+suite: pattern[X] and fixed[X] → separate `pattern` / `fixed` fields
+
+# pattern[X] and fixed[X] are SEMANTICALLY different in FHIR:
+# - pattern[X]: deep-partial match (extras allowed)
+# - fixed[X]:   exact equality
+# Translator preserves the distinction in two separate FHIRSchemaElement
+# fields. Validator decides matcher per field.
+
+defaults:
+  sd:
+    resourceType: StructureDefinition
+    status: active
+    kind: resource
+    derivation: specialization
+    url: http://test/T
+    name: T
+    type: T
+
+tests:
+  - desc: patternString → pattern { type=string, value=... }
+    sd:
+      differential:
+        element:
+          - path: T.a
+            type: [{ code: string }]
+            patternString: hello
+    expected:
+      elements:
+        a:
+          type: string
+          pattern: { type: string, value: hello }
+
+  - desc: patternCodeableConcept carries its CC value verbatim
+    sd:
+      differential:
+        element:
+          - path: T.a
+            type: [{ code: CodeableConcept }]
+            patternCodeableConcept:
+              coding: [{ system: http://loinc.org, code: '85354-9' }]
+    expected:
+      elements:
+        a:
+          type: CodeableConcept
+          pattern:
+            type: CodeableConcept
+            value:
+              coding: [{ system: http://loinc.org, code: '85354-9' }]
+
+  - desc: fixedUri → fixed { type=uri, value=... }
+    sd:
+      differential:
+        element:
+          - path: T.a
+            type: [{ code: uri }]
+            fixedUri: http://unitsofmeasure.org
+    expected:
+      elements:
+        a:
+          type: uri
+          fixed: { type: uri, value: 'http://unitsofmeasure.org' }
+
+  - desc: fixedCode → fixed { type=code, value=... }
+    sd:
+      differential:
+        element:
+          - path: T.a
+            type: [{ code: code }]
+            fixedCode: 'mm[Hg]'
+    expected:
+      elements:
+        a:
+          type: code
+          fixed: { type: code, value: 'mm[Hg]' }

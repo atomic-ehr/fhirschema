@@ -1,0 +1,202 @@
+{
+  "name": "USCoreBloodPressureProfile",
+  "type": "Observation",
+  "kind": "resource",
+  "class": "resource",
+  "url": "http://hl7.org/fhir/StructureDefinition/Profile",
+  "derivation": "specialization",
+  "base": "http://hl7.org/fhir/StructureDefinition/Observation",
+  "elements": {
+    "code": {
+      "short": "Blood Pressure",
+      "type": "CodeableConcept",
+      "pattern": {
+        "type": "CodeableConcept",
+        "value": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "85354-9"
+            }
+          ]
+        }
+      },
+      "mustSupport": true,
+      "index": 0
+    },
+    "component": {
+      "short": "Component observations",
+      "mustSupport": true,
+      "array": true,
+      "min": 2,
+      "index": 1,
+      "slicing": {
+        "discriminator": [
+          {
+            "type": "pattern",
+            "path": "code"
+          }
+        ],
+        "ordered": false,
+        "rules": "open",
+        "min": 2,
+        "slices": {
+          "systolic": {
+            "match": {
+              "code": {
+                "coding": [
+                  {
+                    "system": "http://loinc.org",
+                    "code": "8480-6"
+                  }
+                ]
+              }
+            },
+            "schema": {
+              "short": "Systolic Blood Pressure",
+              "mustSupport": true,
+              "_required": true,
+              "index": 2,
+              "elements": {
+                "code": {
+                  "short": "Systolic Blood Pressure Code",
+                  "pattern": {
+                    "type": "CodeableConcept",
+                    "value": "[Circular Reference]"
+                  },
+                  "mustSupport": true,
+                  "type": "CodeableConcept",
+                  "index": 3
+                },
+                "valueQuantity": {
+                  "short": "Vital Sign Component Value",
+                  "type": "Quantity",
+                  "mustSupport": true,
+                  "index": 4,
+                  "elements": {
+                    "value": {
+                      "type": "decimal",
+                      "mustSupport": true,
+                      "index": 5
+                    },
+                    "unit": {
+                      "type": "string",
+                      "mustSupport": true,
+                      "index": 6
+                    },
+                    "system": {
+                      "type": "uri",
+                      "fixed": {
+                        "type": "uri",
+                        "value": "http://unitsofmeasure.org"
+                      },
+                      "mustSupport": true,
+                      "index": 7
+                    },
+                    "code": {
+                      "type": "code",
+                      "fixed": {
+                        "type": "code",
+                        "value": "mm[Hg]"
+                      },
+                      "mustSupport": true,
+                      "index": 8
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "system",
+                    "unit",
+                    "value"
+                  ]
+                }
+              },
+              "required": [
+                "code"
+              ]
+            },
+            "min": 1,
+            "max": 1
+          },
+          "diastolic": {
+            "match": {
+              "code": {
+                "coding": [
+                  {
+                    "system": "http://loinc.org",
+                    "code": "8462-4"
+                  }
+                ]
+              }
+            },
+            "schema": {
+              "short": "Diastolic Blood Pressure",
+              "mustSupport": true,
+              "_required": true,
+              "index": 9,
+              "elements": {
+                "code": {
+                  "short": "Diastolic Blood Pressure Code",
+                  "pattern": {
+                    "type": "CodeableConcept",
+                    "value": "[Circular Reference]"
+                  },
+                  "mustSupport": true,
+                  "type": "CodeableConcept",
+                  "index": 10
+                },
+                "valueQuantity": {
+                  "short": "Vital Sign Component Value",
+                  "type": "Quantity",
+                  "mustSupport": true,
+                  "index": 11,
+                  "elements": {
+                    "value": {
+                      "type": "decimal",
+                      "mustSupport": true,
+                      "index": 12
+                    },
+                    "unit": {
+                      "type": "string",
+                      "mustSupport": true,
+                      "index": 13
+                    },
+                    "system": {
+                      "type": "uri",
+                      "fixed": {
+                        "type": "uri",
+                        "value": "http://unitsofmeasure.org"
+                      },
+                      "mustSupport": true,
+                      "index": 14
+                    },
+                    "code": {
+                      "type": "code",
+                      "fixed": {
+                        "type": "code",
+                        "value": "mm[Hg]"
+                      },
+                      "mustSupport": true,
+                      "index": 15
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "system",
+                    "unit",
+                    "value"
+                  ]
+                }
+              },
+              "required": [
+                "code"
+              ]
+            },
+            "min": 1,
+            "max": 1
+          }
+        }
+      }
+    }
+  }
+}

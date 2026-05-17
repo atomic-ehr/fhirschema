@@ -1,0 +1,49 @@
+suite: Primitive extensions (_field) — fs4xx
+
+# In FHIR JSON, primitive metadata (id, extension) sits in a sibling field
+# prefixed with underscore. Validator pairs `field` + `_field` in one pass.
+# Current implementation: recognize the `_field` for primitive-typed elements,
+# leave deep checks for later; reject `_field` on a non-primitive (fs401).
+
+tests:
+  - desc: _field paired with primitive value is accepted
+    schemas: [{ elements: { birthDate: { type: date } } }]
+    data:
+      birthDate: '1970-01-01'
+      _birthDate:
+        extension:
+          - url: http://example/note
+            valueString: from-paper-form
+    valid: true
+
+  - desc: _field without primitive value is allowed (metadata-only)
+    schemas: [{ elements: { birthDate: { type: date } } }]
+    data:
+      _birthDate:
+        extension: [{ url: http://example/note, valueString: from-paper-form }]
+    valid: true
+
+  - desc: _field on non-primitive element is fs401
+    schemas:
+      - elements:
+          name: { type: HumanName }
+    registry:
+      - url: HumanName
+        name: HumanName
+        type: HumanName
+        kind: complex-type
+        class: complex-type
+        elements: { family: { type: string } }
+    data:
+      name: { family: Doe }
+      _name: { id: shadow }
+    issues:
+      - { code: fs401, path: [_name] }
+
+  - desc: _field for unknown field is treated as unknown element
+    schemas: [{ elements: { id: { type: id } } }]
+    data:
+      id: pat-1
+      _surprise: { id: shadow }
+    issues:
+      - { code: fs201, path: [_surprise] }

@@ -1,0 +1,139 @@
+suite: Inheritance & SchemaSet (base, additionalProfiles, fs701)
+
+# These exercise the snapshot-less inheritance model: the input schema may
+# point to `base` (single canonical) or `additionalProfiles` (list); the
+# validator resolves them at runtime via ctx.resolve.
+
+tests:
+  # ─── base chain ───────────────────────────────────────────────────────
+  - desc: child schema sees parent's elements via base
+    schemas:
+      - url: https://example/USPatient
+        name: USPatient
+        type: Patient
+        kind: resource
+        class: profile
+        base: https://example/Patient
+        elements: { ssn: { type: string } }
+    registry:
+      - url: https://example/Patient
+        name: Patient
+        type: Patient
+        kind: resource
+        class: resource
+        elements:
+          id: { type: id }
+          active: { type: boolean }
+    data: { id: pat-1, active: true, ssn: '123-45-6789' }
+    valid: true
+
+  - desc: parent's required is inherited
+    schemas:
+      - url: https://example/USPatient
+        name: USPatient
+        type: Patient
+        kind: resource
+        class: profile
+        base: https://example/Patient
+    registry:
+      - url: https://example/Patient
+        name: Patient
+        type: Patient
+        kind: resource
+        class: resource
+        elements: { id: { type: id } }
+        required: [id]
+    data: {}
+    issues:
+      - { code: fs301, path: [id] }
+
+  # ─── unresolved (fs701) ───────────────────────────────────────────────
+  - desc: unresolved base raises fs701
+    schemas:
+      - url: https://example/Orphan
+        name: Orphan
+        type: Orphan
+        kind: resource
+        class: profile
+        base: https://example/NotThere
+    data: { id: x }
+    issues:
+      - { code: fs701, path: [] }
+      # No `id` element resolvable from the orphan schema → unknown.
+      - { code: fs201, path: [id] }
+
+  - desc: unresolved type ref raises fs701
+    schemas:
+      - elements: { name: { type: HumanName } }
+    # No registry entry for HumanName.
+    data: { name: { family: Doe } }
+    issues:
+      - { code: fs701, path: [name] }
+      # And family becomes unknown because HumanName overlay wasn't loaded.
+      - { code: fs201, path: [name, family] }
+
+  # ─── additionalProfiles ───────────────────────────────────────────────
+  - desc: additionalProfiles overlay merges
+    schemas:
+      - url: https://example/PatientWithSsn
+        name: Patient
+        type: Patient
+        kind: resource
+        class: resource
+        elements: { id: { type: id } }
+        additionalProfiles: [https://example/SsnOverlay]
+    registry:
+      - url: https://example/SsnOverlay
+        name: SsnOverlay
+        type: Patient
+        kind: resource
+        class: profile
+        elements: { ssn: { type: string } }
+    data: { id: pat-1, ssn: '123-45-6789' }
+    valid: true
+
+  # ─── cooperative validation ───────────────────────────────────────────
+  - desc: required from any overlay must be satisfied (union semantics)
+    schemas:
+      - url: https://example/A
+        name: A
+        type: Patient
+        kind: resource
+        class: profile
+        elements: { id: { type: id } }
+        required: [id]
+        additionalProfiles: [https://example/B]
+    registry:
+      - url: https://example/B
+        name: B
+        type: Patient
+        kind: resource
+        class: profile
+        elements: { active: { type: boolean } }
+        required: [active]
+    data: { id: pat-1 }
+    issues:
+      - { code: fs301, path: [active] }
+
+  - desc: tightest min from any overlay wins
+    schemas:
+      - url: https://example/A
+        name: A
+        type: Patient
+        kind: resource
+        class: profile
+        elements:
+          tags: { type: string, array: true, min: 1 }
+        additionalProfiles: [https://example/B]
+    registry:
+      - url: https://example/B
+        name: B
+        type: Patient
+        kind: resource
+        class: profile
+        elements:
+          tags: { type: string, array: true, min: 3 }
+    data: { tags: [one] }
+    issues:
+      # only one tag — fails the tighter min=3
+      - { code: fs303, path: [tags] }

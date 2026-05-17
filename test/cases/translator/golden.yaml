@@ -1,0 +1,59 @@
+suite: Golden snapshots
+# Exact-match snapshot pairs for whole-schema translation.
+# To refresh after intentional changes:
+#   bun run scripts/gen-golden-expected.ts test/cases/translator/golden/*.sd.json
+tests:
+  - desc: bundle
+    sdFile: ./golden/bundle.sd.json
+    expectedFile: ./golden/bundle.fs.json
+    exact: true
+
+  - desc: patient
+    sdFile: ./golden/patient.sd.json
+    expectedFile: ./golden/patient.fs.json
+    exact: true
+
+  - desc: questionnaire
+    sdFile: ./golden/questionnaire.sd.json
+    expectedFile: ./golden/questionnaire.fs.json
+    exact: true
+
+  - desc: address
+    sdFile: ./golden/address.sd.json
+    expectedFile: ./golden/address.fs.json
+    exact: true
+
+  - desc: backbone-element
+    sdFile: ./golden/backbone-element.sd.json
+    expectedFile: ./golden/backbone-element.fs.json
+    exact: true
+
+  - desc: element
+    sdFile: ./golden/element.sd.json
+    expectedFile: ./golden/element.fs.json
+    exact: true
+
+  - desc: extension
+    sdFile: ./golden/extension.sd.json
+    expectedFile: ./golden/extension.fs.json
+    exact: true
+
+  - desc: string primitive
+    sdFile: ./golden/string.sd.json
+    expectedFile: ./golden/string.fs.json
+    exact: true
+
+  - desc: boolean primitive
+    sdFile: ./golden/boolean.sd.json
+    expectedFile: ./golden/boolean.fs.json
+    exact: true
+
+  - desc: unsignedInt primitive
+    sdFile: ./golden/unsignedInt.sd.json
+    expectedFile: ./golden/unsignedInt.fs.json
+    exact: true
+
+  - desc: us-core-blood-pressure
+    sdFile: ./golden/us-core-blood-pressure.sd.json
+    expectedFile: ./golden/us-core-blood-pressure.fs.json
+    exact: true

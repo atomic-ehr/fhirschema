@@ -1,0 +1,125 @@
+suite: Structure (fs2xx) and cardinality (fs3xx)
+
+tests:
+  # ─── fs201 unknown-element ────────────────────────────────────────────
+  - desc: unknown top-level key
+    schemas: [{ elements: { id: { type: id } } }]
+    data: { id: pat-1, surprise: yes }
+    issues:
+      - { code: fs201, path: [surprise] }
+
+  - desc: unknown nested key
+    schemas:
+      - elements:
+          name:
+            type: HumanName
+    registry:
+      - { url: HumanName, name: HumanName, type: HumanName, kind: complex-type, class: complex-type, elements: { family: { type: string } } }
+    data: { name: { family: Doe, surprise: yes } }
+    issues:
+      - { code: fs201, path: [name, surprise] }
+
+  - desc: no unknown elements at all
+    schemas: [{ elements: { id: { type: id } } }]
+    data: { id: pat-1 }
+    valid: true
+
+  # ─── fs202 expected-object ────────────────────────────────────────────
+  - desc: scalar where object expected
+    schemas:
+      - elements:
+          name: { type: HumanName }
+    registry:
+      - { url: HumanName, name: HumanName, type: HumanName, kind: complex-type, class: complex-type, elements: { family: { type: string } } }
+    data: { name: 'Doe' }
+    issues:
+      - { code: fs202, path: [name] }
+
+  - desc: empty composite is rejected
+    schemas:
+      - elements:
+          name: { type: HumanName }
+    registry:
+      - { url: HumanName, name: HumanName, type: HumanName, kind: complex-type, class: complex-type, elements: { family: { type: string } } }
+    data: { name: {} }
+    issues:
+      - { code: fs202, path: [name] }
+
+  # ─── fs203 expected-array ─────────────────────────────────────────────
+  - desc: scalar where array expected
+    schemas: [{ elements: { tags: { type: string, array: true } } }]
+    data: { tags: hello }
+    issues:
+      - { code: fs203, path: [tags] }
+
+  - desc: array where scalar expected
+    schemas: [{ elements: { id: { type: id } } }]
+    data: { id: [pat-1] }
+    issues:
+      - { code: fs203, path: [id] }
+
+  - desc: array accepted when array=true
+    schemas: [{ elements: { tags: { type: string, array: true } } }]
+    data: { tags: [foo, bar] }
+    valid: true
+
+  # ─── fs301 required ───────────────────────────────────────────────────
+  - desc: required key missing
+    schemas:
+      - elements: { id: { type: id } }
+        required: [id]
+    data: {}
+    issues:
+      - { code: fs301, path: [id] }
+
+  - desc: required satisfied
+    schemas:
+      - elements: { id: { type: id } }
+        required: [id]
+    data: { id: pat-1 }
+    valid: true
+
+  - desc: required nested key missing
+    schemas:
+      - elements:
+          name:
+            type: HumanName
+        required: [name]
+    registry:
+      - url: HumanName
+        name: HumanName
+        type: HumanName
+        kind: complex-type
+        class: complex-type
+        elements:
+          family: { type: string }
+        required: [family]
+    data: { name: { given: [Alice] } }
+    issues:
+      # outer name is present, but inner family is required
+      - { code: fs201, path: [name, given] }
+      - { code: fs301, path: [name, family] }
+
+  # ─── fs302/fs303 array cardinality ────────────────────────────────────
+  - desc: array min violation (too few)
+    schemas:
+      - elements:
+          tags: { type: string, array: true, min: 2 }
+    data: { tags: [only-one] }
+    issues:
+      - { code: fs303, path: [tags] }
+
+  - desc: array max violation (too many)
+    schemas:
+      - elements:
+          tags: { type: string, array: true, max: 1 }
+    data: { tags: [a, b] }
+    issues:
+      - { code: fs302, path: [tags] }
+
+  - desc: array within bounds
+    schemas:
+      - elements:
+          tags: { type: string, array: true, min: 1, max: 3 }
+    data: { tags: [a, b] }
+    valid: true

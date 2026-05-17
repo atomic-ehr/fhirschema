@@ -1,0 +1,44 @@
+suite: Slicing (slicing block translation, match patterns, slice schemas)
+
+defaults:
+  sd:
+    resourceType: StructureDefinition
+    status: active
+    kind: resource
+    derivation: specialization
+    url: http://test/T
+    name: T
+    type: T
+
+tests:
+  - desc: pattern slicing on an array creates slices map with match
+    sd:
+      differential:
+        element:
+          - path: T.x
+            max: '*'
+            slicing:
+              discriminator: [{ type: pattern, path: a }]
+              rules: open
+          - path: T.x
+            sliceName: s1
+          - path: T.x.a
+            type: [{ code: string }]
+            patternString: s1
+          - path: T.x
+            sliceName: s2
+          - path: T.x.a
+            type: [{ code: string }]
+            patternString: s2
+    expected:
+      elements:
+        x:
+          array: true
+          slicing:
+            discriminator: [{ type: pattern, path: a }]
+            rules: open
+            slices:
+              s1:
+                match: { a: s1 }
+              s2:
+                match: { a: s2 }

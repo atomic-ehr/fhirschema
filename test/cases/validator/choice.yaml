@@ -1,0 +1,171 @@
+suite: Choice types value[x] (fs801, fs802)
+
+# Translator encodes value[x] as: a virtual parent element `value` with
+# `choices: [valueString, valueInteger, ...]` plus one concrete element per
+# variant carrying `type` and `choiceOf: 'value'`.
+
+tests:
+  # ─── basic: one variant present is fine ──────────────────────────────
+  - desc: valueString alone is valid
+    schemas:
+      - elements:
+          value:
+            choices: [valueString, valueInteger]
+          valueString:
+            type: string
+            choiceOf: value
+          valueInteger:
+            type: integer
+            choiceOf: value
+    data: { valueString: hello }
+    valid: true
+
+  - desc: valueInteger alone is valid
+    schemas:
+      - elements:
+          value:
+            choices: [valueString, valueInteger]
+          valueString: { type: string, choiceOf: value }
+          valueInteger: { type: integer, choiceOf: value }
+    data: { valueInteger: 42 }
+    valid: true
+
+  # ─── fs802 multiple variants ──────────────────────────────────────────
+  - desc: two variants present → fs802
+    schemas:
+      - elements:
+          value:
+            choices: [valueString, valueInteger]
+          valueString: { type: string, choiceOf: value }
+          valueInteger: { type: integer, choiceOf: value }
+    data: { valueString: hello, valueInteger: 42 }
+    issues:
+      - { code: fs802, path: [] }
+
+  - desc: three variants present → fs802
+    schemas:
+      - elements:
+          value:
+            choices: [valueString, valueInteger, valueBoolean]
+          valueString:  { type: string,  choiceOf: value }
+          valueInteger: { type: integer, choiceOf: value }
+          valueBoolean: { type: boolean, choiceOf: value }
+    data: { valueString: x, valueInteger: 1, valueBoolean: true }
+    issues:
+      - { code: fs802, path: [] }
+
+  # ─── fs801 narrowed choices ───────────────────────────────────────────
+  - desc: profile narrows to valueString only, data has valueInteger → fs801
+    schemas:
+      - url: https://example/BaseSchema
+        name: Base
+        type: Obs
+        kind: resource
+        class: resource
+        elements:
+          value:
+            choices: [valueString, valueInteger, valueBoolean]
+          valueString:  { type: string,  choiceOf: value }
+          valueInteger: { type: integer, choiceOf: value }
+          valueBoolean: { type: boolean, choiceOf: value }
+      - url: https://example/Profile
+        name: Profile
+        type: Obs
+        kind: resource
+        class: profile
+        base: https://example/BaseSchema
+        elements:
+          value:
+            choices: [valueString]
+    registry:
+      - url: https://example/BaseSchema
+        name: Base
+        type: Obs
+        kind: resource
+        class: resource
+        elements:
+          value:
+            choices: [valueString, valueInteger, valueBoolean]
+          valueString:  { type: string,  choiceOf: value }
+          valueInteger: { type: integer, choiceOf: value }
+          valueBoolean: { type: boolean, choiceOf: value }
+    data: { valueInteger: 1 }
+    issues:
+      - { code: fs801, path: [valueInteger] }
+
+  - desc: profile narrows to valueString only, data has valueString → valid
+    schemas:
+      - url: https://example/Profile
+        name: Profile
+        type: Obs
+        kind: resource
+        class: profile
+        base: https://example/BaseSchema
+        elements:
+          value:
+            choices: [valueString]
+    registry:
+      - url: https://example/BaseSchema
+        name: Base
+        type: Obs
+        kind: resource
+        class: resource
+        elements:
+          value:
+            choices: [valueString, valueInteger, valueBoolean]
+          valueString:  { type: string,  choiceOf: value }
+          valueInteger: { type: integer, choiceOf: value }
+          valueBoolean: { type: boolean, choiceOf: value }
+    data: { valueString: hello }
+    valid: true
+
+  # ─── required choice (parent in required) ─────────────────────────────
+  - desc: required choice with no variant present → fs301 on parent
+    schemas:
+      - elements:
+          value:
+            choices: [valueString, valueInteger]
+          valueString: { type: string, choiceOf: value }
+          valueInteger: { type: integer, choiceOf: value }
+        required: [value]
+    data: {}
+    issues:
+      - { code: fs301, path: [value] }
+
+  - desc: required choice satisfied by valueString
+    schemas:
+      - elements:
+          value:
+            choices: [valueString, valueInteger]
+          valueString: { type: string, choiceOf: value }
+          valueInteger: { type: integer, choiceOf: value }
+        required: [value]
+    data: { valueString: x }
+    valid: true
+
+  - desc: required choice satisfied by _valueString (extension only)
+    schemas:
+      - elements:
+          value:
+            choices: [valueString, valueInteger]
+          valueString: { type: string, choiceOf: value }
+          valueInteger: { type: integer, choiceOf: value }
+        required: [value]
+    data:
+      _valueString:
+        extension:
+          - url: http://hl7.org/fhir/StructureDefinition/data-absent-reason
+            valueCode: unknown
+    valid: true
+
+  # ─── interaction with type narrowing ──────────────────────────────────
+  - desc: present variant still type-validated
+    schemas:
+      - elements:
+          value:
+            choices: [valueString, valueInteger]
+          valueString: { type: string, choiceOf: value }
+          valueInteger: { type: integer, choiceOf: value }
+    data: { valueString: 42 }
+    issues:
+      - { code: fs101, path: [valueString] }

@@ -1,0 +1,380 @@
+{
+  "name": "Extension",
+  "type": "Extension",
+  "kind": "complex-type",
+  "class": "extension",
+  "url": "http://hl7.org/fhir/StructureDefinition/Extension",
+  "version": "4.0.1",
+  "description": "Base StructureDefinition for Extension Type: Optional Extension Element - found in all resources.",
+  "derivation": "specialization",
+  "base": "http://hl7.org/fhir/StructureDefinition/Element",
+  "elements": {
+    "url": {
+      "short": "identifies the meaning of the extension",
+      "representation": [
+        "xmlAttr"
+      ],
+      "type": "uri",
+      "index": 0
+    },
+    "value": {
+      "short": "Value of extension",
+      "choices": [
+        "valueBase64Binary",
+        "valueBoolean",
+        "valueCanonical",
+        "valueCode",
+        "valueDate",
+        "valueDateTime",
+        "valueDecimal",
+        "valueId",
+        "valueInstant",
+        "valueInteger",
+        "valueMarkdown",
+        "valueOid",
+        "valuePositiveInt",
+        "valueString",
+        "valueTime",
+        "valueUnsignedInt",
+        "valueUri",
+        "valueUrl",
+        "valueUuid",
+        "valueAddress",
+        "valueAge",
+        "valueAnnotation",
+        "valueAttachment",
+        "valueCodeableConcept",
+        "valueCoding",
+        "valueContactPoint",
+        "valueCount",
+        "valueDistance",
+        "valueDuration",
+        "valueHumanName",
+        "valueIdentifier",
+        "valueMoney",
+        "valuePeriod",
+        "valueQuantity",
+        "valueRange",
+        "valueRatio",
+        "valueReference",
+        "valueSampledData",
+        "valueSignature",
+        "valueTiming",
+        "valueContactDetail",
+        "valueContributor",
+        "valueDataRequirement",
+        "valueExpression",
+        "valueParameterDefinition",
+        "valueRelatedArtifact",
+        "valueTriggerDefinition",
+        "valueUsageContext",
+        "valueDosage",
+        "valueMeta"
+      ],
+      "index": 2
+    },
+    "valueBase64Binary": {
+      "type": "base64Binary",
+      "short": "Value of extension",
+      "choiceOf": "value",
+      "index": 3
+    },
+    "valueBoolean": {
+      "type": "boolean",
+      "short": "Value of extension",
+      "choiceOf": "value",
+      "index": 4
+    },
+    "valueCanonical": {
+      "type": "canonical",
+      "short": "Value of extension",
+      "choiceOf": "value",
+      "index": 5
+    },
+    "valueCode": {
+      "type": "code",
+      "short": "Value of extension",
+      "choiceOf": "value",
+      "index": 6
+    },
+    "valueDate": {
+      "type": "date",
+      "short": "Value of extension",
+      "choiceOf": "value",
+      "index": 7
+    },
+    "valueDateTime": {
+      "type": "dateTime",
+      "short": "Value of extension",
+      "choiceOf": "value",
+      "index": 8
+    },
+    "valueDecimal": {
+      "type": "decimal",
+      "short": "Value of extension",
+      "choiceOf": "value",
+      "index": 9
+    },
+    "valueId": {
+      "type": "id",
+      "short": "Value of extension",
+      "choiceOf": "value",
+      "index": 10
+    },
+    "valueInstant": {
+      "type": "instant",
+      "short": "Value of extension",
+      "choiceOf": "value",
+      "index": 11
+    },
+    "valueInteger": {
+      "type": "integer",
+      "short": "Value of extension",
+      "choiceOf": "value",
+      "index": 12
+    },
+    "valueMarkdown": {
+      "type": "markdown",
+      "short": "Value of extension",
+      "choiceOf": "value",
+      "index": 13
+    },
+    "valueOid": {
+      "type": "oid",
+      "short": "Value of extension",
+      "choiceOf": "value",
+      "index": 14
+    },
+    "valuePositiveInt": {
+      "type": "positiveInt",
+      "short": "Value of extension",
+      "choiceOf": "value",
+      "index": 15
+    },
+    "valueString": {
+      "type": "string",
+      "short": "Value of extension",
+      "choiceOf": "value",
+      "index": 16
+    },
+    "valueTime": {
+      "type": "time",
+      "short": "Value of extension",
+      "choiceOf": "value",
+      "index": 17
+    },
+    "valueUnsignedInt": {
+      "type": "unsignedInt",
+      "short": "Value of extension",
+      "choiceOf": "value",
+      "index": 18
+    },
+    "valueUri": {
+      "type": "uri",
+      "short": "Value of extension",
+      "choiceOf": "value",
+      "index": 19
+    },
+    "valueUrl": {
+      "type": "url",
+      "short": "Value of extension",
+      "choiceOf": "value",
+      "index": 20
+    },
+    "valueUuid": {
+      "type": "uuid",
+      "short": "Value of extension",
+      "choiceOf": "value",
+      "index": 21
+    },
+    "valueAddress": {
+      "type": "Address",
+      "short": "Value of extension",
+      "choiceOf": "value",
+      "index": 22
+    },
+    "valueAge": {
+      "type": "Age",
+      "short": "Value of extension",
+      "choiceOf": "value",
+      "index": 23
+    },
+    "valueAnnotation": {
+      "type": "Annotation",
+      "short": "Value of extension",
+      "choiceOf": "value",
+      "index": 24
+    },
+    "valueAttachment": {
+      "type": "Attachment",
+      "short": "Value of extension",
+      "choiceOf": "value",
+      "index": 25
+    },
+    "valueCodeableConcept": {
+      "type": "CodeableConcept",
+      "short": "Value of extension",
+      "choiceOf": "value",
+      "index": 26
+    },
+    "valueCoding": {
+      "type": "Coding",
+      "short": "Value of extension",
+      "choiceOf": "value",
+      "index": 27
+    },
+    "valueContactPoint": {
+      "type": "ContactPoint",
+      "short": "Value of extension",
+      "choiceOf": "value",
+      "index": 28
+    },
+    "valueCount": {
+      "type": "Count",
+      "short": "Value of extension",
+      "choiceOf": "value",
+      "index": 29
+    },
+    "valueDistance": {
+      "type": "Distance",
+      "short": "Value of extension",
+      "choiceOf": "value",
+      "index": 30
+    },
+    "valueDuration": {
+      "type": "Duration",
+      "short": "Value of extension",
+      "choiceOf": "value",
+      "index": 31
+    },
+    "valueHumanName": {
+      "type": "HumanName",
+      "short": "Value of extension",
+      "choiceOf": "value",
+      "index": 32
+    },
+    "valueIdentifier": {
+      "type": "Identifier",
+      "short": "Value of extension",
+      "choiceOf": "value",
+      "index": 33
+    },
+    "valueMoney": {
+      "type": "Money",
+      "short": "Value of extension",
+      "choiceOf": "value",
+      "index": 34
+    },
+    "valuePeriod": {
+      "type": "Period",
+      "short": "Value of extension",
+      "choiceOf": "value",
+      "index": 35
+    },
+    "valueQuantity": {
+      "type": "Quantity",
+      "short": "Value of extension",
+      "choiceOf": "value",
+      "index": 36
+    },
+    "valueRange": {
+      "type": "Range",
+      "short": "Value of extension",
+      "choiceOf": "value",
+      "index": 37
+    },
+    "valueRatio": {
+      "type": "Ratio",
+      "short": "Value of extension",
+      "choiceOf": "value",
+      "index": 38
+    },
+    "valueReference": {
+      "type": "Reference",
+      "short": "Value of extension",
+      "choiceOf": "value",
+      "index": 39
+    },
+    "valueSampledData": {
+      "type": "SampledData",
+      "short": "Value of extension",
+      "choiceOf": "value",
+      "index": 40
+    },
+    "valueSignature": {
+      "type": "Signature",
+      "short": "Value of extension",
+      "choiceOf": "value",
+      "index": 41
+    },
+    "valueTiming": {
+      "type": "Timing",
+      "short": "Value of extension",
+      "choiceOf": "value",
+      "index": 42
+    },
+    "valueContactDetail": {
+      "type": "ContactDetail",
+      "short": "Value of extension",
+      "choiceOf": "value",
+      "index": 43
+    },
+    "valueContributor": {
+      "type": "Contributor",
+      "short": "Value of extension",
+      "choiceOf": "value",
+      "index": 44
+    },
+    "valueDataRequirement": {
+      "type": "DataRequirement",
+      "short": "Value of extension",
+      "choiceOf": "value",
+      "index": 45
+    },
+    "valueExpression": {
+      "type": "Expression",
+      "short": "Value of extension",
+      "choiceOf": "value",
+      "index": 46
+    },
+    "valueParameterDefinition": {
+      "type": "ParameterDefinition",
+      "short": "Value of extension",
+      "choiceOf": "value",
+      "index": 47
+    },
+    "valueRelatedArtifact": {
+      "type": "RelatedArtifact",
+      "short": "Value of extension",
+      "choiceOf": "value",
+      "index": 48
+    },
+    "valueTriggerDefinition": {
+      "type": "TriggerDefinition",
+      "short": "Value of extension",
+      "choiceOf": "value",
+      "index": 49
+    },
+    "valueUsageContext": {
+      "type": "UsageContext",
+      "short": "Value of extension",
+      "choiceOf": "value",
+      "index": 50
+    },
+    "valueDosage": {
+      "type": "Dosage",
+      "short": "Value of extension",
+      "choiceOf": "value",
+      "index": 51
+    },
+    "valueMeta": {
+      "type": "Meta",
+      "short": "Value of extension",
+      "choiceOf": "value",
+      "index": 52
+    }
+  },
+  "required": [
+    "url"
+  ]
+}

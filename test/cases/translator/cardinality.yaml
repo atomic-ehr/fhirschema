@@ -1,0 +1,85 @@
+suite: Cardinality (min/max → array, required, min/max)
+
+defaults:
+  sd:
+    resourceType: StructureDefinition
+    status: active
+    kind: resource
+    derivation: specialization
+    url: http://test/T
+    name: T
+    type: T
+
+tests:
+  - desc: max="*" sets array=true
+    sd:
+      differential:
+        element:
+          - path: T.a
+            type: [{ code: string }]
+            max: '*'
+    expected:
+      elements:
+        a:
+          type: string
+          array: true
+
+  - desc: max="5" with min 1 sets array=true plus min/max bounds
+    sd:
+      differential:
+        element:
+          - path: T.a
+            type: [{ code: string }]
+            min: 1
+            max: '5'
+    expected:
+      elements:
+        a:
+          type: string
+          array: true
+          min: 1
+          max: 5
+      required: [a]
+
+  - desc: min=1 on a scalar promotes the field to required (no array)
+    sd:
+      differential:
+        element:
+          - path: T.a
+            type: [{ code: string }]
+            min: 1
+            max: '1'
+    expected:
+      elements:
+        a:
+          type: string
+      required: [a]
+
+  - desc: max="1" with min 0 keeps it a scalar
+    sd:
+      differential:
+        element:
+          - path: T.a
+            type: [{ code: string }]
+            min: 0
+            max: '1'
+    expected:
+      elements:
+        a:
+          type: string
+
+  - desc: required is hoisted to the parent (containing) scope
+    sd:
+      differential:
+        element:
+          - path: T.a
+          - path: T.a.b
+            type: [{ code: string }]
+            min: 1
+            max: '1'
+    expected:
+      elements:
+        a:
+          elements:
+            b: { type: string }
+          required: [b]

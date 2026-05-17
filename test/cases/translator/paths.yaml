@@ -1,0 +1,69 @@
+suite: Path flattening (dotted SD paths → nested elements map)
+
+defaults:
+  sd:
+    resourceType: StructureDefinition
+    status: active
+    kind: resource
+    derivation: specialization
+    url: http://test/T
+    name: T
+    type: T
+
+tests:
+  - desc: single-level path creates elements.a
+    sd:
+      differential:
+        element:
+          - path: T.a
+            type: [{ code: string }]
+    expected:
+      elements:
+        a:
+          type: string
+
+  - desc: nested path a.b creates elements.a.elements.b
+    sd:
+      differential:
+        element:
+          - path: T.a
+          - path: T.a.b
+            type: [{ code: string }]
+    expected:
+      elements:
+        a:
+          elements:
+            b:
+              type: string
+
+  - desc: siblings under same parent
+    sd:
+      differential:
+        element:
+          - path: T.a
+          - path: T.a.b
+            type: [{ code: string }]
+          - path: T.a.c
+            type: [{ code: integer }]
+    expected:
+      elements:
+        a:
+          elements:
+            b: { type: string }
+            c: { type: integer }
+
+  - desc: three-level nesting
+    sd:
+      differential:
+        element:
+          - path: T.a
+          - path: T.a.b
+          - path: T.a.b.c
+            type: [{ code: string }]
+    expected:
+      elements:
+        a:
+          elements:
+            b:
+              elements:
+                c: { type: string }

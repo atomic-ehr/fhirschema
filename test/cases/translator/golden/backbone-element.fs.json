@@ -1,0 +1,23 @@
+{
+  "name": "BackboneElement",
+  "type": "BackboneElement",
+  "kind": "complex-type",
+  "class": "complex-type",
+  "url": "http://hl7.org/fhir/StructureDefinition/BackboneElement",
+  "version": "4.0.1",
+  "description": "Base StructureDefinition for BackboneElement Type: Base definition for all elements that are defined inside a resource - but not those in a data type.",
+  "derivation": "specialization",
+  "base": "http://hl7.org/fhir/StructureDefinition/Element",
+  "abstract": true,
+  "elements": {
+    "modifierExtension": {
+      "short": "Extensions that cannot be ignored even if unrecognized",
+      "type": "Extension",
+      "isModifier": true,
+      "isModifierReason": "Modifier extensions are expected to modify the meaning or interpretation of the element that contains them",
+      "isSummary": true,
+      "array": true,
+      "index": 0
+    }
+  }
+}
