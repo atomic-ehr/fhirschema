@@ -62,6 +62,27 @@ tests:
     issues:
       - { code: fs107, path: [birthDate] }
 
+  - desc: 'graham/allergy: _category extension-only with required binding → fs501'
+    # Source: ../fhir-test-cases/validator/allergy.json + outcomes/java/R4.allergy-base.json
+    # Java emits "No code provided, and a code is required from the value set"
+    # at AllergyIntolerance.category[0]. AllergyIntolerance.category is
+    # `code` with required binding to AllergyIntoleranceCategory.
+    schemas: []
+    data:
+      resourceType: AllergyIntolerance
+      clinicalStatus:
+        coding:
+          - system: http://terminology.hl7.org/CodeSystem/allergyintolerance-clinical
+            code: active
+      type: allergy
+      _category:
+        - extension:
+            - url: http://hl7.org/fhir/StructureDefinition/data-absent-reason
+              valueCode: unknown
+      patient: { reference: 'Patient/abc' }
+    issues:
+      - { code: fs501, path: [category] }
+
   - desc: 'graham/attachment-tx: data field not valid base64 → fs104'
     # Java: "The base64 content in the data element is not valid base64"
     schemas: []

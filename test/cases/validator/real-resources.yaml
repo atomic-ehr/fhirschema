@@ -35,9 +35,17 @@ tests:
       - { code: fs301, path: [intent] }
       - { code: fs301, path: [subject] }
 
-  - desc: ServiceRequest with primitive extension on status counts as present
-    # FHIR rule: a required primitive can be satisfied by `_field` alone
-    # (data-absent-reason extension pattern).
+  - desc: ServiceRequest with primitive extension on status/intent (required binding) → fs501
+    # Spec-strict (Java reference validator) rule: extension-only on a
+    # primitive with `binding.strength: required` does NOT satisfy the
+    # binding — the code MUST be present. status + intent are both
+    # required-bound `code` fields; subject (Reference) is still required-
+    # cardinality. data-absent-reason on `_field` doesn't substitute for
+    # the code.
+    #
+    # Sansara takes the permissive interpretation here (extension-only
+    # satisfies). We diverge per chat.fhir.org consensus (Grahame Grieve,
+    # Elliot Silver, Lloyd McKenzie) — see DESIGN §15.
     schemas: []
     data:
       resourceType: ServiceRequest
@@ -50,7 +58,8 @@ tests:
           - url: http://hl7.org/fhir/StructureDefinition/data-absent-reason
             valueCode: unknown
     issues:
-      # subject still missing
+      - { code: fs501, path: [status] }
+      - { code: fs501, path: [intent] }
       - { code: fs301, path: [subject] }
 
   # ─── meta.profile-driven resolution ────────────────────────────────────

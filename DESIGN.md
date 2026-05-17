@@ -1177,6 +1177,22 @@ priority order:
   (see [test/cases/imports/GRAHAM.md](test/cases/imports/GRAHAM.md) →
   "Java permissive defaults").
 
+- **Extension-only primitive with required binding.** A primitive field
+  with `binding.strength: required` cannot be satisfied by `_field`
+  alone (data-absent-reason pattern) — the code MUST be present. Per
+  chat.fhir.org consensus: Grahame Grieve ("not if there's a required
+  binding"), Elliot Silver ("for a code-type element with a required
+  binding, no"), Lloyd McKenzie. This is a **static schema check** in
+  `walkObject`'s shadow-handling branch: when a `_field` is encountered
+  with no corresponding value, we look up the field's binding and emit
+  `fs501` if strength is `required` (no terminology engine required —
+  the rule is purely about value presence). Sansara takes the
+  permissive interpretation here (extension-only satisfies because its
+  binding check is value-driven); we diverge for spec compliance. See
+  `test/cases/validator/real-resources.yaml` ("ServiceRequest with
+  primitive extension on status/intent") and `graham-r4-bad.yaml`
+  (allergy `_category`).
+
 The current implementation also uses placeholder error codes
 (`FS-001..FS-041`) instead of the canonical `fsNNN` scheme. Bringing the
 implementation in line with §13 is tracked as a code task, not a design

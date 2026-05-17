@@ -94,7 +94,7 @@ imported into our YAML suite, which are pending, and which we mark
 | | extension / without strict (L2984) | ⏳ | — | extension unknown handling |
 | | extension / with strict (L3003) | ⛔ | — | needs extension-URL deref + `fs1101` unknown-extension |
 | `required-element` (L3029) | data-absent on primitive (L3032) | ✅ | `real-resources.yaml` | |
-| | with primitive extension (L3039) | ✅ | `real-resources.yaml` | |
+| | with primitive extension (L3039) | 🟡 divergence | `real-resources.yaml` | sansara permissive (extension-only satisfies required-binding'd code); we are spec-strict per chat.fhir.org consensus → fs501 |
 | | data-absent on required choice (L3052) | ✅ | `choice.yaml` (covered by `_valueString` test) | |
 | `resolve-reference-constraint` (L3064) | | ⛔ | — | needs FHIRPath + reference *resolver* (sync target-type already done via fs1001 in `references.yaml`) |
 | `cardinality-test` (L3109) | base case (L3109) | ✅ | `real-resources.yaml` | |

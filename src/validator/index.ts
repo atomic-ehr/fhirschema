@@ -527,6 +527,29 @@ function walkObject(
         });
         continue;
       }
+      // Spec-strict rule: a primitive with `binding.strength=required`
+      // cannot be extension-only. The shadow may carry id/extension but
+      // a code MUST also be present. Per chat.fhir.org consensus (Grahame
+      // Grieve, Elliot Silver, Lloyd McKenzie):
+      //   "not if there's a required binding" — Grahame
+      //   "For a code-type element with a required binding... must be
+      //    present with one of the specified values" — Elliot
+      // Reference Java validator emits this even without a tx server.
+      if (!(baseKey in obj)) {
+        for (const o of childOverlays) {
+          const b = (o.el as { binding?: { strength?: string; valueSet?: string } }).binding;
+          if (b?.strength === 'required' && b.valueSet) {
+            issues.push({
+              code: FS.INVALID_CODE_FOR_BINDING,
+              path: [...path, baseKey],
+              schema: o.source,
+              expected: b.valueSet,
+              got: 'extension-only',
+            });
+            break;
+          }
+        }
+      }
       // Deep `_field` validation: payload shape (object for scalar primitive,
       // array<object|null> for array primitive) plus walking into Element
       // (id + extension[]). Extension's own elements are resolved via the
