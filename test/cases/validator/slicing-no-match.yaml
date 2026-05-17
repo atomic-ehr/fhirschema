@@ -1,0 +1,52 @@
+suite: 'slice without `match` pattern (sansara L1769)'
+# A slice declared with no `match` block is effectively never classified
+# against (effectiveMatch returns undefined → skipped). With `max: 0` the
+# slice's count stays 0 and satisfies its own cardinality. Items still
+# need to either match another slice or pass under the open/openAtEnd
+# rule.
+
+defaults:
+  useR4: true
+
+tests:
+  - desc: 'inline profile: address.slicing.slices.homeaddress = {max: 0}; non-matching address item → valid'
+    schemas:
+      - url: http://example.com/test/slice-no-match
+        type: Patient
+        base: http://hl7.org/fhir/StructureDefinition/Patient
+        elements:
+          address:
+            type: Address
+            array: true
+            slicing:
+              slices:
+                homeaddress:
+                  max: 0
+    data:
+      resourceType: Patient
+      address:
+        - use: home
+          text: foo
+    valid: true
+
+  - desc: 'same profile but with max:0 + another well-formed slice present'
+    schemas:
+      - url: http://example.com/test/slice-no-match-2
+        type: Patient
+        base: http://hl7.org/fhir/StructureDefinition/Patient
+        elements:
+          address:
+            type: Address
+            array: true
+            slicing:
+              slices:
+                unset:
+                  max: 0
+                home:
+                  match: { use: home }
+    data:
+      resourceType: Patient
+      address:
+        - use: home
+          text: foo
+    valid: true

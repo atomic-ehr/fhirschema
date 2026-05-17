@@ -1,0 +1,78 @@
+suite: 'primitive extension on choice type (sansara L2593)'
+# Regression for https://github.com/HealthSamurai/sansara/issues/6913.
+# `_definitionCanonical` is the primitive-extension shadow of a choice
+# variant (PlanDefinition.action.definition[x] has variants canonical,
+# uri). The validator must not treat the shadow as a separate union
+# subtype — order-independent, presence-of-value-independent.
+
+defaults:
+  useR4: true
+
+tests:
+  - desc: '_definitionCanonical before definitionCanonical → valid (key-order)'
+    schemas: []
+    data:
+      resourceType: PlanDefinition
+      status: active
+      action:
+        - _definitionCanonical:
+            extension:
+              - url: http://example.com/ext
+                valueString: test
+          definitionCanonical: http://example.com/Questionnaire/test
+    valid: true
+
+  - desc: 'definitionCanonical before _definitionCanonical → valid'
+    schemas: []
+    data:
+      resourceType: PlanDefinition
+      status: active
+      action:
+        - definitionCanonical: http://example.com/Questionnaire/test
+          _definitionCanonical:
+            extension:
+              - url: http://example.com/ext
+                valueString: test
+    valid: true
+
+  - desc: 'only definitionCanonical (no shadow) → valid'
+    schemas: []
+    data:
+      resourceType: PlanDefinition
+      status: active
+      action:
+        - definitionCanonical: http://example.com/Questionnaire/test
+    valid: true
+
+  - desc: 'only _definitionCanonical (no value, just ext) → valid'
+    schemas: []
+    data:
+      resourceType: PlanDefinition
+      status: active
+      action:
+        - _definitionCanonical:
+            extension:
+              - url: http://example.com/ext
+                valueString: test
+    valid: true
+
+  - desc: 'Parameters.parameter with only _valueString → valid (only-shadow on choice variant)'
+    schemas: []
+    data:
+      resourceType: Parameters
+      parameter:
+        - name: test
+          _valueString:
+            extension:
+              - url: http://example.com/ext
+                valueCode: masked
+    valid: true
+
+  - desc: 'two real choice variants present → fs802 multiple-choice'
+    schemas: []
+    data:
+      resourceType: Patient
+      deceasedDateTime: '2202-02-12'
+      deceasedBoolean: true
+    issues:
+      - { code: fs802, path: [], expected: deceased }

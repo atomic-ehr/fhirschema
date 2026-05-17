@@ -1,0 +1,57 @@
+suite: 'recursive schemas via elementReference (sansara L198)'
+# Questionnaire.item is array<BackboneElement>; Questionnaire.item.item
+# is `elementReference: [http://hl7.org/fhir/StructureDefinition/Questionnaire,
+# elements, item]` — cyclic. The validator must follow the reference on
+# walk-in so deep nested items get validated against the same shape.
+#
+# Sansara also exercises this via the SDC IG (sdc-questionnaire profile).
+# That case is skipped here: it needs the SDC package wired up; pure R4
+# Questionnaire is enough to exercise the elementReference path.
+
+defaults:
+  useR4: true
+
+tests:
+  - desc: 'nested item.item.linkId boolean → fs101 at item[0].item[0].linkId'
+    schemas: []
+    data:
+      resourceType: Questionnaire
+      status: active
+      item:
+        - linkId: '1'
+          type: decimal
+          item:
+            - linkId: true
+              type: decimal
+    issues:
+      - { code: fs101, path: [item, 0, item, 0, linkId] }
+
+  - desc: 'nested item.item with valid linkId+type → valid'
+    schemas: []
+    data:
+      resourceType: Questionnaire
+      status: active
+      item:
+        - linkId: '1'
+          type: decimal
+          item:
+            - linkId: '1.1'
+              type: decimal
+    valid: true
+
+  - desc: 'two-level nested with enableWhen+answerBoolean → valid'
+    schemas: []
+    data:
+      resourceType: Questionnaire
+      status: active
+      item:
+        - linkId: '1'
+          type: decimal
+          item:
+            - linkId: '1.1'
+              enableWhen:
+                - question: '1'
+                  operator: exists
+                  answerBoolean: true
+              type: decimal
+    valid: true

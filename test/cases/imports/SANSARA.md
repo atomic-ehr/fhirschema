@@ -17,7 +17,7 @@ imported into our YAML suite, which are pending, and which we mark
 | | complex type constraints (L92) — Patient.contact pat-1 | ✅ | `constraints.yaml` | imported with HL7 fhirpath.js adapter |
 | | contained-invariant-profile (L106) | ⏳ | — | uses external profile; importable once fhirpath + profile loading wired |
 | | constraint on bundled resource (L116) | ⏳ | — | combo of Bundle + FHIRPath; mechanism in place |
-| `recursive-schemas` (L198) | | ⏳ | — | element-reference / cyclic types |
+| `recursive-schemas` (L198) | | 🟡 | `recursive-schemas.yaml` | R4 Questionnaire.item.item cases imported (3); SDC profile case pending |
 | `get-by-cofx-path-test` (L321) | | ⛔ | — | internal helper, not user-facing |
 | `primitives-test` (L376) | boolean (L379) | ✅ | `primitives.yaml` | |
 | | integer (L385) | ✅ | `primitives.yaml` | int32 boundary cases included |
@@ -60,10 +60,10 @@ imported into our YAML suite, which are pending, and which we mark
 | | slice with resolve reference + discriminator:type (L1325) | ⛔ | — | needs reference resolution |
 | | resource in bundle should conform (L1437) | ⛔ | — | needs Bundle entry walk |
 | | slice by type:value, path:resolve() (L1487) | ⛔ | — | needs FHIRPath `resolve()` |
-| | closed slicing (L1668) | ⏳ | — | basic closed in `slicing.yaml`; sansara case has more nuance |
+| | closed slicing (L1668) | 🟡 | `slicing.yaml`, `excluded.yaml` | basic closed covered; sansara case uses `example-section-library` profile (out-of-package fixture) |
 | | base open, child closed (L1702) | ⏳ | — | |
 | | openAtEnd slicing (L1736) | ⛔ | — | not implemented |
-| | slice without match (L1769) | ⏳ | — | |
+| | slice without match (L1769) | ✅ | `slicing-no-match.yaml` | inline-profile equivalents imported |
 | | slice is constraining (L1791, L1832) | ⏳ | — | |
 | | re-slice (L1902) | ⛔ | — | reslicing not implemented |
 | | @default slice reslicing (L1962) | ⛔ | — | |
@@ -74,16 +74,16 @@ imported into our YAML suite, which are pending, and which we mark
 | `extension-test` (L2189) | us-core-race valid slicing (L2194) | ✅ | `us-core.yaml` | |
 | | us-core-race invalid sub-extension (L2210) | ✅ | `us-core.yaml` | F4 extension URL deref unlocks this |
 | `multiple-slice-match-test` (L2229) | | ⛔ | — | `slice.match` as array-of-patterns (AND semantics) — translator + validator change |
-| `primitive-extensions-test` (L2261) | valid extension on birthDate (L2294, L2318) | ⏳ | partly via `primitive-extensions.yaml` | re-import with proper FHIR examples |
-| | invalid extension on birthDate (L2305) | ⏳ | — | |
-| | FHIR general person sample (L2328) | ⏳ | — | |
-| | extension for unknown (L2405) | ⏳ | — | |
+| `primitive-extensions-test` (L2261) | valid extension on birthDate (L2294, L2318) | ✅ | `primitive-extensions-r4.yaml` | imported against real R4 patient-birthTime fixture |
+| | invalid extension on birthDate (L2305) | ⏳ | — | needs `_field` deep validation (feature D) to emit fs801 inside extension |
+| | FHIR general person sample (L2328) | ✅ | `primitive-extensions-r4.yaml` | full realistic Patient with nested _family ext |
+| | extension for unknown (L2405) | ✅ | `primitive-extensions.yaml` | `_unknown: {id: 1}` → fs201 |
 | | extension for non-primitive element (L2414) | ✅ | `primitive-extensions.yaml` (fs401) | |
 | | _ key as primitive type (L2423, L2432) | ⏳ | — | |
 | | _ extension as object when array expected (L2442) | ⏳ | — | |
 | | as array / with nulls (L2479, L2488, L2497) | ⏳ | — | null placeholders in primitive arrays |
 | | primitive extension with profile (L2577) | ⏳ | — | |
-| `primitive-extension-on-choice-type-test` (L2593) | all 6 sub-tests (L2600-L2645) | ⏳ | — | combine choice + primitive-ext, several edge cases |
+| `primitive-extension-on-choice-type-test` (L2593) | all 6 sub-tests (L2600-L2645) | ✅ | `primitive-extension-on-choice-type.yaml` | regression for issue #6913; fixed empty-composite false-positive for only-_field objects |
 | `additional-properties-extension-test` (L2656) | all sub-tests | ⛔ | — | open-map / additionalProperties feature not in DESIGN |
 | `any-extension-test` (L2766) | all sub-tests | ⛔ | — | `any` type not in DESIGN |
 | `any-additional-properties-extension-test` (L2837) | | ⛔ | — | same |
@@ -107,21 +107,16 @@ imported into our YAML suite, which are pending, and which we mark
 
 ## Roll-up
 
-- Fully imported: 30 sub-tests
-- Partially imported: 4 deftests (`validation-c/empty`, `validation-c/poly`, `primitive-extensions-test`, `unknown-schemas-test`)
-- Pending (importable, just not done): 22 sub-tests
+- Fully imported: 40+ sub-tests
+- Partially imported: 5 deftests (`validation-c/empty`, `validation-c/poly`, `primitive-extensions-test`, `unknown-schemas-test`, `recursive-schemas`)
+- Pending (importable, just not done): ~14 sub-tests
 - N/A (require unimplemented features): 25 sub-tests
 
 ## Importable next without feature work
 
-Listed in order of estimated cost / cost-benefit:
-
-1. **`unknown-schemas-test/with strict mode`** — requires adding a `strict` option (one boolean). Tiny.
-2. **`primitive-extension-on-choice-type-test`** (6 cases) — pairs `_field` + choice variant.
-3. **`primitive-extensions-test`** remaining sub-cases — extend our coverage of `_field` cases.
-4. **`slicing-validation/closed slicing`** — already supported, just import.
-5. **`slicing-validation/slice without match`** — likely already supported.
-6. **`recursive-schemas`** — element-reference handling check.
+1. **`primitive-extensions-test/invalid valueString in patient-birthTime` (L2305)** — needs feature D (`_field` deep validation) to emit fs801 inside extension.
+2. **Slicing edge cases**: `slice is constraining` (L1791/1832), `base open / child closed` (L1702), `closed slicing` (L1668) — last requires `example-section-library` fixture.
+3. **`open-schemas/isOpen` flag** — only if we decide to support open-mode.
 
 ## Blocked by feature gaps
 

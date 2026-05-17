@@ -246,6 +246,11 @@ function walk(
 ): void {
   if (overlays.length === 0) return;
 
+  // Resolve `elementReference`: an element-def may point to another schema's
+  // element via `[schemaUrl, ...path]`. The reference is fully substituted —
+  // cyclic refs work because resolution happens fresh on each walk-in.
+  overlays = overlays.map((o) => resolveElementReference(ctx, o));
+
   const declaredArray = overlays.some((o) => o.el.array === true);
 
   if (Array.isArray(value)) {
@@ -380,9 +385,9 @@ function walkObject(
   // required-key check on an empty object still wants to report what's
   // missing, matching Graham java validator's output ("Object must have
   // some content" + "minimum required = 1, but only found 0").
-  const meaningfulKeys = Object.keys(obj).filter(
-    (k) => k !== 'resourceType' && !(k.startsWith('_') && k.length > 1),
-  );
+  // `_field` shadows count as content: an Element with only `_x.extension`
+  // (no value) is a valid representation per the primitive-extension rules.
+  const meaningfulKeys = Object.keys(obj).filter((k) => k !== 'resourceType');
   if (meaningfulKeys.length === 0 && !atRoot) {
     issues.push({ code: FS.EXPECTED_OBJECT, path, expected: 'non-empty-object' });
   }
@@ -503,6 +508,25 @@ function findChildOverlays(overlays: Overlay[], key: string): Overlay[] {
     out.push({ el: child, source: o.source });
   }
   return out;
+}
+
+function resolveElementReference(ctx: ValidateContext, o: Overlay): Overlay {
+  const ref = (o.el as { elementReference?: string[] }).elementReference;
+  if (!ref || ref.length === 0) return o;
+  const [schemaUrl, ...segments] = ref;
+  if (!schemaUrl) return o;
+  const schema = ctx.resolve(schemaUrl);
+  if (!schema) return o;
+  let cursor: unknown = schema;
+  for (const seg of segments) {
+    if (cursor !== null && typeof cursor === 'object' && seg in (cursor as Record<string, unknown>)) {
+      cursor = (cursor as Record<string, unknown>)[seg];
+    } else {
+      return o;
+    }
+  }
+  if (!cursor || typeof cursor !== 'object') return o;
+  return { el: cursor as FHIRSchemaElement, source: o.source };
 }
 
 function expandTypeOverlays(
