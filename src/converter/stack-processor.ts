@@ -285,8 +285,25 @@ function addElement(
   const choiceOf = child.choiceOf as string | undefined;
   const actualElementName = choiceOf || elementName;
 
-  // Remove internal _required flag before adding
-  const { _required, ...cleanChild } = child;
+  // Remove internal _required and _excluded flags before adding
+  const { _required, _excluded, ...cleanChild } = child as ProcessingObject & {
+    _required?: boolean;
+    _excluded?: boolean;
+  };
+
+  // max="0" → hoist name into parent.excluded[] and DROP the element from
+  // `elements` map (excluded fields shouldn't appear in the schema body).
+  if (_excluded) {
+    if (!updated.excluded) {
+      updated.excluded = [];
+    }
+    const excluded = updated.excluded as string[];
+    if (!excluded.includes(actualElementName)) {
+      excluded.push(actualElementName);
+    }
+    return updated;
+  }
+
   elements[elementName] = cleanChild;
 
   // Add to required array if needed

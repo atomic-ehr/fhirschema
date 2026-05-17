@@ -1,0 +1,68 @@
+suite: 'Excluded keys (fs207) — profile prohibits a field via max=0'
+# In FHIR, a profile can prohibit an element by setting `max: "0"` in its
+# differential. The translator should hoist that into `parent.excluded[]`
+# (parallel to how `min: 1` hoists into `parent.required[]`). The validator
+# emits fs207 when an excluded key is present in data.
+
+tests:
+  - desc: inline excluded — field present in data is rejected
+    schemas:
+      - elements:
+          status: { type: code }
+          note: { type: string }
+        excluded: [note]
+    data: { status: active, note: 'should not be here' }
+    issues:
+      - { code: fs207, path: [note] }
+
+  - desc: inline excluded — field absent is fine
+    schemas:
+      - elements:
+          status: { type: code }
+          note: { type: string }
+        excluded: [note]
+    data: { status: active }
+    valid: true
+
+  - desc: nested excluded — child element prohibited
+    schemas:
+      - elements:
+          subject:
+            type: Reference
+            elements:
+              display: { type: string }
+            excluded: [display]
+    registry:
+      - url: Reference
+        name: Reference
+        type: Reference
+        kind: complex-type
+        class: complex-type
+        elements:
+          reference: { type: string }
+          display: { type: string }
+    data:
+      subject: { reference: 'Patient/1', display: 'forbidden here' }
+    issues:
+      - { code: fs207, path: [subject, display] }
+
+  - desc: excluded via overlay union — any overlay forbids → excluded
+    schemas:
+      - elements:
+          a: { type: string }
+          b: { type: string }
+        excluded: [a]
+      - elements:
+          a: { type: string }
+          b: { type: string }
+        excluded: [b]
+    data: { a: 1, b: 2 }
+    issues:
+      # both overlays exclude one each — both keys end up forbidden
+      - { code: fs207, path: [a] }
+      - { code: fs207, path: [b] }
+
+  # ─── translator: max="0" → parent.excluded[] ──────────────────────────
+  # (Translator tests live in test/cases/translator/; this section just
+  # documents the expected pipeline so the validator + translator stay in
+  # sync. See test/cases/translator/excluded.yaml for the translator side.)

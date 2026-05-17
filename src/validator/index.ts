@@ -20,6 +20,22 @@ export interface ValidateOptions {
    * fall back to validating against whatever else is in the SchemaSet.
    */
   strict?: boolean;
+  /**
+   * Pluggable FHIRPath evaluator for `constraint.expression` evaluation.
+   * If absent, all FHIRPath constraints are silently skipped (DESIGN §12
+   * deferred-validation pattern). Callers wire a real implementation
+   * (HL7 fhirpath.js, atomic-ehr/fhirpath, or a custom adapter).
+   */
+  fhirpath?: FhirpathEvaluator;
+}
+
+/**
+ * Minimal interface for a pluggable FHIRPath engine. `evaluate` returns the
+ * FHIRPath result collection (an array). Constraint satisfaction is judged
+ * truthy when the array is non-empty AND its first element is not `false`.
+ */
+export interface FhirpathEvaluator {
+  evaluate(expression: string, root: unknown, context?: Record<string, unknown>): unknown[];
 }
 
 export interface ValidationIssue {
@@ -180,6 +196,7 @@ function walk(
   value: unknown,
   path: (string | number)[],
   issues: ValidationIssue[],
+  options?: ValidateOptions,
 ): void {
   if (overlays.length === 0) return;
 
@@ -197,7 +214,7 @@ function walk(
       return;
     }
     checkArrayCardinality(overlays, value, path, issues);
-    walkArrayItems(ctx, overlays, value, path, issues);
+    walkArrayItems(ctx, overlays, value, path, issues, options);
     return;
   }
 
@@ -246,7 +263,7 @@ function walk(
     return;
   }
 
-  walkObject(ctx, overlays, value as Record<string, unknown>, path, issues, false);
+  walkObject(ctx, overlays, value as Record<string, unknown>, path, issues, false, options);
 }
 
 function walkObject(
@@ -290,6 +307,11 @@ function walkObject(
   // Reference's own elements.
   checkReferenceTarget(overlays, obj, path, issues);
 
+  // FHIRPath constraints (fs601). Skipped if no evaluator wired.
+  if (options?.fhirpath) {
+    checkConstraints(expanded, obj, path, issues, options.fhirpath);
+  }
+
   // Empty composite check (only at non-root). Continue afterwards — a
   // required-key check on an empty object still wants to report what's
   // missing, matching Graham java validator's output ("Object must have
@@ -304,6 +326,13 @@ function walkObject(
   // Choice groups (value[x]): map parent → intersection of allowed variants.
   // Profile narrowing intersects; base widening is not allowed.
   const choiceGroups = collectChoiceGroups(expanded);
+
+  // Excluded keys union across overlays — any overlay forbidding the key
+  // makes it forbidden globally.
+  const excluded = new Set<string>();
+  for (const o of expanded) {
+    for (const e of o.el.excluded ?? []) excluded.add(e);
+  }
 
   // Required keys union across overlays.
   // A choice parent (key in `choiceGroups`) is satisfied by ANY variant.
@@ -336,6 +365,12 @@ function walkObject(
     const isShadow = key.startsWith('_') && key.length > 1;
     const baseKey = isShadow ? key.slice(1) : key;
 
+    // Excluded keys: emit fs207 but otherwise stop (don't descend further).
+    if (excluded.has(baseKey)) {
+      issues.push({ code: FS.EXCLUDED_ELEMENT, path: [...path, key], got: key });
+      continue;
+    }
+
     const childOverlays = findChildOverlays(expanded, baseKey);
 
     if (childOverlays.length === 0) {
@@ -359,7 +394,7 @@ function walkObject(
       continue;
     }
 
-    walk(ctx, childOverlays, obj[key], [...path, key], issues);
+    walk(ctx, childOverlays, obj[key], [...path, key], issues, options);
   }
 }
 
@@ -534,10 +569,14 @@ function mergeSlicing(overlays: Overlay[]): Slicing | undefined {
   return merged;
 }
 
-/** Return slice names whose `match` pattern is satisfied by the item. */
+/**
+ * Return slice names whose `match` pattern is satisfied by the item.
+ * The `@default` slice is excluded — it's a fallback, not a match-by-pattern.
+ */
 function classifyItem(item: unknown, slicing: Slicing): string[] {
   const out: string[] = [];
   for (const [name, def] of Object.entries(slicing.slices ?? {})) {
+    if (name === '@default') continue;
     const effective = effectiveMatch(def);
     if (effective === undefined) continue;
     if (matchPattern(effective, item)) out.push(name);
@@ -571,6 +610,7 @@ function walkArrayItems(
   arr: unknown[],
   path: (string | number)[],
   issues: ValidationIssue[],
+  options?: ValidateOptions,
 ): void {
   // Item-level overlays: strip `array` and the slicing block (slicing applies
   // at the array level, not per item).
@@ -583,13 +623,16 @@ function walkArrayItems(
 
   if (!slicing) {
     for (let i = 0; i < arr.length; i++) {
-      walk(ctx, itemOverlays, arr[i], [...path, i], issues);
+      walk(ctx, itemOverlays, arr[i], [...path, i], issues, options);
     }
     return;
   }
 
   const counts = new Map<string, number>();
-  for (const name of Object.keys(slicing.slices ?? {})) counts.set(name, 0);
+  const sliceOrder = Object.keys(slicing.slices ?? {});
+  for (const name of sliceOrder) counts.set(name, 0);
+  let maxIdx = -1; // highest slice-declaration index seen so far (for ordered)
+  const defaultSlice = (slicing.slices as Record<string, SliceDef> | undefined)?.['@default'];
 
   for (let i = 0; i < arr.length; i++) {
     const item = arr[i];
@@ -602,11 +645,25 @@ function walkArrayItems(
         expected: 'one matching slice',
         got: matched,
       });
-      walk(ctx, itemOverlays, item, [...path, i], issues);
+      walk(ctx, itemOverlays, item, [...path, i], issues, options);
       continue;
     }
 
     if (matched.length === 0) {
+      // `@default` slice (if present) is the fallback overlay for items
+      // that match no other slice. Its presence also suppresses the
+      // closed-rule fs901 error.
+      if (defaultSlice) {
+        counts.set('@default', (counts.get('@default') ?? 0) + 1);
+        const overlayed: Overlay[] = defaultSlice.schema
+          ? [
+              ...itemOverlays,
+              { el: defaultSlice.schema as FHIRSchemaElement, source: undefined },
+            ]
+          : itemOverlays;
+        walk(ctx, overlayed, item, [...path, i], issues, options);
+        continue;
+      }
       if (slicing.rules === 'closed') {
         issues.push({
           code: FS.SLICE_NOT_MATCHED,
@@ -614,8 +671,8 @@ function walkArrayItems(
           expected: Object.keys(slicing.slices ?? {}),
         });
       }
-      // open / openAtEnd: validate against base element only
-      walk(ctx, itemOverlays, item, [...path, i], issues);
+      // open / openAtEnd without @default: validate against base element only.
+      walk(ctx, itemOverlays, item, [...path, i], issues, options);
       continue;
     }
 
@@ -623,10 +680,28 @@ function walkArrayItems(
     const name = matched[0] as string;
     counts.set(name, (counts.get(name) ?? 0) + 1);
     const slice = (slicing.slices as Record<string, SliceDef>)[name];
+
+    // Ordered slicing (fs903): slice index must be non-decreasing across
+    // matched items. Slices A,B,C declared in that order → data may run
+    // [A, A, B, C] but not [B, A].
+    if (slicing.ordered === true) {
+      const idx = sliceOrder.indexOf(name);
+      if (idx < maxIdx) {
+        issues.push({
+          code: FS.SLICE_OUT_OF_ORDER,
+          path: [...path, i],
+          expected: { sliceOrder, after: sliceOrder[maxIdx] },
+          got: name,
+        });
+      } else {
+        maxIdx = idx;
+      }
+    }
+
     const overlayed: Overlay[] = slice.schema
       ? [...itemOverlays, { el: slice.schema as FHIRSchemaElement, source: undefined }]
       : itemOverlays;
-    walk(ctx, overlayed, item, [...path, i], issues);
+    walk(ctx, overlayed, item, [...path, i], issues, options);
   }
 
   // Per-slice cardinality
@@ -659,6 +734,53 @@ function stripArrayAndSlicing(el: FHIRSchemaElement): FHIRSchemaElement {
 }
 
 // ─── pattern ─────────────────────────────────────────────────────────────
+
+// ─── constraints (FHIRPath) ──────────────────────────────────────────────
+
+/**
+ * Evaluate `constraint` expressions via the pluggable FHIRPath engine.
+ * One issue per failed constraint per overlay (union semantics — every
+ * overlay's constraints apply).
+ */
+function checkConstraints(
+  overlays: Overlay[],
+  obj: Record<string, unknown>,
+  path: (string | number)[],
+  issues: ValidationIssue[],
+  engine: FhirpathEvaluator,
+): void {
+  for (const o of overlays) {
+    const constraints = (o.el as { constraint?: Record<string, ConstraintDef> }).constraint;
+    if (!constraints) continue;
+    for (const [key, c] of Object.entries(constraints)) {
+      if (!c?.expression) continue;
+      let result: unknown[];
+      try {
+        result = engine.evaluate(c.expression, obj);
+      } catch {
+        // Engine threw — treat as failing constraint to surface the issue.
+        result = [];
+      }
+      if (!isFhirpathTruthy(result)) {
+        issues.push({
+          code: FS.INVARIANT_VIOLATED,
+          path,
+          schema: o.source,
+          expected: key,
+          message: c.human,
+        });
+      }
+    }
+  }
+}
+
+type ConstraintDef = { expression?: string; human?: string; severity?: string };
+
+/** FHIRPath truthy: non-empty collection whose first element is not `false`. */
+function isFhirpathTruthy(result: unknown[]): boolean {
+  if (!Array.isArray(result) || result.length === 0) return false;
+  return result[0] !== false;
+}
 
 // ─── references ──────────────────────────────────────────────────────────
 

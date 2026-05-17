@@ -13,10 +13,10 @@ imported into our YAML suite, which are pending, and which we mark
 
 | deftest | sub-test | status | where | notes |
 |---|---|---|---|---|
-| `constraints-test` (L42) | base constraints (L47) | ⛔ | — | needs FHIRPath engine (fs601) |
-| | complex type constraints (L92) | ⛔ | — | needs FHIRPath |
-| | contained-invariant-profile (L106) | ⛔ | — | needs FHIRPath + contained re-entry |
-| | constraint on bundled resource (L116) | ⛔ | — | needs FHIRPath + Bundle entry walk |
+| `constraints-test` (L42) | base constraints (L47) — root invariants (dom-2 etc.) | 🟡 | — | feature done (fs601); root-level R4 invariants not in our fixtures (translator gap on root-level `.constraint`) |
+| | complex type constraints (L92) — Patient.contact pat-1 | ✅ | `constraints.yaml` | imported with HL7 fhirpath.js adapter |
+| | contained-invariant-profile (L106) | ⏳ | — | uses external profile; importable once fhirpath + profile loading wired |
+| | constraint on bundled resource (L116) | ⏳ | — | combo of Bundle + FHIRPath; mechanism in place |
 | `recursive-schemas` (L198) | | ⏳ | — | element-reference / cyclic types |
 | `get-by-cofx-path-test` (L321) | | ⛔ | — | internal helper, not user-facing |
 | `primitives-test` (L376) | boolean (L379) | ✅ | `primitives.yaml` | |
@@ -53,8 +53,9 @@ imported into our YAML suite, which are pending, and which we mark
 | | Bundle resource validation (L953) | ✅ | `real-resources.yaml` | inner-resource walk implemented |
 | | contained (L996) | 🟡 | `real-resources.yaml` | simplified version imported; full sansara case needs `excluded` keys |
 | `slicing-validation` (L1015) | Simple slicings (L1024) | ✅ | `real-resources.yaml` | 4 cases (vitalsigns VSCat) |
-| | ordered slicing (L1093) | ⛔ | — | `ordered: true` enforcement not yet implemented |
-| | @default slice (L1189) | ⛔ | — | default slice handling not yet implemented |
+| | ordered slicing (L1093) | 🟡 | `slicing-ordered.yaml` (hand-crafted) | feature implemented (fs903); sansara cases use `example-section-library` profile (not in core, needs fixture) |
+| | @default slice (L1189) | 🟡 | `slicing-default.yaml` (hand-crafted) | feature implemented; sansara cases use `EVG+IVAN` profile (test fixture in their tu) |
+| | excluded keys (L892) | 🟡 | `excluded.yaml` (hand-crafted) | feature implemented (translator hoists `max=0`, validator emits fs207); full sansara case uses `lipidprofile` |
 | | slice with discriminator:type type (L1290) | ⏳ | — | `match: { type: "X" }` pattern |
 | | slice with resolve reference + discriminator:type (L1325) | ⛔ | — | needs reference resolution |
 | | resource in bundle should conform (L1437) | ⛔ | — | needs Bundle entry walk |

@@ -1,0 +1,45 @@
+suite: 'Excluded keys — translator hoist max=0 to parent excluded[]'
+
+defaults:
+  sd:
+    resourceType: StructureDefinition
+    status: active
+    kind: resource
+    derivation: constraint
+    url: http://test/MyProfile
+    name: MyProfile
+    type: Patient
+    baseDefinition: http://hl7.org/fhir/StructureDefinition/Patient
+
+tests:
+  - desc: max="0" hoisted to root `excluded[]`, element removed from `elements`
+    sd:
+      differential:
+        element:
+          - path: Patient.conclusionCode
+            max: '0'
+    expected:
+      excluded: [conclusionCode]
+
+  - desc: nested max="0" — hoisted to parent element's `excluded[]`
+    sd:
+      differential:
+        element:
+          - path: Patient.contact
+          - path: Patient.contact.relationship
+            max: '0'
+    expected:
+      elements:
+        contact:
+          excluded: [relationship]
+
+  - desc: multiple excluded fields at root
+    sd:
+      differential:
+        element:
+          - path: Patient.contact
+            max: '0'
+          - path: Patient.communication
+            max: '0'
+    expected:
+      excluded: [contact, communication]

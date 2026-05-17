@@ -420,6 +420,16 @@ interface ValidateOptions {
   SchemaSet. Matches reference validators' permissive default.
 - `strict: true` — both emit `fs701` profile-not-found. Use in pipelines
   that demand declared profiles to be loaded.
+- `fhirpath?: FhirpathEvaluator` — pluggable FHIRPath engine for
+  `constraint.expression` evaluation. If absent, all constraints are
+  silently skipped (deferred-validation pattern). Wire HL7 fhirpath.js
+  via a 1-line adapter:
+  ```ts
+  import fhirpath from 'fhirpath';
+  validate(ctx, schemas, data, {
+    fhirpath: { evaluate: (expr, root) => fhirpath.evaluate(root, expr) }
+  });
+  ```
 
 `ValidationResult`:
 
@@ -760,24 +770,39 @@ The translator also writes a flat `extensions` map keyed by URL for the
 
 The validator can take either path — both must agree.
 
-### 10.3 Algorithm
+### 10.3 `@default` slice (fallback overlay)
+
+A slice named `@default` is a catch-all overlay for items that didn't match
+any other slice. It has no `match` pattern of its own — selection is by
+exhaustion. Behavior:
+
+- Items matching no other slice are validated against the base element
+  schema **plus** `@default.schema` (if defined). Internal constraint
+  violations fire normally (fs301, fs101, etc.).
+- The `@default` slice suppresses `fs901` even when `rules: closed`:
+  unmatched items are routed to `@default` instead of erroring.
+- `@default` is **not** counted toward other slices' cardinality. Its own
+  `min`/`max` (if specified) apply normally via `fs902`.
+
+### 10.4 Algorithm
 
 For each array element with `slicing`:
 
 ```
 1. Merge slicing across overlays (slices map, rules, ordered).
 2. For each item at index i:
-     a. Test the item against each slice's match.
+     a. Test the item against each slice's match (excluding @default).
      b. >1 match → fs901 (ambiguous slice).
      c. 0 matches:
-          rules: closed     → fs901 (unmatched item)
-          rules: open       → validate against the base (non-slice) element
-                              schema only
-          rules: openAtEnd  → as `open`, plus position check
+          if @default present → validate with (base ⊕ @default.schema);
+                                increment @default counter
+          else rules: closed  → fs901 (unmatched item) + validate base
+          else rules: open    → validate against the base element schema only
+          else rules: openAtEnd → as `open`, plus position check (TODO)
      d. 1 match: validate item with (base element schema) ⊕ (slice schema).
         Increment slice's counter.
+        If ordered=true: slice index must be >= max index seen → else fs903.
 3. After all items: for each slice, if count < min or count > max → fs902.
-4. If ordered=true: verify slice assignments are in declaration order.
 ```
 
 ### 10.4 Reslicing
@@ -970,6 +995,7 @@ Literal validation (JSON type correct, value invalid):
 | fs204 | expected-primitive| Expected JSON primitive, got object or array |
 | fs205 | pattern-mismatch  | `pattern[X]` value not satisfied (deep-partial match) |
 | fs206 | fixed-mismatch    | `fixed[X]` value not satisfied (exact equality) |
+| fs207 | excluded-element  | Field prohibited by `excluded[]` (from `max: "0"` in profile) is present in data |
 
 ### fs3xx — Cardinality
 
@@ -1020,6 +1046,7 @@ Literal validation (JSON type correct, value invalid):
 |-------|-------------------|-------------|
 | fs901 | slice-not-matched | Item matched zero (closed) or multiple slices |
 | fs902 | slice-cardinality | Per-slice min/max violated |
+| fs903 | slice-out-of-order | `slicing.ordered: true` violated — item appears before its declared slice |
 
 ### fs10xx — References (deferred)
 
@@ -1114,19 +1141,20 @@ Not yet implemented in [src/validator/index.ts](src/validator/index.ts), in
 priority order:
 
 - **Slicing variants.** Core slicing works (open/closed, deep-partial match,
-  per-slice cardinality, slice schema overlays). Still missing: `openAtEnd`
-  position rule, `ordered: true` enforcement, reslicing inside a slice
-  schema, and the extension-URL convenience sugar (`extensions` map). All
-  noted as future increments — current validator falls back to the full
-  slicing block for all three flavors of slicing.
+  per-slice cardinality, slice schema overlays, `ordered: true`,
+  `@default` fallback). Still missing: `openAtEnd` position rule,
+  reslicing inside a slice schema, and the extension-URL convenience
+  sugar (`extensions` map).
 <!-- Choice types now implemented; removed from gaps. -->
 
 <!-- fixed[X] strict equality now implemented: translator preserves the
 distinction in `fixed: { type, value }` (separate from `pattern`), validator
 runs deep-equal check and emits fs206. Removed from gaps. -->
 
-- **FHIRPath constraints (`fs601`).** Requires a FHIRPath engine. Out of
-  core scope; will be a pluggable evaluator.
+<!-- FHIRPath constraints implemented as a pluggable evaluator
+(`options.fhirpath`). Default = silent skip. Tests wire HL7 fhirpath.js.
+Removed from gaps. -->
+
 - **Bindings (`fs5xx`).** Requires terminology server integration. Surfaced
   as deferred work.
 - **Reference resolution (`fs1002`).** Sync target-type check (`fs1001`) is
@@ -1230,6 +1258,11 @@ expected outcome:
 | Inner-resource walk (Bundle.entry, Patient.contained) | done | sansara `validation-c/Bundle` + `contained` (simplified) |
 | Strict mode (`options.strict: true`) | done | sansara `unknown-schemas-test/profile` (both strict + non-strict) |
 | Reference target sync check (fs1001) | done | hand-crafted (Graham references module uses external `java/*` files) |
+| Resource `id` strict validation | done | Graham `patient-id-bad-*`, `resource-invalid-id-*` (no code changes needed) |
+| Excluded keys (`max: 0` → `excluded[]`, fs207) | done | hand-crafted; translator hoists `max="0"` to parent's `excluded[]` |
+| Ordered slicing (fs903) | done | hand-crafted; sansara `slicing-validation/ordered slicing` needs profile fixtures |
+| `@default` slice (fallback overlay for unmatched items) | done | hand-crafted; sansara `slicing-validation/@default slice` needs profile fixtures |
+| FHIRPath constraints (fs601) — pluggable engine | done | hand-crafted (7) + sansara `Patient.contact pat-1` (real R4 invariant) |
 | Choice types | not yet | §9 |
 | Slicing | not yet | §10 |
 | `pattern[X]` / `fixed[X]` matching | not yet | §15 |

@@ -21,8 +21,19 @@
 import { describe, expect, it } from 'bun:test';
 import { join } from 'node:path';
 import { relative } from 'node:path';
+// @ts-ignore — fhirpath ships JS + .d.ts; default-import works fine
+import fhirpath from 'fhirpath';
 import type { FHIRSchema } from '../src/converter/types.js';
-import { validate, type ValidateContext, type ValidationIssue } from '../src/validator/index.js';
+import {
+  validate,
+  type FhirpathEvaluator,
+  type ValidateContext,
+  type ValidationIssue,
+} from '../src/validator/index.js';
+
+const fhirpathAdapter: FhirpathEvaluator = {
+  evaluate: (expr, root) => fhirpath.evaluate(root, expr) as unknown[],
+};
 import {
   buildResolverMap,
   loadPackageFixtures,
@@ -110,7 +121,12 @@ for (const file of files) {
           ...((t.registry as FHIRSchema[] | undefined) ?? []),
         ];
         const ctx = makeCtx(registry, baseMap);
-        const result = validate(ctx, t.schemas as FHIRSchema[], t.data, t.options);
+        const suiteOpts =
+          (defaults as { useFhirpath?: boolean } | undefined)?.useFhirpath === true
+            ? { fhirpath: fhirpathAdapter }
+            : {};
+        const opts = { ...suiteOpts, ...(t.options ?? {}) };
+        const result = validate(ctx, t.schemas as FHIRSchema[], t.data, opts);
 
         // valid: true → expect no issues at all.
         const expectedIssues = t.valid === true ? [] : (t.issues ?? []);

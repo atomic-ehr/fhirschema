@@ -299,6 +299,7 @@ function buildElementCardinality(element: ProcessingElement): ProcessingElement 
     (maxValue && maxValue !== '*' && Number.parseInt(maxValue, 10) >= 2);
 
   const isRequired = element.min === 1;
+  const isExcluded = maxValue === '0';
 
   const result: ProcessingElement = { ...element };
   delete result.min;
@@ -316,6 +317,12 @@ function buildElementCardinality(element: ProcessingElement): ProcessingElement 
 
   if (isRequired) {
     result._required = true;
+  }
+
+  // max="0" prohibits the field — hoisted into parent.excluded[] (parallel
+  // to how min=1 hoists into parent.required[]).
+  if (isExcluded) {
+    (result as ProcessingElement & { _excluded?: boolean })._excluded = true;
   }
 
   return result;

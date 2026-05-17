@@ -1,0 +1,133 @@
+suite: '@default slice — fallback overlay for unmatched items'
+# A slice named `@default` (sansara convention) acts as a catch-all overlay
+# for items that don't match any other slice. Its schema is applied just
+# like a normal slice's schema (with fs301/fs101/etc firing normally on
+# constraint violations). It does NOT consume a discriminator match —
+# it's selected only when no other slice matches.
+
+tests:
+  - desc: '@default slice — matched item uses fixed-text, unmatched item uses @default schema'
+    schemas:
+      - elements:
+          address:
+            type: Address
+            array: true
+            slicing:
+              slices:
+                fixed-text:
+                  match: { text: foo }
+                  schema:
+                    required: [text]
+                '@default':
+                  schema:
+                    required: [use]
+    registry:
+      - url: Address
+        name: Address
+        type: Address
+        kind: complex-type
+        class: complex-type
+        elements:
+          text: { type: string }
+          use: { type: code }
+    data:
+      address:
+        - { text: foo, use: official }   # matches fixed-text
+        - { text: bar, use: official }   # routed to @default — has `use`, valid
+    valid: true
+
+  - desc: '@default slice — unmatched item fails @default required → fs301'
+    schemas:
+      - elements:
+          address:
+            type: Address
+            array: true
+            slicing:
+              slices:
+                fixed-text:
+                  match: { text: foo }
+                  schema:
+                    required: [text]
+                '@default':
+                  schema:
+                    required: [use]
+    registry:
+      - url: Address
+        name: Address
+        type: Address
+        kind: complex-type
+        class: complex-type
+        elements:
+          text: { type: string }
+          use: { type: code }
+    data:
+      address:
+        - { text: foo, use: official }   # fixed-text
+        - { text: bar }                  # @default → missing `use`
+    issues:
+      - { code: fs301, path: [address, 1, use] }
+
+  - desc: '@default + missing fixed-text min → fs902 on fixed-text, fs301 inside @default'
+    schemas:
+      - elements:
+          address:
+            type: Address
+            array: true
+            slicing:
+              slices:
+                fixed-text:
+                  match: { text: foo }
+                  min: 1
+                  schema:
+                    required: [text]
+                '@default':
+                  schema:
+                    required: [use]
+    registry:
+      - url: Address
+        name: Address
+        type: Address
+        kind: complex-type
+        class: complex-type
+        elements:
+          text: { type: string }
+          use: { type: code }
+    data:
+      address:
+        - { text: a }   # doesn't match fixed-text → @default → missing `use`
+    issues:
+      - { code: fs301, path: [address, 0, use] }   # @default required not met
+      - { code: fs902, path: [address] }           # fixed-text min=1, actual=0
+
+  - desc: '@default slice not counted for non-@default cardinality'
+    schemas:
+      - elements:
+          tags:
+            type: code
+            array: true
+            slicing:
+              slices:
+                a:
+                  match: a
+                  max: 1
+                '@default':
+                  schema: {}
+    data: { tags: [a, b, c] }   # only 1 item to slice "a", others to @default — valid
+    valid: true
+
+  # ─── @default with closed rules ───────────────────────────────────────
+  - desc: '@default present + rules: closed → unmatched items go to @default not error'
+    schemas:
+      - elements:
+          tags:
+            type: code
+            array: true
+            slicing:
+              rules: closed
+              slices:
+                a:
+                  match: a
+                '@default':
+                  schema: {}
+    data: { tags: [a, x, y] }   # x, y go to @default (no schema constraint) — valid
+    valid: true

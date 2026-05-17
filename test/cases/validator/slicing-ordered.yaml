@@ -1,0 +1,115 @@
+suite: 'Ordered slicing — fs903 slice-out-of-order'
+# FHIR rule: when `slicing.ordered: true`, items must appear in their
+# declaration order. Items of slice A can precede items of slice B (if A
+# is declared before B), but not the other way around.
+
+tests:
+  - desc: ordered=true, valid order [A, B, C]
+    schemas:
+      - elements:
+          tags:
+            type: code
+            array: true
+            slicing:
+              rules: open
+              ordered: true
+              slices:
+                A: { match: a }
+                B: { match: b }
+                C: { match: c }
+    data: { tags: [a, b, c] }
+    valid: true
+
+  - desc: ordered=true, valid order [B, C] (skipping A is fine)
+    schemas:
+      - elements:
+          tags:
+            type: code
+            array: true
+            slicing:
+              rules: open
+              ordered: true
+              slices:
+                A: { match: a }
+                B: { match: b }
+                C: { match: c }
+    data: { tags: [b, c] }
+    valid: true
+
+  - desc: ordered=true, repeated items of same slice [A, A, B]
+    schemas:
+      - elements:
+          tags:
+            type: code
+            array: true
+            slicing:
+              rules: open
+              ordered: true
+              slices:
+                A: { match: a, max: 5 }
+                B: { match: b }
+    data: { tags: [a, a, b] }
+    valid: true
+
+  - desc: ordered=true, invalid order [B, A] → fs903 at [tags, 1]
+    schemas:
+      - elements:
+          tags:
+            type: code
+            array: true
+            slicing:
+              rules: open
+              ordered: true
+              slices:
+                A: { match: a }
+                B: { match: b }
+    data: { tags: [b, a] }
+    issues:
+      - { code: fs903, path: [tags, 1] }
+
+  - desc: ordered=true, [A, B, A] → fs903 on second A
+    schemas:
+      - elements:
+          tags:
+            type: code
+            array: true
+            slicing:
+              rules: open
+              ordered: true
+              slices:
+                A: { match: a, max: 5 }
+                B: { match: b }
+    data: { tags: [a, b, a] }
+    issues:
+      - { code: fs903, path: [tags, 2] }
+
+  # ─── unordered (default) ignores order ────────────────────────────────
+  - desc: ordered absent → [B, A] is fine
+    schemas:
+      - elements:
+          tags:
+            type: code
+            array: true
+            slicing:
+              rules: open
+              slices:
+                A: { match: a }
+                B: { match: b }
+    data: { tags: [b, a] }
+    valid: true
+
+  # ─── unmatched items (open) — don't disrupt ordering ──────────────────
+  - desc: ordered=true with open rules — unmatched item between slices is OK
+    schemas:
+      - elements:
+          tags:
+            type: code
+            array: true
+            slicing:
+              rules: open
+              ordered: true
+              slices:
+                A: { match: a }
+                B: { match: b }
+    data: { tags: [a, x, b] }
+    valid: true

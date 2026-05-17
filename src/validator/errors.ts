@@ -37,6 +37,7 @@ export const FS = {
   EXPECTED_PRIMITIVE: 'fs204',
   PATTERN_MISMATCH: 'fs205',
   FIXED_MISMATCH: 'fs206',
+  EXCLUDED_ELEMENT: 'fs207',
 
   // fs3xx — cardinality
   REQUIRED: 'fs301',
@@ -46,6 +47,9 @@ export const FS = {
   // fs4xx — primitive extensions
   INVALID_PRIMITIVE_EXTENSION: 'fs401',
   MISALIGNED_ARRAYS: 'fs402',
+
+  // fs6xx — constraints
+  INVARIANT_VIOLATED: 'fs601',
 
   // fs7xx — profiles / schema refs
   PROFILE_NOT_FOUND: 'fs701',
@@ -57,6 +61,7 @@ export const FS = {
   // fs9xx — slicing
   SLICE_NOT_MATCHED: 'fs901',
   SLICE_CARDINALITY: 'fs902',
+  SLICE_OUT_OF_ORDER: 'fs903',
 
   // fs10xx — references
   INVALID_REFERENCE_TYPE: 'fs1001',

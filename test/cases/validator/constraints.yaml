@@ -1,0 +1,119 @@
+suite: 'FHIRPath constraints (fs601)'
+# Constraints are FHIRPath expressions attached to schemas/elements. The
+# validator evaluates them via a pluggable engine (`options.fhirpath`).
+# Without a configured engine, constraints are silently skipped (matches
+# the deferred-validation pattern). With HL7 fhirpath.js (used in this
+# suite), expressions evaluate at the relevant node.
+
+# The runner picks up `options.useFhirpath: true` and constructs an
+# adapter around HL7 fhirpath.js for this suite.
+defaults:
+  useFhirpath: true
+  useR4: true
+
+tests:
+  - desc: simple constraint — name.exists() passes when name is present
+    schemas:
+      - elements:
+          name: { type: string }
+        constraint:
+          rule-1:
+            expression: 'name.exists()'
+            human: 'name must be present'
+            severity: 'error'
+    data: { name: hello }
+    valid: true
+
+  - desc: simple constraint — name.exists() fails when name missing
+    schemas:
+      - elements:
+          name: { type: string }
+        constraint:
+          rule-1:
+            expression: 'name.exists()'
+            human: 'name must be present'
+            severity: 'error'
+    data: {}
+    issues:
+      - { code: fs601, path: [] }
+
+  - desc: numeric constraint — value > 0
+    schemas:
+      - elements:
+          value: { type: integer }
+        constraint:
+          positive:
+            expression: 'value > 0'
+            human: 'value must be positive'
+            severity: 'error'
+    data: { value: 5 }
+    valid: true
+
+  - desc: numeric constraint — value > 0 fails on 0
+    schemas:
+      - elements:
+          value: { type: integer }
+        constraint:
+          positive:
+            expression: 'value > 0'
+            human: 'value must be positive'
+            severity: 'error'
+    data: { value: 0 }
+    issues:
+      - { code: fs601, path: [] }
+
+  - desc: multiple constraints — both must pass
+    schemas:
+      - elements:
+          a: { type: integer }
+          b: { type: integer }
+        constraint:
+          c1: { expression: 'a > 0', human: 'a > 0', severity: 'error' }
+          c2: { expression: 'b > 0', human: 'b > 0', severity: 'error' }
+    data: { a: 5, b: -1 }
+    issues:
+      - { code: fs601, path: [] }
+
+  - desc: warning severity — fs601 emitted at warning level
+    schemas:
+      - elements:
+          x: { type: integer }
+        constraint:
+          c1:
+            expression: 'x.exists()'
+            human: 'x should be set'
+            severity: 'warning'
+    data: {}
+    issues:
+      - { code: fs601, path: [] }
+
+  - desc: constraint via overlay union — any overlay's constraints apply
+    schemas:
+      - elements: { a: { type: integer } }
+        constraint:
+          c1: { expression: 'a > 0', human: 'a > 0', severity: 'error' }
+      - elements: { a: { type: integer } }
+        constraint:
+          c2: { expression: 'a < 100', human: 'a < 100', severity: 'error' }
+    data: { a: 150 }
+    issues:
+      - { code: fs601, path: [] }
+
+  # ─── sansara import: real R4 Patient.contact pat-1 invariant ─────────
+  # core_test.clj:92 — "SHALL at least contain a contact's details or a
+  # reference to an organization". Element-level constraint, lives in our
+  # R4 fixture under Patient.contact.constraint.pat-1.
+  - desc: 'sansara/constraints-test: Patient.contact pat-1 violated → fs601'
+    schemas: []
+    data:
+      resourceType: Patient
+      contact: [{ gender: unknown }]
+    issues:
+      - { code: fs601, path: [contact, 0] }
+
+  - desc: 'sansara/constraints-test: Patient.contact pat-1 satisfied (has name)'
+    schemas: []
+    data:
+      resourceType: Patient
+      contact: [{ gender: unknown, name: { family: Doe } }]
+    valid: true

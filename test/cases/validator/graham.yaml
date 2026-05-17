@@ -158,6 +158,36 @@ tests:
     issues:
       - { code: fs110, path: [id] }
 
+  # ─── batch 3: resource id validation ─────────────────────────────────
+  - desc: 'graham/patient-id-bad-2: id with space → fs110'
+    schemas: []
+    data: { resourceType: Patient, id: 'bad-id 1' }
+    issues:
+      - { code: fs110, path: [id] }
+
+  - desc: 'graham/patient-id-bad-3: id longer than 64 chars → fs110'
+    schemas: []
+    data:
+      resourceType: Patient
+      id: 'bad-id-too-long-very-long-very-long-very-long-very-long-very-long-very-long-very-long-very-long-very-long-very-long'
+    issues:
+      - { code: fs110, path: [id] }
+
+  - desc: 'graham/resource-invalid-id-1: id with slash/equals → fs110'
+    schemas: []
+    data: { resourceType: Location, id: '/foobar==', name: 'A Location' }
+    issues:
+      - { code: fs110, path: [id] }
+
+  - desc: 'graham/resource-invalid-id-2: 90-char Location id → fs110'
+    schemas: []
+    data:
+      resourceType: Location
+      id: 'foobarfoobarfoobarfoobarfoobarfoobarfoobarfoobarfoobarfoobarfoobarfoobarfoobarfoobarfoobar'
+      name: 'A Location'
+    issues:
+      - { code: fs110, path: [id] }
+
   - desc: 'graham/group-choice-bad3: characteristic[0].value=string but type narrowed to boolean → fs1xx'
     # Java reports primitive value type mismatch on value[x] resolved-as-boolean
     schemas: []

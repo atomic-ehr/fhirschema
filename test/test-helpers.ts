@@ -68,6 +68,8 @@ export type ValidatorSuite = {
     useR4?: boolean;
     /** Generic: load any number of prepared packages by id. */
     usePackages?: string[];
+    /** Wire HL7 fhirpath.js into `options.fhirpath` for constraint eval. */
+    useFhirpath?: boolean;
   };
   tests: ValidatorCase[];
 };
