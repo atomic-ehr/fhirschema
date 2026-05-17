@@ -76,16 +76,18 @@ tests:
       - { code: fs201, path: [characteristic, 0, value] }
       - { code: fs301, path: [characteristic, 0, value] }
 
-  # SKIP — list-minimal uses `fhir_comments` JSON5 extension which is not
-  # standard FHIR JSON. The reference java validator filters it out before
-  # validation; our validator (correctly per FHIR JSON spec) reports it as
-  # unknown. Importable once we add a "tolerate fhir_comments" option.
+  # `fhir_comments` is a non-standard JSON5 extension that some FHIR
+  # producers emit. The reference Java validator silently strips it before
+  # validation; we tolerate it the same way (no fs201) — both at the
+  # resource root and inside any nested object (e.g. `_id.fhir_comments`).
   - desc: 'graham/list-minimal: List with fhir_comments (non-standard JSON5)'
-    skip: true
     schemas: []
     data:
       resourceType: List
+      fhir_comments: [' this is all valid ']
       id: val1
+      _id:
+        fhir_comments: [' another comment ']
       status: current
       mode: changes
     valid: true
@@ -202,31 +204,3 @@ tests:
     issues:
       - { code: fs103, path: [characteristic, 0, valueBoolean] }
 
-  # KNOWN DIVERGENCE (NOT IMPORTED AS-IS) — Graham's `list-contained`
-  # has `subject: { reference: '#pat' }` (scalar) in R5 where
-  # List.subject cardinality is 0..*. Per FHIR JSON spec, arrays MUST be
-  # used for repeating elements even when there's a single value. We emit
-  # fs203 "expected array" — spec-correct.
-  #
-  # The Java reference validator is permissive by default and accepts the
-  # scalar; the same shape is flagged as "must be a JSON Array, not an
-  # Object" only under the `fmt` module (strict JSON format) — see
-  # list-contained-bad-json. So Java has implicit dual-mode (permissive
-  # default + strict-fmt opt-in).
-  #
-  # We choose spec-strict by default (see DESIGN §15 — "JSON array
-  # leniency" future option). If we ever need a permissive opt-in
-  # (matching Java's default), we'd add `options.permissiveArrayShape`.
-  - desc: 'graham/list-contained: List with contained Patient'
-    skip: true
-    schemas: []
-    data:
-      resourceType: List
-      id: val1
-      contained:
-        - resourceType: Patient
-          id: pat
-      status: current
-      mode: changes
-      subject: { reference: '#pat' }
-    valid: true

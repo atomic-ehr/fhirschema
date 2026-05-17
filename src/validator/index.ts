@@ -99,6 +99,15 @@ export interface ValidationResult {
 // Input schema may carry `base` (canonical) or `additionalProfiles` to combine.
 export type InputSchema = FHIRSchema & { additionalProfiles?: string[] };
 
+// Internal `options` extension: the resource currently being walked (set
+// when we enter a resource) and the outermost resource (set once, preserved
+// through inner-resource walks). Used to populate %resource / %rootResource
+// FHIRPath env vars. Not exposed in `ValidateOptions`.
+type InternalOptions = ValidateOptions & {
+  _resource?: unknown;
+  _rootResource?: unknown;
+};
+
 // ─── overlay model ─────────────────────────────────────────────────────────
 
 // At each scope we carry a set of "overlays": one per schema currently active.
@@ -182,7 +191,15 @@ export function validate(
   }
 
   if (overlays.length > 0) {
-    walkObject(ctx, overlays, data, [], issues, true, options);
+    // Stash the resource being walked (becomes %resource / %context) and
+    // preserve the outermost (%rootResource) across inner-resource walks.
+    const inner = options as InternalOptions | undefined;
+    const optsForWalk: InternalOptions = {
+      ...(options ?? {}),
+      _resource: data,
+      _rootResource: inner?._rootResource ?? data,
+    };
+    walkObject(ctx, overlays, data, [], issues, true, optsForWalk);
   }
 
   // Normalize severity: default 'error' if not set by emit site.
@@ -378,7 +395,11 @@ function walkObject(
 
   // FHIRPath constraints (fs601). Skipped if no evaluator wired.
   if (options?.fhirpath) {
-    checkConstraints(expanded, obj, path, issues, options.fhirpath);
+    const internal = options as InternalOptions;
+    checkConstraints(expanded, obj, path, issues, options.fhirpath, {
+      resource: internal._resource,
+      rootResource: internal._rootResource,
+    });
   }
 
   // Empty composite check (only at non-root). Continue afterwards — a
@@ -433,6 +454,9 @@ function walkObject(
   // Iterate over data keys (data-driven traversal).
   for (const key of Object.keys(obj)) {
     if (atRoot && key === 'resourceType') continue;
+    // Non-standard JSON5 metadata field emitted by some FHIR producers
+    // (e.g. Graham's test suite). Silently tolerated like Java validator.
+    if (key === 'fhir_comments') continue;
 
     const isShadow = key.startsWith('_') && key.length > 1;
     const baseKey = isShadow ? key.slice(1) : key;
@@ -993,6 +1017,7 @@ function checkConstraints(
   path: (string | number)[],
   issues: ValidationIssue[],
   engine: FhirpathEvaluator,
+  env: { resource?: unknown; rootResource?: unknown } = {},
 ): void {
   for (const o of overlays) {
     const constraints = (o.el as { constraint?: Record<string, ConstraintDef> }).constraint;
@@ -1002,7 +1027,15 @@ function checkConstraints(
       if (!c?.expression) continue;
       let result: unknown[];
       try {
-        result = engine.evaluate(c.expression, obj);
+        // FHIR FHIRPath env vars: %resource (containing resource),
+        // %rootResource (outermost — e.g. Bundle for Bundle.entry), %context
+        // (current node being validated). Constraints like dom-3 reference
+        // %resource explicitly.
+        result = engine.evaluate(c.expression, obj, {
+          resource: env.resource ?? obj,
+          rootResource: env.rootResource ?? env.resource ?? obj,
+          context: obj,
+        });
       } catch {
         // Engine threw — treat as failing constraint to surface the issue.
         result = [];

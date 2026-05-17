@@ -35,7 +35,9 @@ import {
 import { TxFhirOrgAdapter } from '../src/validator/tx-adapter.js';
 
 const fhirpathAdapter: FhirpathEvaluator = {
-  evaluate: (expr, root) => fhirpath.evaluate(root, expr) as unknown[],
+  evaluate: (expr, root, env) =>
+    // HL7 fhirpath.js: 3rd arg is env vars; keys WITHOUT the `%` prefix.
+    fhirpath.evaluate(root, expr, env ?? {}) as unknown[],
 };
 
 const TEST_VALUESETS: Record<string, Set<string>> = {
