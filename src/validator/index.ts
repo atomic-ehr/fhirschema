@@ -762,6 +762,14 @@ type SliceDef = {
   schema?: FHIRSchemaElement;
   min?: number;
   max?: number;
+  /**
+   * FHIR `sliceIsConstraining`: when set on a slice in a child profile,
+   * signals that it constrains the SAME slice in the parent (i.e. shares
+   * the slice name) rather than introducing a new one. Effect at merge
+   * time: shallow-merge child fields onto the parent slice instead of
+   * replacing the whole def.
+   */
+  sliceIsConstraining?: boolean;
 };
 type Slicing = {
   rules?: string;
@@ -772,7 +780,11 @@ type Slicing = {
 /**
  * Merge slicing blocks across overlays on the same array element.
  * - `slices`: union (last write wins on same slice name; profile typically
- *   adds new slices on top of the base).
+ *   adds new slices on top of the base). When the child slice has
+ *   `sliceIsConstraining: true`, shallow-merge its fields onto the
+ *   parent's slice instead of replacing — letting the child tighten an
+ *   existing slice (e.g. add `max: 0`) while preserving the parent's
+ *   match pattern and other fields.
  * - `rules`: take the tightest (closed > openAtEnd > open).
  * - `ordered`: any overlay claiming `true`.
  * Returns undefined if no overlay declared slicing.
@@ -784,8 +796,14 @@ function mergeSlicing(overlays: Overlay[]): Slicing | undefined {
     const s = (o.el as unknown as { slicing?: Slicing }).slicing;
     if (!s) continue;
     if (!merged) merged = { slices: {} };
+    const target = merged.slices as Record<string, SliceDef>;
     for (const [name, def] of Object.entries(s.slices ?? {})) {
-      (merged.slices as Record<string, SliceDef>)[name] = def;
+      const existing = target[name];
+      if (existing && def.sliceIsConstraining === true) {
+        target[name] = { ...existing, ...def };
+      } else {
+        target[name] = def;
+      }
     }
     if (s.rules !== undefined) {
       if (

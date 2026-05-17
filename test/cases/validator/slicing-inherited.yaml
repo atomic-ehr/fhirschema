@@ -1,0 +1,124 @@
+suite: 'slicing across inheritance chain (sansara L1702, L1791)'
+# Validates how slicing blocks on a profile and its base/parent combine.
+# We merge the chain in `mergeSlicing` so child slices add up, rules pick
+# the tightest (closed > openAtEnd > open), and `sliceIsConstraining`
+# semantically targets the same-named slice in the parent (merge instead
+# of replace).
+
+defaults:
+  useR4: true
+
+tests:
+  - desc: 'base open + child closed → effective closed; matching item passes'
+    schemas: []
+    registry:
+      - url: http://example.com/test/slicing/foo
+        type: Patient
+        base: http://hl7.org/fhir/StructureDefinition/Patient
+        elements:
+          address:
+            type: Address
+            array: true
+            slicing:
+              rules: open
+              slices:
+                home:
+                  match: { use: home }
+      - url: http://example.com/test/slicing/bar
+        type: Patient
+        base: http://example.com/test/slicing/foo
+        elements:
+          address:
+            type: Address
+            array: true
+            slicing:
+              rules: closed
+              slices:
+                billing:
+                  match: { use: billing }
+    data:
+      resourceType: Patient
+      meta:
+        profile: [http://example.com/test/slicing/bar]
+      address:
+        - use: home
+          text: foo
+    valid: true
+
+  - desc: 'sliceIsConstraining max:0 — child tightens parent slice → fs902 when matched item present'
+    # foo declares homeaddress with min=1 + match {use: home}.
+    # bar constrains that same slice (sliceIsConstraining=true) with max=0.
+    # Effective: homeaddress matches {use: home} AND max=0. One home item
+    # in data → count 1 exceeds max 0 → fs902.
+    schemas: []
+    registry:
+      - url: http://example.com/test/slicing/foo
+        type: Patient
+        base: http://hl7.org/fhir/StructureDefinition/Patient
+        elements:
+          address:
+            type: Address
+            array: true
+            slicing:
+              slices:
+                homeaddress:
+                  min: 1
+                  match: { use: home }
+      - url: http://example.com/test/slicing/bar
+        type: Patient
+        base: http://example.com/test/slicing/foo
+        elements:
+          address:
+            type: Address
+            array: true
+            slicing:
+              slices:
+                homeaddress:
+                  sliceIsConstraining: true
+                  max: 0
+    data:
+      resourceType: Patient
+      meta:
+        profile: [http://example.com/test/slicing/bar]
+      address:
+        - use: home
+          text: foo
+    issues:
+      - { code: fs902, path: [address] }
+
+  - desc: 'base open + child closed → effective closed; unmatched item → fs901'
+    schemas: []
+    registry:
+      - url: http://example.com/test/slicing/foo
+        type: Patient
+        base: http://hl7.org/fhir/StructureDefinition/Patient
+        elements:
+          address:
+            type: Address
+            array: true
+            slicing:
+              rules: open
+              slices:
+                home:
+                  match: { use: home }
+      - url: http://example.com/test/slicing/bar
+        type: Patient
+        base: http://example.com/test/slicing/foo
+        elements:
+          address:
+            type: Address
+            array: true
+            slicing:
+              rules: closed
+              slices:
+                billing:
+                  match: { use: billing }
+    data:
+      resourceType: Patient
+      meta:
+        profile: [http://example.com/test/slicing/bar]
+      address:
+        - use: temp
+          text: foo
+    issues:
+      - { code: fs901, path: [address, 0] }
