@@ -150,19 +150,13 @@ export function validate(
   // Expand input list: each schema brings its inheritance chain + additional profiles.
   const overlays: Overlay[] = [];
   for (const s of schemas) {
-    collectChain(ctx, s, s.url, overlays, issues, new Set());
+    addSchemaOverlays(ctx, s, s.url, overlays, issues);
     for (const ap of s.additionalProfiles ?? []) {
-      const resolved = ctx.resolve(ap);
-      if (!resolved) {
-        issues.push({
-          code: FS.PROFILE_NOT_FOUND,
-          path: [],
-          schema: s.url,
-          expected: ap,
-        });
-        continue;
-      }
-      collectChain(ctx, resolved, resolved.url, overlays, issues, new Set());
+      addResolvedProfile(ctx, ap, overlays, issues, {
+        reportMissing: true,
+        path: [],
+        schema: s.url,
+      });
     }
   }
 
@@ -170,40 +164,11 @@ export function validate(
   //   1. `data.resourceType` → resolve the base resource schema.
   //   2. `data.meta.profile[]` → resolve each declared profile.
   // Each adds its inheritance chain to the SchemaSet.
-  if (data !== null && typeof data === 'object' && !Array.isArray(data)) {
-    const obj = data as { resourceType?: unknown; meta?: { profile?: unknown } };
-
-    if (typeof obj.resourceType === 'string') {
-      const rt = ctx.resolve(obj.resourceType);
-      if (rt) {
-        collectChain(ctx, rt, rt.url, overlays, issues, new Set());
-      } else if (strict) {
-        issues.push({
-          code: FS.PROFILE_NOT_FOUND,
-          path: [],
-          expected: obj.resourceType,
-        });
-      }
-    }
-
-    const profiles = obj.meta?.profile;
-    if (Array.isArray(profiles)) {
-      for (const canonical of profiles) {
-        if (typeof canonical !== 'string') continue;
-        const p = ctx.resolve(canonical);
-        if (!p) {
-          if (strict) {
-            issues.push({
-              code: FS.PROFILE_NOT_FOUND,
-              path: ['meta', 'profile'],
-              expected: canonical,
-            });
-          }
-          continue;
-        }
-        collectChain(ctx, p, p.url, overlays, issues, new Set());
-      }
-    }
+  for (const declared of findDeclaredProfiles(data)) {
+    addResolvedProfile(ctx, declared.ref, overlays, issues, {
+      reportMissing: strict,
+      path: declared.path,
+    });
   }
 
   if (overlays.length > 0) {
@@ -227,6 +192,57 @@ export function validate(
 }
 
 // ─── overlay collection ────────────────────────────────────────────────────
+
+function addSchemaOverlays(
+  ctx: ValidateContext,
+  schema: FHIRSchema,
+  source: string | undefined,
+  out: Overlay[],
+  issues: ValidationIssue[],
+): void {
+  collectChain(ctx, schema, source, out, issues, new Set());
+}
+
+function addResolvedProfile(
+  ctx: ValidateContext,
+  ref: string,
+  out: Overlay[],
+  issues: ValidationIssue[],
+  missing: { reportMissing: boolean; path: (string | number)[]; schema?: string },
+): void {
+  const resolved = ctx.resolve(ref);
+  if (resolved) {
+    addSchemaOverlays(ctx, resolved, resolved.url, out, issues);
+    return;
+  }
+  if (!missing.reportMissing) return;
+  issues.push({
+    code: FS.PROFILE_NOT_FOUND,
+    path: missing.path,
+    schema: missing.schema,
+    expected: ref,
+  });
+}
+
+function findDeclaredProfiles(data: unknown): Array<{ ref: string; path: (string | number)[] }> {
+  if (data === null || typeof data !== 'object' || Array.isArray(data)) return [];
+
+  const obj = data as { resourceType?: unknown; meta?: { profile?: unknown } };
+  const out: Array<{ ref: string; path: (string | number)[] }> = [];
+  if (typeof obj.resourceType === 'string') {
+    out.push({ ref: obj.resourceType, path: [] });
+  }
+
+  if (Array.isArray(obj.meta?.profile)) {
+    for (const canonical of obj.meta.profile) {
+      if (typeof canonical === 'string') {
+        out.push({ ref: canonical, path: ['meta', 'profile'] });
+      }
+    }
+  }
+
+  return out;
+}
 
 function collectChain(
   ctx: ValidateContext,
@@ -282,9 +298,9 @@ function walk(
   // Resolve `elementReference`: an element-def may point to another schema's
   // element via `[schemaUrl, ...path]`. The reference is fully substituted —
   // cyclic refs work because resolution happens fresh on each walk-in.
-  overlays = overlays.map((o) => resolveElementReference(ctx, o));
+  const resolvedOverlays = overlays.map((o) => resolveElementReference(ctx, o));
 
-  const declaredArray = overlays.some((o) => o.el.array === true);
+  const declaredArray = resolvedOverlays.some((o) => o.el.array === true);
 
   if (Array.isArray(value)) {
     if (!declaredArray) {
@@ -297,8 +313,8 @@ function walk(
       issues.push({ code: FS.TOO_FEW, path, expected: 'non-empty array', got: 0 });
       return;
     }
-    checkArrayCardinality(overlays, value, path, issues);
-    walkArrayItems(ctx, overlays, value, path, issues, options);
+    checkArrayCardinality(resolvedOverlays, value, path, issues);
+    walkArrayItems(ctx, resolvedOverlays, value, path, issues, options);
     return;
   }
 
@@ -310,16 +326,16 @@ function walk(
   // pattern[X] check (deep-partial) and fixed[X] check (strict equality).
   // Both run before the primitive/object branches so type checks still emit
   // their own issues independently.
-  checkPatterns(overlays, value, path, issues);
-  checkFixed(overlays, value, path, issues);
+  checkPatterns(resolvedOverlays, value, path, issues);
+  checkFixed(resolvedOverlays, value, path, issues);
 
   // Terminology bindings (fs5xx). Pluggable; skipped if no engine wired.
   if (options?.terminology) {
-    checkBindings(overlays, value, path, issues, options.terminology);
+    checkBindings(resolvedOverlays, value, path, issues, options.terminology);
   }
 
   // primitive / null / object
-  const type = pickType(overlays);
+  const type = pickType(resolvedOverlays);
 
   if (type && isPrimitiveType(type)) {
     if (value === null) return; // primitive extension placeholder
@@ -352,7 +368,7 @@ function walk(
     return;
   }
 
-  walkObject(ctx, overlays, value as Record<string, unknown>, path, issues, false, options);
+  walkObject(ctx, resolvedOverlays, value as Record<string, unknown>, path, issues, false, options);
 }
 
 function walkObject(
@@ -426,7 +442,7 @@ function walkObject(
     const extSchema = ctx.resolve(obj.url);
     if (extSchema) {
       const chain: Overlay[] = [];
-      collectChain(ctx, extSchema, extSchema.url, chain, issues, new Set());
+      addSchemaOverlays(ctx, extSchema, extSchema.url, chain, issues);
       expanded = [...expanded, ...chain];
     }
   }
@@ -462,23 +478,17 @@ function walkObject(
 
   // Excluded keys union across overlays — any overlay forbidding the key
   // makes it forbidden globally.
-  const excluded = new Set<string>();
-  for (const o of expanded) {
-    for (const e of o.el.excluded ?? []) excluded.add(e);
-  }
+  const excluded = collectStrings(expanded, (o) => o.el.excluded);
 
   // Required keys union across overlays.
   // A choice parent (key in `choiceGroups`) is satisfied by ANY variant.
-  const required = new Set<string>();
-  for (const o of expanded) {
-    for (const r of o.el.required ?? []) required.add(r);
-  }
+  const required = collectStrings(expanded, (o) => o.el.required);
   for (const r of required) {
     if (choiceGroups.has(r)) {
       // For a required choice parent, ANY declared variant present
       // satisfies the slot — even a narrowed-away one. Variant-not-allowed
       // is handled by checkChoiceGroups (fs801); we don't double-fire.
-      const allVariants = collectAllChoiceVariants(expanded, r);
+      const allVariants = collectChoiceVariants(expanded, r);
       const present = allVariants.some((v) => v in obj || `_${v}` in obj);
       if (!present) {
         issues.push({ code: FS.REQUIRED, path: [...path, r], expected: r });
@@ -576,14 +586,7 @@ function walkObject(
       // (id + extension[]). Extension's own elements are resolved via the
       // standard expandTypeOverlays path.
       const isArrayPrimitive = childOverlays.some((o) => o.el.array === true);
-      validateShadowPayload(
-        ctx,
-        obj[key],
-        [...path, key],
-        issues,
-        isArrayPrimitive,
-        options,
-      );
+      validateShadowPayload(ctx, obj[key], [...path, key], issues, isArrayPrimitive, options);
       continue;
     }
 
@@ -670,6 +673,17 @@ function pickType(overlays: Overlay[]): string | undefined {
   return undefined;
 }
 
+function collectStrings(
+  overlays: Overlay[],
+  getValues: (o: Overlay) => string[] | undefined,
+): Set<string> {
+  const out = new Set<string>();
+  for (const o of overlays) {
+    for (const value of getValues(o) ?? []) out.add(value);
+  }
+  return out;
+}
+
 function findChildOverlays(overlays: Overlay[], key: string): Overlay[] {
   const out: Overlay[] = [];
   for (const o of overlays) {
@@ -694,7 +708,11 @@ function resolveElementReference(ctx: ValidateContext, o: Overlay): Overlay {
   if (!schema) return o;
   let cursor: unknown = schema;
   for (const seg of segments) {
-    if (cursor !== null && typeof cursor === 'object' && seg in (cursor as Record<string, unknown>)) {
+    if (
+      cursor !== null &&
+      typeof cursor === 'object' &&
+      seg in (cursor as Record<string, unknown>)
+    ) {
       cursor = (cursor as Record<string, unknown>)[seg];
     } else {
       return o;
@@ -740,7 +758,7 @@ function expandTypeOverlays(
  * fs801.
  */
 /** Union of variants for one choice parent across overlays. */
-function collectAllChoiceVariants(overlays: Overlay[], parent: string): string[] {
+function collectChoiceVariants(overlays: Overlay[], parent: string): string[] {
   const out = new Set<string>();
   for (const o of overlays) {
     for (const [n, el] of Object.entries(o.el.elements ?? {})) {
@@ -763,7 +781,10 @@ function collectChoiceGroups(overlays: Overlay[]): Map<string, string[]> {
         if (cur === undefined) {
           out.set(name, [...el.choices]);
         } else {
-          out.set(name, cur.filter((v) => (el.choices as string[]).includes(v)));
+          out.set(
+            name,
+            cur.filter((v) => (el.choices as string[]).includes(v)),
+          );
         }
       }
     }
@@ -781,18 +802,9 @@ function checkChoiceGroups(
   for (const [parent, allowed] of groups) {
     // All known variant names for this parent: anything declared `choiceOf: parent`
     // anywhere, plus the union of all `choices` lists across overlays.
-    const allVariants = new Set<string>();
-    for (const o of overlays) {
-      for (const [n, el] of Object.entries(o.el.elements ?? {})) {
-        if (el.choiceOf === parent) allVariants.add(n);
-      }
-      const pEl = o.el.elements?.[parent];
-      if (Array.isArray(pEl?.choices)) {
-        for (const v of pEl.choices) allVariants.add(v);
-      }
-    }
-
-    const present = [...allVariants].filter((v) => v in obj || `_${v}` in obj);
+    const present = collectChoiceVariants(overlays, parent).filter(
+      (v) => v in obj || `_${v}` in obj,
+    );
 
     // Variants present but narrowed away by some overlay's choices list.
     for (const v of present) {
@@ -977,16 +989,14 @@ function walkArrayItems(
       // closed-rule fs901 error.
       if (defaultSlice) {
         counts.set('@default', (counts.get('@default') ?? 0) + 1);
-        const overlayed: Overlay[] = defaultSlice.schema
-          ? [
-              ...itemOverlays,
-              {
-                el: stripArrayAndSlicing(defaultSlice.schema as FHIRSchemaElement),
-                source: undefined,
-              },
-            ]
-          : itemOverlays;
-        walk(ctx, overlayed, item, [...path, i], issues, options);
+        walk(
+          ctx,
+          withSliceSchema(itemOverlays, defaultSlice.schema),
+          item,
+          [...path, i],
+          issues,
+          options,
+        );
         continue;
       }
       if (slicing.rules === 'closed') {
@@ -1033,16 +1043,7 @@ function walkArrayItems(
       }
     }
 
-    const overlayed: Overlay[] = slice.schema
-      ? [
-          ...itemOverlays,
-          {
-            el: stripArrayAndSlicing(slice.schema as FHIRSchemaElement),
-            source: undefined,
-          },
-        ]
-      : itemOverlays;
-    walk(ctx, overlayed, item, [...path, i], issues, options);
+    walk(ctx, withSliceSchema(itemOverlays, slice.schema), item, [...path, i], issues, options);
   }
 
   // Per-slice cardinality
@@ -1065,6 +1066,17 @@ function walkArrayItems(
       });
     }
   }
+}
+
+function withSliceSchema(overlays: Overlay[], schema: FHIRSchemaElement | undefined): Overlay[] {
+  if (!schema) return overlays;
+  return [
+    ...overlays,
+    {
+      el: stripArrayAndSlicing(schema),
+      source: undefined,
+    },
+  ];
 }
 
 function stripArrayAndSlicing(el: FHIRSchemaElement): FHIRSchemaElement {
@@ -1219,7 +1231,10 @@ function checkBundleIntegrity(
     if (!ee.resource || typeof ee.resource !== 'object') continue;
     forEachReference(ee.resource, [...path, 'entry', i, 'resource'], (ref, refPath) => {
       if (ref.startsWith('#') || ref.startsWith('urn:')) return;
-      const m = /^(?:(?:[a-zA-Z][a-zA-Z0-9+.-]*):\/\/[^/]+\/(?:.*\/)?)?([A-Z][A-Za-z]+)\/([A-Za-z0-9\-.]+)(?:\/_history\/.+)?$/.exec(ref);
+      const m =
+        /^(?:(?:[a-zA-Z][a-zA-Z0-9+.-]*):\/\/[^/]+\/(?:.*\/)?)?([A-Z][A-Za-z]+)\/([A-Za-z0-9\-.]+)(?:\/_history\/.+)?$/.exec(
+          ref,
+        );
       if (!m) return;
       const key = `${m[1]}/${m[2]}`;
       const candidates = byTypeId.get(key);
@@ -1291,9 +1306,7 @@ function checkConstraints(
       }
       if (!isFhirpathTruthy(result)) {
         const sev: IssueSeverity =
-          c.severity === 'warning' || c.severity === 'information'
-            ? c.severity
-            : 'error';
+          c.severity === 'warning' || c.severity === 'information' ? c.severity : 'error';
         issues.push({
           code: FS.INVARIANT_VIOLATED,
           severity: sev,

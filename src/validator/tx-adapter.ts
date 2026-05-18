@@ -29,17 +29,22 @@ export interface TxAdapterOptions {
   timeoutSeconds?: number;
 }
 
+type TxLookupResult = {
+  verdict: TerminologyVerdict;
+  displayMismatch?: { provided: string; canonical: string };
+};
+
 export interface TxCache {
-  get(key: string): TerminologyVerdict | undefined;
-  set(key: string, verdict: TerminologyVerdict): void;
+  get(key: string): TxLookupResult | undefined;
+  set(key: string, verdict: TxLookupResult): void;
 }
 
 class MapCache implements TxCache {
-  private m = new Map<string, TerminologyVerdict>();
+  private m = new Map<string, TxLookupResult>();
   get(k: string) {
     return this.m.get(k);
   }
-  set(k: string, v: TerminologyVerdict) {
+  set(k: string, v: TxLookupResult) {
     this.m.set(k, v);
   }
 }
@@ -91,19 +96,19 @@ export class TxFhirOrgAdapter implements TerminologyEvaluator {
   private lookup(
     valueSet: string,
     coding: { system?: string; code: string; display?: string },
-  ): { verdict: TerminologyVerdict; displayMismatch?: { provided: string; canonical: string } } {
+  ): TxLookupResult {
     const key = `${valueSet}|${coding.system ?? ''}|${coding.code}|${coding.display ?? ''}`;
     const cached = this.cache?.get(key);
-    if (cached !== undefined) return cached as never;
+    if (cached) return cached;
     const r = this.callValidateCode(valueSet, coding);
-    this.cache?.set(key, r as never);
+    this.cache?.set(key, r);
     return r;
   }
 
   private callValidateCode(
     valueSet: string,
     coding: { system?: string; code: string; display?: string },
-  ): { verdict: TerminologyVerdict; displayMismatch?: { provided: string; canonical: string } } {
+  ): TxLookupResult {
     const params: Array<{
       name: string;
       valueUri?: string;
@@ -211,7 +216,9 @@ export class TxFhirOrgAdapter implements TerminologyEvaluator {
   }
 }
 
-function extractCodings(value: unknown): Array<{ system?: string; code: string; display?: string }> {
+function extractCodings(
+  value: unknown,
+): Array<{ system?: string; code: string; display?: string }> {
   if (typeof value === 'string') return [{ code: value }];
   if (value === null || typeof value !== 'object') return [];
   const obj = value as Record<string, unknown>;
