@@ -3,7 +3,7 @@ defaults:
   usePackages:
   - hl7.fhir.r5.core
 tests:
-- desc: graham/group-choice-bad2
+- desc: fhir-tests/group-choice-bad2
   schemas: []
   data:
     resourceType: Group
@@ -17,7 +17,7 @@ tests:
   issues:
   - code: fs201
   - code: fs301
-- desc: graham/list-extension1
+- desc: fhir-tests/list-extension1
   schemas: []
   data:
     resourceType: List

@@ -3,7 +3,7 @@ defaults:
   usePackages:
   - hl7.fhir.r5.core
 tests:
-- desc: graham/custom-resource
+- desc: fhir-tests/custom-resource
   schemas: []
   data:
     resourceType: CustomResource
@@ -12,7 +12,7 @@ tests:
     name:
     - needle
   valid: true
-- desc: graham/list-wrong-order
+- desc: fhir-tests/list-wrong-order
   schemas: []
   data:
     resourceType: List
@@ -20,7 +20,7 @@ tests:
     mode: changes
     status: current
   valid: true
-- desc: graham/list-xhtml-correct1
+- desc: fhir-tests/list-xhtml-correct1
   schemas: []
   data:
     resourceType: List
@@ -36,7 +36,7 @@ tests:
     status: current
     mode: changes
   valid: true
-- desc: graham/list-xhtml-correct2
+- desc: fhir-tests/list-xhtml-correct2
   schemas: []
   data:
     resourceType: List
@@ -52,7 +52,7 @@ tests:
     status: current
     mode: changes
   valid: true
-- desc: graham/primitive-good-ws
+- desc: fhir-tests/primitive-good-ws
   schemas: []
   data:
     resourceType: Parameters
@@ -60,7 +60,7 @@ tests:
     - name: paramString
       valueString: " \t "
   valid: true
-- desc: graham/patient-lang2
+- desc: fhir-tests/patient-lang2
   schemas: []
   data:
     resourceType: Patient
@@ -70,7 +70,7 @@ tests:
       status: generated
       div: <div xmlns="http://www.w3.org/1999/xhtml" xml:lang="en-AU" lang="en-AU">some text in no particular language </div>
   valid: true
-- desc: graham/patient-lang3
+- desc: fhir-tests/patient-lang3
   schemas: []
   data:
     resourceType: Patient
@@ -80,7 +80,7 @@ tests:
       status: generated
       div: <div xmlns="http://www.w3.org/1999/xhtml" lang="fr">some text in no particular language </div>
   valid: true
-- desc: graham/params-ws
+- desc: fhir-tests/params-ws
   schemas: []
   data:
     resourceType: Parameters
@@ -88,7 +88,7 @@ tests:
     - name: allWS
       valueString: "\t\n\v\f\r \N             \L\P  　"
   valid: true
-- desc: graham/unicode-control-chars-json
+- desc: fhir-tests/unicode-control-chars-json
   schemas: []
   data:
     resourceType: Parameters
@@ -96,7 +96,7 @@ tests:
     - name: test
       valueString: "invalid: \x13, not invalid: \r."
   valid: true
-- desc: graham/obs-vital-signs-mdc5
+- desc: fhir-tests/obs-vital-signs-mdc5
   schemas: []
   data:
     resourceType: Observation
@@ -171,7 +171,7 @@ tests:
           code: '150588'
         text: MDC_MODALITY_SPOT
   valid: true
-- desc: graham/sd-slices-ms
+- desc: fhir-tests/sd-slices-ms
   schemas: []
   data:
     resourceType: StructureDefinition
@@ -219,7 +219,7 @@ tests:
         path: Patient.identifier.system
         fixedUri: http://somegov/somepath
   valid: true
-- desc: graham/obs-sampled-data
+- desc: fhir-tests/obs-sampled-data
   schemas: []
   data:
     resourceType: Observation
@@ -814,7 +814,7 @@ tests:
     device:
       display: Apple Watch 4.1
   valid: true
-- desc: graham/list-contained
+- desc: fhir-tests/list-contained
   schemas: []
   data:
     resourceType: List
@@ -830,7 +830,7 @@ tests:
   skip: true
   _skipReason: Java permissive scalar-where-array (List.subject is 0..*, data is scalar). Spec-strict default — would need opt-in `options.permissiveArrayShape`.
     (DESIGN §15 → "Permissive JSON shape (Java parity)")
-- desc: graham/fhirpath-good
+- desc: fhir-tests/fhirpath-good
   schemas: []
   data:
     resourceType: CareTeam
@@ -843,7 +843,7 @@ tests:
   skip: true
   _skipReason: Reference target type narrowed via FHIRPath %context on profile; we only honor literal refers[]. (DESIGN §15 → "Reference resolution
     semantics")
-- desc: graham/ext-ctxt-resource-good
+- desc: fhir-tests/ext-ctxt-resource-good
   schemas: []
   data:
     resourceType: Patient
@@ -855,7 +855,7 @@ tests:
     name:
     - text: Test Name
   valid: true
-- desc: graham/bundle-url-dash
+- desc: fhir-tests/bundle-url-dash
   schemas: []
   data:
     resourceType: Bundle
@@ -873,7 +873,7 @@ tests:
         title: Test Plan
         url: http://example-url.org/artifacts/PlanDefinition/Test
   valid: true
-- desc: graham/bundle-conditional-reference-good
+- desc: fhir-tests/bundle-conditional-reference-good
   schemas: []
   data:
     resourceType: Bundle
@@ -899,7 +899,7 @@ tests:
         method: POST
         url: Observation
   valid: true
-- desc: graham/reslicing-good-extensions
+- desc: fhir-tests/reslicing-good-extensions
   schemas: []
   data:
     resourceType: AuditEvent
@@ -929,7 +929,7 @@ tests:
       observer:
         reference: Patient/Bob
   valid: true
-- desc: graham/mixed-request-canonical-targets-profile
+- desc: fhir-tests/mixed-request-canonical-targets-profile
   schemas: []
   data:
     resourceType: StructureDefinition
@@ -999,7 +999,7 @@ tests:
           - http://hl7.org/fhir/StructureDefinition/SubstanceDefinition
         mustSupport: true
   valid: true
-- desc: graham/ref-policy-default-r5
+- desc: fhir-tests/ref-policy-default-r5
   schemas: []
   data:
     resourceType: Bundle
@@ -1066,7 +1066,7 @@ tests:
         effectiveDateTime: '2024-06-01'
   skip: true
   _skipReason: Graham data typo `uin:uuid:` (should be urn:uuid:); our fs1003 correctly catches it but Java tolerates. (DESIGN §15 → fs1003)
-- desc: graham/ref-policy-default-r4
+- desc: fhir-tests/ref-policy-default-r4
   schemas: []
   data:
     resourceType: Bundle
@@ -1135,7 +1135,7 @@ tests:
   skip: true
   _skipReason: Bundle.entry.fullUrl typo `uin:uuid:` (vs `urn:uuid:`) in upstream Graham data. Our fs1003 is correct; Java seemingly tolerates
     the typo. (DESIGN §15 → fs1003 absolute-URL rule)
-- desc: graham/standards-status-r5
+- desc: fhir-tests/standards-status-r5
   schemas: []
   data:
     resourceType: CodeSystem

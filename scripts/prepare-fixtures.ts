@@ -48,7 +48,7 @@ const PACKAGES: Pkg[] = [
     url: 'https://packages.simplifier.net/hl7.fhir.r5.core/5.0.0',
   },
   // Graham IG-package test bucket — packages needed to validate cases under
-  // test/cases/validator/graham-ig-*.yaml. Local .tgz files are shipped
+  // test/cases/validator/fhir-tests-ig-*.yaml. Local .tgz files are shipped
   // inside the fhir-test-cases repo; online ones come from simplifier.
   // Versions match the test manifest exactly.
   { id: 'hl7.fhir.test.verA', version: '1.0.0',

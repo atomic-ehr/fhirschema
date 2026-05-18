@@ -1,7 +1,7 @@
-suite: 'primitive extensions on real R4 elements (sansara L2261 partial)'
+suite: 'primitive extensions on real R4 elements (aidbox L2261 partial)'
 # Cases that rely on real R4 extension fixtures (patient-birthTime,
 # humanname-own-prefix). The "invalid valueString in patient-birthTime"
-# case (sansara L2305) is intentionally NOT here — it requires _field
+# case (aidbox L2305) is intentionally NOT here — it requires _field
 # deep validation (planned feature D) to surface the fs801. Re-import
 # once D lands.
 

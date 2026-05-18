@@ -101,11 +101,11 @@ tests:
     issues:
       - { code: fs601, path: [] }
 
-  # ─── sansara import: real R4 Patient.contact pat-1 invariant ─────────
+  # ─── aidbox import: real R4 Patient.contact pat-1 invariant ─────────
   # core_test.clj:92 — "SHALL at least contain a contact's details or a
   # reference to an organization". Element-level constraint, lives in our
   # R4 fixture under Patient.contact.constraint.pat-1.
-  - desc: 'sansara/constraints-test: Patient.contact pat-1 violated → fs601'
+  - desc: 'aidbox/constraints-test: Patient.contact pat-1 violated → fs601'
     schemas: []
     data:
       resourceType: Patient
@@ -113,22 +113,22 @@ tests:
     issues:
       - { code: fs601, path: [contact, 0] }
 
-  - desc: 'sansara/constraints-test: Patient.contact pat-1 satisfied (has name)'
+  - desc: 'aidbox/constraints-test: Patient.contact pat-1 satisfied (has name)'
     schemas: []
     data:
       resourceType: Patient
       contact: [{ gender: unknown, name: { family: Doe } }]
     valid: true
 
-  # ─── sansara root-level DomainResource constraints ────────────────────
-  # NOTE on path: sansara reports failures at the offending child path
+  # ─── aidbox root-level DomainResource constraints ────────────────────
+  # NOTE on path: aidbox reports failures at the offending child path
   # (e.g. dom-2 at [contained, 0]); we emit at the scope where the
   # constraint is DEFINED (root → []), matching Graham java validator.
   # That's the standard FHIRPath constraint interpretation — same outcome,
   # different UX. %resource / %rootResource / %context env vars are now
   # threaded into the engine so dom-3 evaluates correctly.
 
-  - desc: 'sansara/constraints-test: nested contained Practitioner → dom-2 + dom-3'
+  - desc: 'aidbox/constraints-test: nested contained Practitioner → dom-2 + dom-3'
     # Three issues from the same data:
     # - dom-2 at [] (outer Patient: contained.contained.empty() = false)
     # - dom-3 at [] (outer Patient: Practitioner is contained but not referenced)
@@ -147,7 +147,7 @@ tests:
       - { code: fs601, path: [], expected: dom-3 }
       - { code: fs601, path: [contained, 0], expected: dom-3 }
 
-  - desc: 'sansara/constraints-test: contained Practitioner with no incoming reference → dom-3'
+  - desc: 'aidbox/constraints-test: contained Practitioner with no incoming reference → dom-3'
     schemas: []
     data:
       resourceType: Patient
@@ -158,9 +158,9 @@ tests:
       - { code: fs601, path: [], expected: dom-3 }
 
   # This one IS importable — Organization without name/identifier emits org-1
-  # at root scope, which matches sansara intent (just `[]` vs `[Organization]`
+  # at root scope, which matches aidbox intent (just `[]` vs `[Organization]`
   # path notation).
-  - desc: 'sansara/constraints-test: empty Organization → org-1'
+  - desc: 'aidbox/constraints-test: empty Organization → org-1'
     schemas: []
     data: { resourceType: Organization }
     issues:

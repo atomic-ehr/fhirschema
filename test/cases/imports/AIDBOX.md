@@ -1,10 +1,10 @@
-# Sansara fhir-clj — import registry
+# Aidbox fhir-clj — import registry
 
-Source: [../sansara/box/libs/fhir-clj/test/fhir/validator/core_test.clj](../../../../sansara/box/libs/fhir-clj/test/fhir/validator/core_test.clj)
+Source: [../aidbox/box/libs/fhir-clj/test/fhir/validator/core_test.clj](../../../../aidbox/box/libs/fhir-clj/test/fhir/validator/core_test.clj)
 (~3,400 lines, Clojure validator with `matcho` matchers, runs on real
 FHIR R4/R5 packages).
 
-This file tracks per-`deftest`/`testing` block which sansara cases we have
+This file tracks per-`deftest`/`testing` block which aidbox cases we have
 imported into our YAML suite, which are pending, and which we mark
 **N/A** (out of scope because we don't implement the feature yet — see
 [DESIGN.md §15](../../../DESIGN.md)).
@@ -51,16 +51,16 @@ imported into our YAML suite, which are pending, and which we mark
 | | poly (L918) | ✅ | `real-resources.yaml` | bare `deceased` now correctly emits fs201 at [deceased] after virtual-parent fix |
 | | unexpected object (L946) | ✅ | `real-resources.yaml` | |
 | | Bundle resource validation (L953) | ✅ | `real-resources.yaml` | inner-resource walk implemented |
-| | contained (L996) | 🟡 | `real-resources.yaml` | simplified version imported; full sansara case needs `excluded` keys |
+| | contained (L996) | 🟡 | `real-resources.yaml` | simplified version imported; full aidbox case needs `excluded` keys |
 | `slicing-validation` (L1015) | Simple slicings (L1024) | ✅ | `real-resources.yaml` | 4 cases (vitalsigns VSCat) |
-| | ordered slicing (L1093) | 🟡 | `slicing-ordered.yaml` (hand-crafted) | feature implemented (fs903); sansara cases use `example-section-library` profile (not in core, needs fixture) |
-| | @default slice (L1189) | 🟡 | `slicing-default.yaml` (hand-crafted) | feature implemented; sansara cases use `EVG+IVAN` profile (test fixture in their tu) |
-| | excluded keys (L892) | 🟡 | `excluded.yaml` (hand-crafted) | feature implemented (translator hoists `max=0`, validator emits fs207); full sansara case uses `lipidprofile` |
+| | ordered slicing (L1093) | 🟡 | `slicing-ordered.yaml` (hand-crafted) | feature implemented (fs903); aidbox cases use `example-section-library` profile (not in core, needs fixture) |
+| | @default slice (L1189) | 🟡 | `slicing-default.yaml` (hand-crafted) | feature implemented; aidbox cases use `EVG+IVAN` profile (test fixture in their tu) |
+| | excluded keys (L892) | 🟡 | `excluded.yaml` (hand-crafted) | feature implemented (translator hoists `max=0`, validator emits fs207); full aidbox case uses `lipidprofile` |
 | | slice with discriminator:type type (L1290) | ⏳ | — | `match: { type: "X" }` pattern |
 | | slice with resolve reference + discriminator:type (L1325) | ⛔ | — | needs reference resolution |
 | | resource in bundle should conform (L1437) | ⛔ | — | needs Bundle entry walk |
 | | slice by type:value, path:resolve() (L1487) | ⛔ | — | needs FHIRPath `resolve()` |
-| | closed slicing (L1668) | 🟡 | `slicing.yaml`, `excluded.yaml` | basic closed covered; sansara case uses `example-section-library` profile (out-of-package fixture) |
+| | closed slicing (L1668) | 🟡 | `slicing.yaml`, `excluded.yaml` | basic closed covered; aidbox case uses `example-section-library` profile (out-of-package fixture) |
 | | base open, child closed (L1702) | ⏳ | — | |
 | | openAtEnd slicing (L1736) | ⛔ | — | not implemented |
 | | slice without match (L1769) | ✅ | `slicing-no-match.yaml` | inline-profile equivalents imported |
@@ -68,7 +68,7 @@ imported into our YAML suite, which are pending, and which we mark
 | | re-slice (L1902) | ⛔ | — | reslicing not implemented |
 | | @default slice reslicing (L1962) | ⛔ | — | |
 | | Slices with type:profile (L2042) | ⛔ | — | needs profile-based slicing |
-| `effects-test` (L2113) | check-existence effect (L2118) | ⛔ | — | sansara's internal effect system |
+| `effects-test` (L2113) | check-existence effect (L2118) | ⛔ | — | aidbox's internal effect system |
 | | match profile effect (L2146) | ⛔ | — | same |
 | | independent effects bug #6609 (L2170) | ⛔ | — | same |
 | `extension-test` (L2189) | us-core-race valid slicing (L2194) | ✅ | `us-core.yaml` | |
@@ -94,7 +94,7 @@ imported into our YAML suite, which are pending, and which we mark
 | | extension / without strict (L2984) | ⏳ | — | extension unknown handling |
 | | extension / with strict (L3003) | ⛔ | — | needs extension-URL deref + `fs1101` unknown-extension |
 | `required-element` (L3029) | data-absent on primitive (L3032) | ✅ | `real-resources.yaml` | |
-| | with primitive extension (L3039) | 🟡 divergence | `real-resources.yaml` | sansara permissive (extension-only satisfies required-binding'd code); we are spec-strict per chat.fhir.org consensus → fs501 |
+| | with primitive extension (L3039) | 🟡 divergence | `real-resources.yaml` | aidbox permissive (extension-only satisfies required-binding'd code); we are spec-strict per chat.fhir.org consensus → fs501 |
 | | data-absent on required choice (L3052) | ✅ | `choice.yaml` (covered by `_valueString` test) | |
 | `resolve-reference-constraint` (L3064) | | ⛔ | — | needs FHIRPath + reference *resolver* (sync target-type already done via fs1001 in `references.yaml`) |
 | `cardinality-test` (L3109) | base case (L3109) | ✅ | `real-resources.yaml` | |
@@ -103,7 +103,7 @@ imported into our YAML suite, which are pending, and which we mark
 | `constraint-on-primitive-element` (L3168) | | ⛔ | — | needs FHIRPath |
 | `schema-deque-test` (L3212) | | ⛔ | — | internal |
 | `invoice-vdds-rz-test` (L3277) | | ⏳ | — | large integration scenario, low priority |
-| `issue-sansara-7313` (L3306) | | ⏳ | — | regression test |
+| `issue-aidbox-7313` (L3306) | | ⏳ | — | regression test |
 
 ## Roll-up
 
@@ -130,4 +130,4 @@ imported into our YAML suite, which are pending, and which we mark
 | `validation-c/excluded keys` | Translator: `max: 0` → `excluded` |
 | `validation-c/empty complex type` (full coverage) | `_field` deep validation |
 | `additional-properties-extension-test`, `any-*-test`, `open-schemas` | Open-schema mode / `any` type — out of scope per DESIGN |
-| `effects-test` | Sansara-specific effect system — out of scope |
+| `effects-test` | Aidbox-specific effect system — out of scope |

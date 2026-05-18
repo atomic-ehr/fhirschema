@@ -1,7 +1,7 @@
-# Graham fhir-test-cases — import registry
+# HL7 fhir-test-cases — import registry
 
 Source: [github.com/FHIR/fhir-test-cases/validator/manifest.json](https://github.com/FHIR/fhir-test-cases/tree/master/validator)
-(curated by Grahame Grieve, 970 test cases as of import).
+(970 test cases as of import).
 
 Each test entry consists of:
 
@@ -11,13 +11,13 @@ Each test entry consists of:
   `firely-sdk-wip`) as text messages
 
 We map the java validator's text messages to our `fsNNN` codes. The mapping
-is hand-built — the table is in [graham.yaml](../validator/graham.yaml).
+is hand-built — the table is in [fhir-tests-misc.yaml](../validator/fhir-tests-misc.yaml).
 
 **Legend**: ✅ imported · ⏳ pending · ⛔ N/A
 
 ## Imported
 
-### Hand-curated (graham.yaml)
+### Hand-curated (fhir-tests-misc.yaml)
 
 | name | module | version | status | notes |
 |---|---|---|---|---|
@@ -35,7 +35,7 @@ is hand-built — the table is in [graham.yaml](../validator/graham.yaml).
 | patient-id-bad-1/2/3 | general | R5 | ✅ | invalid Patient id → fs110 |
 | group-choice-bad3 | (default) | R5 | ✅ | wrong type for valueBoolean → fs103 |
 
-### Bulk-imported good cases (graham-r4-good.yaml, graham-r5-good.yaml)
+### Bulk-imported good cases (fhir-tests-r4-good.yaml, fhir-tests-r5-good.yaml)
 
 26 zero-error cases from the manifest where the data is plain JSON
 (parseable by `js-yaml`) and our validator returns `valid: true`. Both
@@ -49,7 +49,7 @@ versions covered:
   primitive-good-ws, patient-lang2/3, params-ws, unicode-control-chars-json,
   obs-vital-signs-mdc5, sd-slices-ms, obs-sampled-data.
 
-### Bulk-imported bad cases (graham-r4-bad.yaml)
+### Bulk-imported bad cases (fhir-tests-r4-bad.yaml)
 
 5 R4 bad-case cases that map cleanly to fsNNN codes:
 
@@ -172,10 +172,10 @@ without code changes.
   - 12 known-divergence candidates (refers-meta-type, fhir_comments,
     Java permissive shape, R4 translator gap, FHIRPath-context narrowing)
   - 222 profile-loading (need profile pre-translation + ctx registration)
-    in [graham-profile-r4.yaml](../validator/graham-profile-r4.yaml) and
-    [graham-profile-r5.yaml](../validator/graham-profile-r5.yaml)
+    in [fhir-tests-profile-r4.yaml](../validator/fhir-tests-profile-r4.yaml) and
+    [fhir-tests-profile-r5.yaml](../validator/fhir-tests-profile-r5.yaml)
   - 26 IG-package (need package fetched + translated) in
-    [graham-ig-r4.yaml](../validator/graham-ig-r4.yaml)
+    [fhir-tests-ig-r4.yaml](../validator/fhir-tests-ig-r4.yaml)
 - **Feature-gap (not imported)**: ~660 across xhtml/cdshooks/cda/v2/logical/
   shc/xver/package-versioning/measure/matchetype/questionnaire/tx and
   beyond.
@@ -201,6 +201,6 @@ For future imports, the java validator's text messages map roughly to:
 | `Profile X not found` | `fs701` profile-not-found |
 | `Pattern not satisfied` | `fs205` pattern-mismatch |
 
-This table is a guideline — sansara has been the primary source of cases
-because its `matcho` format is machine-readable, while Graham's text
-output requires hand-mapping per case.
+This table is a guideline — aidbox has been the primary source of cases
+because its `matcho` format is machine-readable, while the upstream HL7
+text output requires hand-mapping per case.

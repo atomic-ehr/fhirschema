@@ -10,7 +10,7 @@ defaults:
 
 tests:
   - desc: 'us-core-race extension with required `text` sub-extension missing → fs902'
-    # sansara extension-test invalid case (skipped before — now unblocked)
+    # aidbox extension-test invalid case (skipped before — now unblocked)
     schemas: []
     data:
       resourceType: Patient

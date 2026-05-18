@@ -1,4 +1,6 @@
-suite: 'Reslicing — slicing inside slice.schema'
+suite: 'Nested slicing — slicing inside slice.schema'
+# Distinct from FHIR-spec "reslicing" (slash-notation child-profile slice
+# refinement via `sliceIsConstraining`), which lives in slicing-inherited.yaml.
 # A slice's schema may itself contain elements with their own slicing.
 # Our recursive walk should pick up nested slicing naturally — the slice
 # schema is applied as overlay, then any nested array elements go through

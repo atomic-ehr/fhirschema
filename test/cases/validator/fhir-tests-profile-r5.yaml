@@ -3,7 +3,7 @@ defaults:
   usePackages:
   - hl7.fhir.r5.core
 tests:
-- desc: graham/patient-au-5
+- desc: fhir-tests/patient-au-5
   schemas: []
   _loadProfile:
   - profile-patient-au.xml
@@ -59,7 +59,7 @@ tests:
       type: seealso
   skip: true
   _skipReason: XML→SD translator failure on this profile shape; needs investigation. (see DESIGN §15)
-- desc: graham/bp
+- desc: fhir-tests/bp
   schemas: []
   _loadProfile:
   - bp-profile.xml
@@ -162,7 +162,7 @@ tests:
           display: low
         text: Below low normal
   valid: true
-- desc: graham/reslicing-instance
+- desc: fhir-tests/reslicing-instance
   schemas: []
   _loadProfile:
   - reslicing-profile.json
@@ -195,7 +195,7 @@ tests:
       observer:
         reference: Patient/Bob
   valid: true
-- desc: graham/capstmt-deprecated
+- desc: fhir-tests/capstmt-deprecated
   schemas: []
   _loadProfile:
   - capstmt-extension-something.xml
@@ -215,7 +215,7 @@ tests:
         valueString: http://something
   skip: true
   _skipReason: XML→SD translator failure; needs investigation. (see DESIGN §15)
-- desc: graham/capstmt-deprecated-profile
+- desc: fhir-tests/capstmt-deprecated-profile
   schemas: []
   _loadProfile:
   - capstmt-extension-something.xml
@@ -247,7 +247,7 @@ tests:
           - http://hl7.org/fhir/test/StructureDefinition/something
   skip: true
   _skipReason: XML→SD translator failure; needs investigation. (see DESIGN §15)
-- desc: graham/inactive-active-active
+- desc: fhir-tests/inactive-active-active
   schemas: []
   _loadProfile:
   - inactive-sd-active.json
@@ -261,7 +261,7 @@ tests:
         system: http://hl7.org/fhir/validation-test/CodeSystem/inactive
         code: codeActive
   valid: true
-- desc: graham/inactive-inactive-active
+- desc: fhir-tests/inactive-inactive-active
   schemas: []
   _loadProfile:
   - inactive-sd-active.json
@@ -275,7 +275,7 @@ tests:
         system: http://hl7.org/fhir/validation-test/CodeSystem/inactive
         code: codeInactive
   valid: true
-- desc: graham/inactive-retired-active
+- desc: fhir-tests/inactive-retired-active
   schemas: []
   _loadProfile:
   - inactive-sd-active.json
@@ -289,7 +289,7 @@ tests:
         system: http://hl7.org/fhir/validation-test/CodeSystem/inactive
         code: codeRetired
   valid: true
-- desc: graham/inactive-active-inactive
+- desc: fhir-tests/inactive-active-inactive
   schemas: []
   _loadProfile:
   - inactive-sd-inactive.json
@@ -303,7 +303,7 @@ tests:
         system: http://hl7.org/fhir/validation-test/CodeSystem/inactive
         code: codeActive
   valid: true
-- desc: graham/inactive-inactive-inactive
+- desc: fhir-tests/inactive-inactive-inactive
   schemas: []
   _loadProfile:
   - inactive-sd-inactive.json
@@ -317,7 +317,7 @@ tests:
         system: http://hl7.org/fhir/validation-test/CodeSystem/inactive
         code: codeInactive
   valid: true
-- desc: graham/inactive-retired-inactive
+- desc: fhir-tests/inactive-retired-inactive
   schemas: []
   _loadProfile:
   - inactive-sd-inactive.json
@@ -331,7 +331,7 @@ tests:
         system: http://hl7.org/fhir/validation-test/CodeSystem/inactive
         code: codeRetired
   valid: true
-- desc: graham/slice-instance
+- desc: fhir-tests/slice-instance
   schemas: []
   _loadProfile:
   - slice-profile.json
@@ -350,7 +350,7 @@ tests:
       value: two@two.com
       use: home
   valid: true
-- desc: graham/additional-bindings-observation-1
+- desc: fhir-tests/additional-bindings-observation-1
   schemas: []
   _loadProfile:
   - additional-bindings-profile-1.json
@@ -363,7 +363,7 @@ tests:
       - system: http://loinc.org
         code: 100066-0
   valid: true
-- desc: graham/additional-bindings-observation-uc-y
+- desc: fhir-tests/additional-bindings-observation-uc-y
   schemas: []
   _loadProfile:
   - additional-bindings-profile-uc.json
@@ -381,7 +381,7 @@ tests:
       - system: http://loinc.org
         code: 100066-0
   valid: true
-- desc: graham/additional-bindings-observation-uc-n
+- desc: fhir-tests/additional-bindings-observation-uc-n
   schemas: []
   _loadProfile:
   - additional-bindings-profile-uc.json
@@ -399,7 +399,7 @@ tests:
       - system: http://loinc.org
         code: 100066-0
   valid: true
-- desc: graham/deprecated-extension
+- desc: fhir-tests/deprecated-extension
   schemas: []
   _loadProfile:
   - StructureDefinition-deprecated.json
@@ -410,7 +410,7 @@ tests:
     - url: http://hl7.org/fhir/test/StructureDefinition/deprecated
       valueString: something
   valid: true
-- desc: graham/standards-status-x-r5
+- desc: fhir-tests/standards-status-x-r5
   schemas: []
   _loadProfile:
   - cs-stds-status-ext.json
@@ -427,7 +427,7 @@ tests:
     experimental: false
     content: not-present
   valid: true
-- desc: graham/cw-card-tighten
+- desc: fhir-tests/cw-card-tighten
   schemas: []
   _loadProfile:
   - compliesWith/card-tighten-base.json
@@ -456,7 +456,7 @@ tests:
         max: '3'
   skip: true
   _skipReason: no java outcome (DESIGN §15)
-- desc: graham/cw-card-loosen-min
+- desc: fhir-tests/cw-card-loosen-min
   schemas: []
   _loadProfile:
   - compliesWith/card-loosen-min-base.json
@@ -485,7 +485,7 @@ tests:
         max: '*'
   skip: true
   _skipReason: no java outcome (DESIGN §15)
-- desc: graham/cw-card-widen-max
+- desc: fhir-tests/cw-card-widen-max
   schemas: []
   _loadProfile:
   - compliesWith/card-widen-max-base.json
@@ -514,7 +514,7 @@ tests:
         max: '5'
   skip: true
   _skipReason: no java outcome (DESIGN §15)
-- desc: graham/cw-card-narrow-to-required
+- desc: fhir-tests/cw-card-narrow-to-required
   schemas: []
   _loadProfile:
   - compliesWith/card-narrow-to-required-base.json
@@ -543,7 +543,7 @@ tests:
         max: '1'
   skip: true
   _skipReason: no java outcome (DESIGN §15)
-- desc: graham/cw-card-prohibit-allowed
+- desc: fhir-tests/cw-card-prohibit-allowed
   schemas: []
   _loadProfile:
   - compliesWith/card-prohibit-allowed-base.json
@@ -571,7 +571,7 @@ tests:
         max: '0'
   skip: true
   _skipReason: no java outcome (DESIGN §15)
-- desc: graham/cw-card-prohibit-required
+- desc: fhir-tests/cw-card-prohibit-required
   schemas: []
   _loadProfile:
   - compliesWith/card-prohibit-required-base.json
@@ -599,7 +599,7 @@ tests:
         max: '0'
   skip: true
   _skipReason: no java outcome (DESIGN §15)
-- desc: graham/cw-constraint-additional
+- desc: fhir-tests/cw-constraint-additional
   schemas: []
   _loadProfile:
   - compliesWith/constraint-additional-base.json
@@ -632,7 +632,7 @@ tests:
           expression: family.exists()
   skip: true
   _skipReason: no java outcome (DESIGN §15)
-- desc: graham/cw-constraint-missing
+- desc: fhir-tests/cw-constraint-missing
   schemas: []
   _loadProfile:
   - compliesWith/constraint-missing-base.json
@@ -660,7 +660,7 @@ tests:
         min: 1
   skip: true
   _skipReason: no java outcome (DESIGN §15)
-- desc: graham/cw-constraint-stricter
+- desc: fhir-tests/cw-constraint-stricter
   schemas: []
   _loadProfile:
   - compliesWith/constraint-stricter-base.json
@@ -697,7 +697,7 @@ tests:
           expression: family.exists()
   skip: true
   _skipReason: no java outcome (DESIGN §15)
-- desc: graham/cw-binding-subset
+- desc: fhir-tests/cw-binding-subset
   schemas: []
   _loadProfile:
   - compliesWith/binding-subset-base.json
@@ -740,7 +740,7 @@ tests:
           valueSet: '#vs-gender-subset'
   skip: true
   _skipReason: no java outcome (DESIGN §15)
-- desc: graham/cw-binding-superset
+- desc: fhir-tests/cw-binding-superset
   schemas: []
   _loadProfile:
   - compliesWith/binding-superset-base.json
@@ -785,7 +785,7 @@ tests:
           valueSet: '#vs-gender-big'
   skip: true
   _skipReason: no java outcome (DESIGN §15)
-- desc: graham/cw-binding-strength-weaker
+- desc: fhir-tests/cw-binding-strength-weaker
   schemas: []
   _loadProfile:
   - compliesWith/binding-strength-weaker-base.json
@@ -830,7 +830,7 @@ tests:
           valueSet: '#vs-marital'
   skip: true
   _skipReason: no java outcome (DESIGN §15)
-- desc: graham/cw-binding-strength-stronger
+- desc: fhir-tests/cw-binding-strength-stronger
   schemas: []
   _loadProfile:
   - compliesWith/binding-strength-stronger-base.json
@@ -875,7 +875,7 @@ tests:
           valueSet: '#vs-marital2'
   skip: true
   _skipReason: no java outcome (DESIGN §15)
-- desc: graham/cw-fixed-value-valid
+- desc: fhir-tests/cw-fixed-value-valid
   schemas: []
   _loadProfile:
   - compliesWith/fixed-value-valid-base.json
@@ -904,7 +904,7 @@ tests:
         fixedCode: male
   skip: true
   _skipReason: no java outcome (DESIGN §15)
-- desc: graham/cw-fixed-matches-pattern
+- desc: fhir-tests/cw-fixed-matches-pattern
   schemas: []
   _loadProfile:
   - compliesWith/fixed-matches-pattern-base.json
@@ -935,7 +935,7 @@ tests:
             code: M
   skip: true
   _skipReason: no java outcome (DESIGN §15)
-- desc: graham/cw-fixed-conflicts-pattern
+- desc: fhir-tests/cw-fixed-conflicts-pattern
   schemas: []
   _loadProfile:
   - compliesWith/fixed-conflicts-pattern-base.json
@@ -966,7 +966,7 @@ tests:
             code: S
   skip: true
   _skipReason: no java outcome (DESIGN §15)
-- desc: graham/cw-pattern-narrower
+- desc: fhir-tests/cw-pattern-narrower
   schemas: []
   _loadProfile:
   - compliesWith/pattern-narrower-base.json
@@ -997,7 +997,7 @@ tests:
             code: M
   skip: true
   _skipReason: no java outcome (DESIGN §15)
-- desc: graham/cw-pattern-broader
+- desc: fhir-tests/cw-pattern-broader
   schemas: []
   _loadProfile:
   - compliesWith/pattern-broader-base.json
@@ -1028,7 +1028,7 @@ tests:
             code: M
   skip: true
   _skipReason: no java outcome (DESIGN §15)
-- desc: graham/cw-slice-adds
+- desc: fhir-tests/cw-slice-adds
   schemas: []
   _loadProfile:
   - compliesWith/slice-adds-base.json
@@ -1068,7 +1068,7 @@ tests:
           system: http://hospital.example.org/mrn
   skip: true
   _skipReason: no java outcome (DESIGN §15)
-- desc: graham/cw-slice-open-vs-closed
+- desc: fhir-tests/cw-slice-open-vs-closed
   schemas: []
   _loadProfile:
   - compliesWith/slice-open-vs-closed-base.json
@@ -1108,7 +1108,7 @@ tests:
           system: http://hospital.example.org/mrn
   skip: true
   _skipReason: no java outcome (DESIGN §15)
-- desc: graham/cw-slice-missing-required
+- desc: fhir-tests/cw-slice-missing-required
   schemas: []
   _loadProfile:
   - compliesWith/slice-missing-required-base.json
@@ -1149,7 +1149,7 @@ tests:
         patternUri: http://hl7.org/fhir/sid/us-ssn
   skip: true
   _skipReason: no java outcome (DESIGN §15)
-- desc: graham/cw-slice-compatible
+- desc: fhir-tests/cw-slice-compatible
   schemas: []
   _loadProfile:
   - compliesWith/slice-compatible-base.json
@@ -1198,7 +1198,7 @@ tests:
         patternUri: http://hl7.org/fhir/sid/us-ssn
   skip: true
   _skipReason: no java outcome (DESIGN §15)
-- desc: graham/cw-slice-closed-valid
+- desc: fhir-tests/cw-slice-closed-valid
   schemas: []
   _loadProfile:
   - compliesWith/slice-closed-valid-base.json
@@ -1239,7 +1239,7 @@ tests:
         patternUri: http://hospital.example.org/mrn
   skip: true
   _skipReason: no java outcome (DESIGN §15)
-- desc: graham/cw-slice-extra-in-closed
+- desc: fhir-tests/cw-slice-extra-in-closed
   schemas: []
   _loadProfile:
   - compliesWith/slice-extra-in-closed-base.json
@@ -1287,7 +1287,7 @@ tests:
         patternUri: http://example.org/drivers-license
   skip: true
   _skipReason: no java outcome (DESIGN §15)
-- desc: graham/cw-slice-tighten-card
+- desc: fhir-tests/cw-slice-tighten-card
   schemas: []
   _loadProfile:
   - compliesWith/slice-tighten-card-base.json
@@ -1328,7 +1328,7 @@ tests:
         patternUri: http://hospital.example.org/mrn
   skip: true
   _skipReason: no java outcome (DESIGN §15)
-- desc: graham/cw-slice-loosen-card
+- desc: fhir-tests/cw-slice-loosen-card
   schemas: []
   _loadProfile:
   - compliesWith/slice-loosen-card-base.json

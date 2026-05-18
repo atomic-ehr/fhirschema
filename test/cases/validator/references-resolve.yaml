@@ -3,7 +3,7 @@ suite: 'Reference resolution (fs1002) — pluggable resolver'
 # checked for existence. Without resolver: skipped (fs1002 is deferred per
 # DESIGN §12). Verdicts:
 #   resolved          → no issue
-#   unresolved        → fs1002 (warning, sansara/java treat as warning)
+#   unresolved        → fs1002 (warning, aidbox/java treat as warning)
 #   unknown           → silent (resolver can't decide)
 #
 # Test resolver knows: Patient/1, Patient/2, Organization/org1.

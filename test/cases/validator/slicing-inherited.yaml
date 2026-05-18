@@ -1,4 +1,4 @@
-suite: 'slicing across inheritance chain (sansara L1702, L1791)'
+suite: 'slicing across inheritance chain (aidbox L1702, L1791)'
 # Validates how slicing blocks on a profile and its base/parent combine.
 # We merge the chain in `mergeSlicing` so child slices add up, rules pick
 # the tightest (closed > openAtEnd > open), and `sliceIsConstraining`

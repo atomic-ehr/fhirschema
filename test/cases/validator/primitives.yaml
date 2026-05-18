@@ -1,9 +1,9 @@
 suite: Primitive validation (fs1xx)
-# Imported from atomic-ehr/sansara fhir-clj `primitives-test`
-# (../sansara/box/libs/fhir-clj/test/fhir/validator/core_test.clj:376-712).
+# Imported from atomic-ehr/aidbox fhir-clj `primitives-test`
+# (../aidbox/box/libs/fhir-clj/test/fhir/validator/core_test.clj:376-712).
 # Coverage mirrors the reference Clojure validator.
 #
-# Mapping table sansara → ours:
+# Mapping table aidbox → ours:
 #   invalid-type (wrong JSON kind)   → fs101 expected-string | fs102 expected-number | fs103 expected-boolean
 #   invalid-type (wrong literal)     → fs104..fs123 invalid-<TYPE>
 #   empty-value                      → fs1xx invalid-* (string-like) or fs204
@@ -65,7 +65,7 @@ tests:
     schemas: [{ elements: { value: { type: integer } } }]
     data: { value: -2147483649 }
     issues: [{ code: fs112, path: [value] }]
-  # Note: sansara also rejects `1.0` for integer. JS cannot distinguish
+  # Note: aidbox also rejects `1.0` for integer. JS cannot distinguish
   # `1.0` from `1` after JSON.parse (Number.isInteger(1.0) === true), so
   # this case is not expressible here. Documented as a JS-platform limit.
 

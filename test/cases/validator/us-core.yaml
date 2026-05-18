@@ -1,4 +1,4 @@
-suite: US Core profile validation (imported from sansara)
+suite: US Core profile validation (imported from aidbox)
 
 defaults:
   usePackages:
@@ -6,7 +6,7 @@ defaults:
     - hl7.fhir.us.core
 
 tests:
-  # ─── sansara `extension-test` (core_test.clj:2189) — us-core-race ────
+  # ─── aidbox `extension-test` (core_test.clj:2189) — us-core-race ────
   - desc: 'us-core-race: valid Patient with ombCategory + text extensions'
     schemas: []
     data:

@@ -20,13 +20,13 @@ tests:
     issues:
       - { code: fs201, path: [surprise] }
 
-  - desc: unknown resourceType → silent pass (matches sansara default; strict mode is future work)
+  - desc: unknown resourceType → silent pass (matches aidbox default; strict mode is future work)
     schemas: []
     data: { resourceType: NotARealResource, foo: 1 }
     valid: true
 
-  # ─── required (imported from sansara `required-element`) ───────────────
-  # ../sansara/box/libs/fhir-clj/test/fhir/validator/core_test.clj:3029
+  # ─── required (imported from aidbox `required-element`) ───────────────
+  # ../aidbox/box/libs/fhir-clj/test/fhir/validator/core_test.clj:3029
   - desc: ServiceRequest missing status, intent, subject
     schemas: []
     data: { resourceType: ServiceRequest }
@@ -43,7 +43,7 @@ tests:
     # cardinality. data-absent-reason on `_field` doesn't substitute for
     # the code.
     #
-    # Sansara takes the permissive interpretation here (extension-only
+    # Aidbox takes the permissive interpretation here (extension-only
     # satisfies). We diverge per chat.fhir.org consensus (Grahame Grieve,
     # Elliot Silver, Lloyd McKenzie) — see DESIGN §15.
     schemas: []
@@ -164,9 +164,9 @@ tests:
     issues:
       - { code: fs802, path: [] }
 
-  # ─── sansara `cardinality-test` (core_test.clj:3109) ──────────────────
+  # ─── aidbox `cardinality-test` (core_test.clj:3109) ──────────────────
   # Profile narrows Patient.address to min=2 max=3
-  - desc: 'sansara/cardinality-test: Patient.name.given scalar where array expected'
+  - desc: 'aidbox/cardinality-test: Patient.name.given scalar where array expected'
     schemas: []
     data:
       resourceType: Patient
@@ -174,7 +174,7 @@ tests:
     issues:
       - { code: fs203, path: [name, 0, given] }
 
-  - desc: 'sansara/cardinality-test: profile narrows address min=2 — within bounds'
+  - desc: 'aidbox/cardinality-test: profile narrows address min=2 — within bounds'
     schemas: []
     registry:
       - url: https://example/cardinality-profile
@@ -193,7 +193,7 @@ tests:
       address: [{ text: t1 }, { text: t2 }]
     valid: true
 
-  - desc: 'sansara/cardinality-test: profile address min=2, actual=1 → fs303'
+  - desc: 'aidbox/cardinality-test: profile address min=2, actual=1 → fs303'
     schemas: []
     registry:
       - url: https://example/cardinality-profile
@@ -213,8 +213,8 @@ tests:
     issues:
       - { code: fs303, path: [address] }
 
-  # ─── sansara `slicing-validation/Simple slicings` (core_test.clj:1015) ──
-  - desc: 'sansara/slicing: Observation conforms to vitalsigns with VSCat category'
+  # ─── aidbox `slicing-validation/Simple slicings` (core_test.clj:1015) ──
+  - desc: 'aidbox/slicing: Observation conforms to vitalsigns with VSCat category'
     schemas: []
     data:
       resourceType: Observation
@@ -230,7 +230,7 @@ tests:
               code: vital-signs
     valid: true
 
-  - desc: 'sansara/slicing: missing required VSCat slice → fs902'
+  - desc: 'aidbox/slicing: missing required VSCat slice → fs902'
     schemas: []
     data:
       resourceType: Observation
@@ -247,7 +247,7 @@ tests:
     issues:
       - { code: fs902, path: [category] }
 
-  - desc: 'sansara/slicing: too many VSCat → fs902'
+  - desc: 'aidbox/slicing: too many VSCat → fs902'
     schemas: []
     data:
       resourceType: Observation
@@ -263,7 +263,7 @@ tests:
     issues:
       - { code: fs902, path: [category] }
 
-  - desc: 'sansara/slicing: missing category entirely → fs301'
+  - desc: 'aidbox/slicing: missing category entirely → fs301'
     schemas: []
     data:
       resourceType: Observation
@@ -276,8 +276,8 @@ tests:
     issues:
       - { code: fs301, path: [category] }
 
-  # ─── sansara `validation-c/empty complex type` (core_test.clj:720) ────
-  - desc: 'sansara/validation-c: empty array on collection (Patient.name = [])'
+  # ─── aidbox `validation-c/empty complex type` (core_test.clj:720) ────
+  - desc: 'aidbox/validation-c: empty array on collection (Patient.name = [])'
     schemas: []
     data:
       resourceType: Patient
@@ -285,7 +285,7 @@ tests:
     issues:
       - { code: fs303, path: [name] }
 
-  - desc: 'sansara/validation-c: empty composite on complex field (maritalStatus = {})'
+  - desc: 'aidbox/validation-c: empty composite on complex field (maritalStatus = {})'
     schemas: []
     data:
       resourceType: Patient
@@ -293,7 +293,7 @@ tests:
     issues:
       - { code: fs202, path: [maritalStatus] }
 
-  - desc: 'sansara/validation-c: empty string on primitive (birthDate = "")'
+  - desc: 'aidbox/validation-c: empty string on primitive (birthDate = "")'
     schemas: []
     data:
       resourceType: Patient
@@ -302,8 +302,8 @@ tests:
       # birthDate is type `date`; empty string → fs107 invalid-date
       - { code: fs107, path: [birthDate] }
 
-  # ─── sansara `validation-c/Primitive types` (core_test.clj:767) ──────
-  - desc: 'sansara/validation-c: birthDate "14:00" is not a valid date'
+  # ─── aidbox `validation-c/Primitive types` (core_test.clj:767) ──────
+  - desc: 'aidbox/validation-c: birthDate "14:00" is not a valid date'
     schemas: []
     data:
       resourceType: Patient
@@ -311,14 +311,14 @@ tests:
     issues:
       - { code: fs107, path: [birthDate] }
 
-  - desc: 'sansara/validation-c: birthDate "2000-04-30" is valid'
+  - desc: 'aidbox/validation-c: birthDate "2000-04-30" is valid'
     schemas: []
     data:
       resourceType: Patient
       birthDate: '2000-04-30'
     valid: true
 
-  - desc: 'sansara/validation-c: positiveInt -5 on Immunization protocolApplied'
+  - desc: 'aidbox/validation-c: positiveInt -5 on Immunization protocolApplied'
     schemas: []
     data:
       resourceType: Immunization
@@ -331,7 +331,7 @@ tests:
     issues:
       - { code: fs116, path: [protocolApplied, 0, doseNumberPositiveInt] }
 
-  - desc: 'sansara/validation-c: unknown top-level key → fs201'
+  - desc: 'aidbox/validation-c: unknown top-level key → fs201'
     schemas: []
     data:
       resourceType: Patient
@@ -339,7 +339,7 @@ tests:
     issues:
       - { code: fs201, path: [unexist-key] }
 
-  - desc: 'sansara/validation-c: Patient.active = 42 (number where boolean expected)'
+  - desc: 'aidbox/validation-c: Patient.active = 42 (number where boolean expected)'
     schemas: []
     data:
       resourceType: Patient
@@ -347,7 +347,7 @@ tests:
     issues:
       - { code: fs103, path: [active] }
 
-  - desc: 'sansara/validation-c: Patient.gender = ["male"] (array where scalar expected)'
+  - desc: 'aidbox/validation-c: Patient.gender = ["male"] (array where scalar expected)'
     schemas: []
     data:
       resourceType: Patient
@@ -355,8 +355,8 @@ tests:
     issues:
       - { code: fs203, path: [gender] }
 
-  # ─── sansara `validation-c/poly` (core_test.clj:918) ──────────────────
-  - desc: 'sansara/validation-c: deceased + deceasedDateTime/Boolean → fs802'
+  # ─── aidbox `validation-c/poly` (core_test.clj:918) ──────────────────
+  - desc: 'aidbox/validation-c: deceased + deceasedDateTime/Boolean → fs802'
     schemas: []
     data:
       resourceType: Patient
@@ -365,7 +365,7 @@ tests:
     issues:
       - { code: fs802, path: [] }
 
-  - desc: 'sansara/validation-c: bare `deceased` key (not a variant) → fs201 at [deceased]'
+  - desc: 'aidbox/validation-c: bare `deceased` key (not a variant) → fs201 at [deceased]'
     # `deceased[x]` is a virtual choice parent — only `deceasedBoolean` /
     # `deceasedDateTime` are real JSON fields. Literal `deceased` is not a
     # FHIR field and should be flagged as unknown.
@@ -376,8 +376,8 @@ tests:
     issues:
       - { code: fs201, path: [deceased] }
 
-  # ─── sansara `validation-c/unexpected object` (core_test.clj:946) ────
-  - desc: 'sansara/validation-c: object where array expected (Patient.name = {family})'
+  # ─── aidbox `validation-c/unexpected object` (core_test.clj:946) ────
+  - desc: 'aidbox/validation-c: object where array expected (Patient.name = {family})'
     schemas: []
     data:
       resourceType: Patient
@@ -387,7 +387,7 @@ tests:
 
   # ─── inner-resource walk: Bundle.entry.resource ───────────────────────
   - desc: 'inner-resource: Bundle with valid Patient + Observation entries'
-    # sansara validation-c/Bundle line 954
+    # aidbox validation-c/Bundle line 954
     schemas: []
     data:
       resourceType: Bundle
@@ -398,12 +398,12 @@ tests:
         - request: { method: POST, url: /Observation }
           resource:
             resourceType: Observation
-            status: active
+            status: final
             code: { coding: [{ code: code }] }
     valid: true
 
   - desc: 'inner-resource: Bundle with Observation missing required code/status'
-    # sansara validation-c/Bundle line 966 (simplified)
+    # aidbox validation-c/Bundle line 966 (simplified)
     schemas: []
     data:
       resourceType: Bundle
@@ -419,7 +419,7 @@ tests:
 
   # ─── inner-resource walk: Patient.contained ───────────────────────────
   - desc: 'inner-resource: Patient.contained DiagnosticReport missing code → fs301'
-    # sansara validation-c/contained line 996 (simplified — without excluded)
+    # aidbox validation-c/contained line 996 (simplified — without excluded)
     schemas: []
     data:
       resourceType: Patient
@@ -462,7 +462,7 @@ tests:
     issues:
       - { code: fs103, path: [entry, 0, resource, active] }
 
-  - desc: 'sansara/validation-c: Patient.active = "true" (string where boolean expected)'
+  - desc: 'aidbox/validation-c: Patient.active = "true" (string where boolean expected)'
     schemas: []
     data:
       resourceType: Patient
@@ -470,7 +470,7 @@ tests:
     issues:
       - { code: fs103, path: [active] }
 
-  - desc: 'sansara/cardinality-test: profile address max=3, actual=4 → fs302'
+  - desc: 'aidbox/cardinality-test: profile address max=3, actual=4 → fs302'
     schemas: []
     registry:
       - url: https://example/cardinality-profile

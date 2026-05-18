@@ -1,4 +1,4 @@
-suite: 'slice without `match` pattern (sansara L1769)'
+suite: 'slice without `match` pattern (aidbox L1769)'
 # A slice declared with no `match` block is effectively never classified
 # against (effectiveMatch returns undefined → skipped). With `max: 0` the
 # slice's count stays 0 and satisfies its own cardinality. Items still

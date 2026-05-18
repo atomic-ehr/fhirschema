@@ -1,4 +1,4 @@
-suite: HL7 fhir-test-cases (Grahame Grieve, curated) — R5 samples
+suite: HL7 fhir-test-cases — R5 samples
 # Imported from github.com/FHIR/fhir-test-cases/validator/manifest.json.
 # Each test names its source file. Expected outputs are mapped from java
 # validator messages to our fsNNN codes:
@@ -15,7 +15,7 @@ defaults:
 
 tests:
   # ─── good (errorCount=0) ──────────────────────────────────────────────
-  - desc: 'graham/patient-good: minimal valid Patient with narrative'
+  - desc: 'fhir-tests/patient-good: minimal valid Patient with narrative'
     schemas: []
     data:
       resourceType: Patient
@@ -25,7 +25,7 @@ tests:
         div: '<div xmlns="http://www.w3.org/1999/xhtml">some text</div>'
     valid: true
 
-  - desc: 'graham/group-choice-good: Group with valid characteristic.value[x]'
+  - desc: 'fhir-tests/group-choice-good: Group with valid characteristic.value[x]'
     schemas: []
     data:
       resourceType: Group
@@ -37,7 +37,7 @@ tests:
           exclude: false
     valid: true
 
-  - desc: 'graham/group-minimal: minimal Group'
+  - desc: 'fhir-tests/group-minimal: minimal Group'
     schemas: []
     data:
       resourceType: Group
@@ -46,7 +46,7 @@ tests:
     valid: true
 
   # ─── bad (errorCount>0) — clear mappings ──────────────────────────────
-  - desc: 'graham/list-empty2: List.entry is empty array → fs303'
+  - desc: 'fhir-tests/list-empty2: List.entry is empty array → fs303'
     # "ERROR: List.entry: Array cannot be empty - the property should not be
     #  present if it has no values"
     schemas: []
@@ -59,7 +59,7 @@ tests:
     issues:
       - { code: fs303, path: [entry] }
 
-  - desc: 'graham/group-choice-bad1: characteristic[0].value (no [x]) → fs201 + fs301'
+  - desc: 'fhir-tests/group-choice-bad1: characteristic[0].value (no [x]) → fs201 + fs301'
     # Source: group-choice-bad1.json. Java reports:
     #   "Unrecognized property 'value'"        → fs201 (virtual choice parent)
     #   "value[x]: minimum required = 1"       → fs301 on the choice
@@ -80,7 +80,7 @@ tests:
   # producers emit. The reference Java validator silently strips it before
   # validation; we tolerate it the same way (no fs201) — both at the
   # resource root and inside any nested object (e.g. `_id.fhir_comments`).
-  - desc: 'graham/list-minimal: List with fhir_comments (non-standard JSON5)'
+  - desc: 'fhir-tests/list-minimal: List with fhir_comments (non-standard JSON5)'
     schemas: []
     data:
       resourceType: List
@@ -93,7 +93,7 @@ tests:
     valid: true
 
   # ─── unblocked by inner-resource walk ────────────────────────────────
-  - desc: 'graham/bundle-good: Bundle with two Patient entries (refs by fullUrl)'
+  - desc: 'fhir-tests/bundle-good: Bundle with two Patient entries (refs by fullUrl)'
     schemas: []
     data:
       resourceType: Bundle
@@ -114,7 +114,7 @@ tests:
     valid: true
 
   # ─── batch 2 (after local-clone scan of fhir-test-cases repo) ────────
-  - desc: 'graham/patient-lang1: Patient with language (xhtml lang warning is N/A for us)'
+  - desc: 'fhir-tests/patient-lang1: Patient with language (xhtml lang warning is N/A for us)'
     schemas: []
     data:
       resourceType: Patient
@@ -125,12 +125,12 @@ tests:
         div: '<div xmlns="http://www.w3.org/1999/xhtml">some text</div>'
     valid: true
 
-  - desc: 'graham/group-minimal-tiny: minimal Group'
+  - desc: 'fhir-tests/group-minimal-tiny: minimal Group'
     schemas: []
     data: { resourceType: Group, type: person, membership: definitional }
     valid: true
 
-  - desc: 'graham/list-unknown-prop: List.other unknown → fs201'
+  - desc: 'fhir-tests/list-unknown-prop: List.other unknown → fs201'
     schemas: []
     data:
       resourceType: List
@@ -141,7 +141,7 @@ tests:
     issues:
       - { code: fs201, path: [other] }
 
-  - desc: 'graham/list-empty1: List.entry[0] = {} → fs202 + fs301 on item'
+  - desc: 'fhir-tests/list-empty1: List.entry[0] = {} → fs202 + fs301 on item'
     schemas: []
     data:
       resourceType: List
@@ -153,7 +153,7 @@ tests:
       - { code: fs202, path: [entry, 0] }
       - { code: fs301, path: [entry, 0, item] }
 
-  - desc: 'graham/patient-id-bad-1: id with underscore → fs110'
+  - desc: 'fhir-tests/patient-id-bad-1: id with underscore → fs110'
     # Java reports "Invalid Resource id: Invalid Characters ('bad-id_1')"
     schemas: []
     data: { resourceType: Patient, id: 'bad-id_1' }
@@ -161,13 +161,13 @@ tests:
       - { code: fs110, path: [id] }
 
   # ─── batch 3: resource id validation ─────────────────────────────────
-  - desc: 'graham/patient-id-bad-2: id with space → fs110'
+  - desc: 'fhir-tests/patient-id-bad-2: id with space → fs110'
     schemas: []
     data: { resourceType: Patient, id: 'bad-id 1' }
     issues:
       - { code: fs110, path: [id] }
 
-  - desc: 'graham/patient-id-bad-3: id longer than 64 chars → fs110'
+  - desc: 'fhir-tests/patient-id-bad-3: id longer than 64 chars → fs110'
     schemas: []
     data:
       resourceType: Patient
@@ -175,13 +175,13 @@ tests:
     issues:
       - { code: fs110, path: [id] }
 
-  - desc: 'graham/resource-invalid-id-1: id with slash/equals → fs110'
+  - desc: 'fhir-tests/resource-invalid-id-1: id with slash/equals → fs110'
     schemas: []
     data: { resourceType: Location, id: '/foobar==', name: 'A Location' }
     issues:
       - { code: fs110, path: [id] }
 
-  - desc: 'graham/resource-invalid-id-2: 90-char Location id → fs110'
+  - desc: 'fhir-tests/resource-invalid-id-2: 90-char Location id → fs110'
     schemas: []
     data:
       resourceType: Location
@@ -190,7 +190,7 @@ tests:
     issues:
       - { code: fs110, path: [id] }
 
-  - desc: 'graham/group-choice-bad3: characteristic[0].value=string but type narrowed to boolean → fs1xx'
+  - desc: 'fhir-tests/group-choice-bad3: characteristic[0].value=string but type narrowed to boolean → fs1xx'
     # Java reports primitive value type mismatch on value[x] resolved-as-boolean
     schemas: []
     data:

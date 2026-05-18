@@ -1,5 +1,5 @@
 suite: Strict mode for unresolved profiles (fs701)
-# Imported from sansara `unknown-schemas-test` (core_test.clj:2929).
+# Imported from aidbox `unknown-schemas-test` (core_test.clj:2929).
 # By default, unresolved profiles in `data.meta.profile` are silent
 # (matches reference validators' non-strict mode). With `options.strict:
 # true`, they become fs701 errors.
@@ -10,8 +10,8 @@ defaults:
     - hl7.fhir.us.core
 
 tests:
-  # ─── sansara: without strict mode ─────────────────────────────────────
-  - desc: 'sansara/unknown-schemas: known profile (us-core-patient) → valid'
+  # ─── aidbox: without strict mode ─────────────────────────────────────
+  - desc: 'aidbox/unknown-schemas: known profile (us-core-patient) → valid'
     schemas: []
     data:
       resourceType: Patient
@@ -22,7 +22,7 @@ tests:
       identifier: [{ system: sys, value: v1, use: someuse }]
     valid: true
 
-  - desc: 'sansara/unknown-schemas: unknown profile, no strict mode → silent valid'
+  - desc: 'aidbox/unknown-schemas: unknown profile, no strict mode → silent valid'
     schemas: []
     data:
       resourceType: Patient
@@ -33,8 +33,8 @@ tests:
       identifier: [{ system: sys, value: v1, use: someuse }]
     valid: true
 
-  # ─── sansara: with strict mode ────────────────────────────────────────
-  - desc: 'sansara/unknown-schemas: known profile + strict → valid'
+  # ─── aidbox: with strict mode ────────────────────────────────────────
+  - desc: 'aidbox/unknown-schemas: known profile + strict → valid'
     schemas: []
     options: { strict: true }
     data:
@@ -46,7 +46,7 @@ tests:
       identifier: [{ system: sys, value: v1, use: someuse }]
     valid: true
 
-  - desc: 'sansara/unknown-schemas: unknown profile + strict → fs701'
+  - desc: 'aidbox/unknown-schemas: unknown profile + strict → fs701'
     schemas: []
     options: { strict: true }
     data:

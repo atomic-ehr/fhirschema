@@ -2,7 +2,7 @@ suite: Graham fhir-test-cases — profile-loading (R4)
 defaults:
   useR4: true
 tests:
-- desc: graham/fixed-quantity-binding-observation
+- desc: fhir-tests/fixed-quantity-binding-observation
   schemas: []
   _loadProfile:
   - fixed-quantity-binding-structuredef.json
@@ -26,7 +26,7 @@ tests:
     "ERROR: The code provided (http://unitsofmeasure.org#m) was not found in the value set ''Common UCUM Codes for Age'' (http://hl7.org/fhir/ValueSet/age-units|4.0.1),
     and a code from this value set is required: The provided code ''http://unitsofmeasure.org#m'' was not found in the value set ''http://hl7.org/fhir/ValueSet/age-units|4.0.1''"]
     (DESIGN §15)'
-- desc: graham/fixed-quantity-binding-observation-2
+- desc: fhir-tests/fixed-quantity-binding-observation-2
   schemas: []
   _loadProfile:
   - fixed-quantity-binding-structuredef.json
@@ -43,7 +43,7 @@ tests:
       system: http://unitsofmeasure.org
       value: 18
   valid: true
-- desc: graham/medstmt-ips
+- desc: fhir-tests/medstmt-ips
   schemas: []
   _loadProfile:
   - medstmt-ips-profile.xml
@@ -81,10 +81,11 @@ tests:
           system: http://unitsofmeasure.org
           code: mg
   valid: true
-- desc: graham/mycommunication.invalid
+- desc: fhir-tests/mycommunication.invalid
   schemas: []
   _loadProfile:
   - mycommunication.structureDefinition.xml
+  _applyProfile: true
   data:
     resourceType: Communication
     id: myCommInvalid
@@ -95,7 +96,9 @@ tests:
     - reference: Observation/example
     about:
     - reference: Patient/pat-good
-- desc: graham/mycommunication.valid.example
+  issues:
+  - { code: fs701, path: [partOf, 0] }
+- desc: fhir-tests/mycommunication.valid.example
   schemas: []
   _loadProfile:
   - mycommunication.structureDefinition.xml
@@ -109,7 +112,7 @@ tests:
     - reference: Patient/pat-good
     about:
     - reference: Patient/pat-good
-- desc: graham/jv-patient-good
+- desc: fhir-tests/jv-patient-good
   schemas: []
   _loadProfile:
   - jv-patient-profile-res.xml
@@ -143,11 +146,15 @@ tests:
         value: '73456734567345673456'
       display: Charlottenlund Lægehus
   valid: true
-- desc: graham/jv-patient-bad
+- desc: fhir-tests/jv-patient-bad
   schemas: []
   _loadProfile:
   - jv-patient-profile-res.xml
   - jv-patient-profile-dt.xml
+  _applyProfile: true
+  skip: true
+  _skipReason: profile constrains identifier.value via a string-length / regex
+    pattern that our validator does not enforce on Identifier types yet (DESIGN §15)
   data:
     resourceType: Patient
     name:
@@ -177,7 +184,7 @@ tests:
         value: '73456'
       display: Charlottenlund Lægehus
   valid: true
-- desc: graham/bb-obs-value-is-not-quantity
+- desc: fhir-tests/bb-obs-value-is-not-quantity
   schemas: []
   _loadProfile:
   - bb-sd.json
@@ -191,7 +198,7 @@ tests:
     status: final
     valueString: test
   valid: true
-- desc: graham/bb-obs-value-is-not-in-valueset
+- desc: fhir-tests/bb-obs-value-is-not-in-valueset
   schemas: []
   _loadProfile:
   - bb-sd.json
@@ -211,7 +218,7 @@ tests:
       code: cm
       value: 8
   valid: true
-- desc: graham/bb-obs-value-is-not-quantity-or-string
+- desc: fhir-tests/bb-obs-value-is-not-quantity-or-string
   schemas: []
   _loadProfile:
   - bb-sd-2.json
@@ -224,7 +231,7 @@ tests:
     status: final
     valueString: test
   valid: true
-- desc: graham/patient-ig-good
+- desc: fhir-tests/patient-ig-good
   schemas: []
   _loadProfile:
   - patient-ig-ig.json
@@ -236,7 +243,7 @@ tests:
     name:
     - text: test
   valid: true
-- desc: graham/patient-ig-bad
+- desc: fhir-tests/patient-ig-bad
   schemas: []
   _loadProfile:
   - patient-ig-ig.json
@@ -248,7 +255,7 @@ tests:
   issues:
   - code: fs301
   _applyProfile: true
-- desc: graham/patient-min-none
+- desc: fhir-tests/patient-min-none
   schemas: []
   _loadProfile:
   - patient-min-profile-none.xml
@@ -257,7 +264,7 @@ tests:
     id: pat-good
     active: true
   valid: true
-- desc: graham/patient-min-none1
+- desc: fhir-tests/patient-min-none1
   schemas: []
   _loadProfile:
   - patient-min-profile-none1.xml
@@ -266,7 +273,7 @@ tests:
     id: pat-good
     active: true
   valid: true
-- desc: graham/patient-min-fixed
+- desc: fhir-tests/patient-min-fixed
   schemas: []
   _loadProfile:
   - patient-min-profile-fixed.xml
@@ -275,7 +282,7 @@ tests:
     id: pat-good
     active: true
   valid: true
-- desc: graham/patient-min-fixed1
+- desc: fhir-tests/patient-min-fixed1
   schemas: []
   _loadProfile:
   - patient-min-profile-fixed1.xml
@@ -284,7 +291,7 @@ tests:
     id: pat-good
     active: true
   valid: true
-- desc: graham/patient-min-pattern
+- desc: fhir-tests/patient-min-pattern
   schemas: []
   _loadProfile:
   - patient-min-profile-pattern.xml
@@ -293,7 +300,7 @@ tests:
     id: pat-good
     active: true
   valid: true
-- desc: graham/patient-min-pattern1
+- desc: fhir-tests/patient-min-pattern1
   schemas: []
   _loadProfile:
   - patient-min-profile-pattern1.xml
@@ -302,7 +309,7 @@ tests:
     id: pat-good
     active: true
   valid: true
-- desc: graham/parameters-profiled-resource-valid
+- desc: fhir-tests/parameters-profiled-resource-valid
   schemas: []
   _loadProfile:
   - parameters-profiled-resource-profiles-patient.json
@@ -317,11 +324,12 @@ tests:
         name:
         - text: patient-name
   valid: true
-- desc: graham/parameters-profiled-resource-invalid
+- desc: fhir-tests/parameters-profiled-resource-invalid
   schemas: []
   _loadProfile:
   - parameters-profiled-resource-profile-params.json
   - parameters-profiled-resource-profiles-patient.json
+  _applyProfile: true
   data:
     resourceType: Parameters
     parameter:
@@ -329,8 +337,9 @@ tests:
       resource:
         resourceType: Patient
         id: '1'
-  valid: true
-- desc: graham/parameters-profiled-resource-multiple
+  issues:
+  - { code: fs301, path: [name] }
+- desc: fhir-tests/parameters-profiled-resource-multiple
   schemas: []
   _loadProfile:
   - parameters-profiled-resource-profile-params-multiples.json
@@ -344,7 +353,7 @@ tests:
         resourceType: Patient
         id: '1'
   valid: true
-- desc: graham/ad-practitioner-resource
+- desc: fhir-tests/ad-practitioner-resource
   schemas: []
   _loadProfile:
   - ad-practitioner-profile.json
@@ -369,7 +378,7 @@ tests:
       state: Vic
       postalCode: '3999'
   valid: true
-- desc: graham/sdoh-type-slice
+- desc: fhir-tests/sdoh-type-slice
   schemas: []
   _loadProfile:
   - sdoh-type-slice-profile.json
@@ -403,7 +412,7 @@ tests:
     we didn''t have money to get more [U.S. FSS]'' for http://loinc.org#88123-5. Valid display is one of 2 choices: ''Within the past 12 months
     the food we bought just didn''t last and we didn''t have money to get more'' (en-US) or ''Within the past 12 months the food we bought just
     didn''t last and we didn''t have money to get more'' (en-US) (for the language(s) ''en-US'')"] (DESIGN §15)'
-- desc: graham/type-subtype-slicing1
+- desc: fhir-tests/type-subtype-slicing1
   schemas: []
   _loadProfile:
   - type-subtype-slicing-sd.json
@@ -461,7 +470,7 @@ tests:
         system: http://loinc.org
     status: final
   valid: true
-- desc: graham/type-subtype-slicing2
+- desc: fhir-tests/type-subtype-slicing2
   schemas: []
   _loadProfile:
   - type-subtype-slicing-sd.json
@@ -511,7 +520,7 @@ tests:
         code: J/C
         system: http://unitsofmeasure.org
   valid: true
-- desc: graham/type-subtype-slicing3
+- desc: fhir-tests/type-subtype-slicing3
   schemas: []
   _loadProfile:
   - type-subtype-slicing-sd.json
@@ -573,7 +582,7 @@ tests:
         code: J/C
         system: http://unitsofmeasure.org
   valid: true
-- desc: graham/obs-value-min
+- desc: fhir-tests/obs-value-min
   schemas: []
   _loadProfile:
   - obs-value-min-profile.json
@@ -589,7 +598,7 @@ tests:
       system: http://unitsofmeasure.org
       code: kg
   valid: true
-- desc: graham/obs-value-min-g
+- desc: fhir-tests/obs-value-min-g
   schemas: []
   _loadProfile:
   - obs-value-min-profile.json
@@ -605,7 +614,7 @@ tests:
       system: http://unitsofmeasure.org
       code: g
   valid: true
-- desc: graham/obs-value-max-g
+- desc: fhir-tests/obs-value-max-g
   schemas: []
   _loadProfile:
   - obs-value-min-profile.json
@@ -621,7 +630,7 @@ tests:
       system: http://unitsofmeasure.org
       code: g
   valid: true
-- desc: graham/bundle-enrl
+- desc: fhir-tests/bundle-enrl
   schemas: []
   _loadProfile:
   - bundle-enrl-sd.json
@@ -1222,7 +1231,7 @@ tests:
     and a coding should come from this value set unless it has no suitable code (note that the validator cannot judge what is suitable) (codes
     = http://terminology.hl7.org/CodeSystem/v2-0203#RI)", "ERROR: Hyperlink ''#Organization_01c31a2f-321d-4c6e-8349-206af8a88088'' at ''div/p/a''
     for ''See above (Organization/01c31a2f-321d-4c6e-8349-206af8a88088)'' does not resolve"] (DESIGN §15)'
-- desc: graham/valueset-import-legacy-test
+- desc: fhir-tests/valueset-import-legacy-test
   schemas: []
   _loadProfile:
   - valueset-import-legacy-test-profile.json
@@ -1241,7 +1250,7 @@ tests:
     effectiveDateTime: '2020-02-16'
     valueBoolean: true
   valid: true
-- desc: graham/uuid-extension
+- desc: fhir-tests/uuid-extension
   schemas: []
   _loadProfile:
   - uuid-ext.xml
@@ -1275,7 +1284,7 @@ tests:
   _skipReason: 'unmappable Java outs=[''ERROR: The extension https://example.com/StructureDefinition/is-extemp could not be found so is not allowed
     here'', "ERROR: Unknown code ''56248011000036107'' in the CodeSystem ''http://snomed.info/sct'' version ''http://snomed.info/sct/900000000000207008/version/20250201''
     (International Edition)"] (DESIGN §15)'
-- desc: graham/bundle-invariant
+- desc: fhir-tests/bundle-invariant
   schemas: []
   _loadProfile:
   - bundle-invariant-profile.json
@@ -1295,7 +1304,7 @@ tests:
         resourceType: Patient
         gender: female
   valid: true
-- desc: graham/contained-invariant
+- desc: fhir-tests/contained-invariant
   schemas: []
   _loadProfile:
   - contained-invariant-profile.json
@@ -1312,7 +1321,7 @@ tests:
     generalPractitioner:
     - reference: '#p1'
   valid: true
-- desc: graham/res-inv-example-good
+- desc: fhir-tests/res-inv-example-good
   schemas: []
   _loadProfile:
   - res-inv-profile-bundle.json
@@ -1397,11 +1406,12 @@ tests:
           - code: none
             system: http://terminology.hl7.org/CodeSystem/endpoint-payload-type
   valid: true
-- desc: graham/res-inv-example-bad
+- desc: fhir-tests/res-inv-example-bad
   schemas: []
   _loadProfile:
   - res-inv-profile-bundle.json
   - res-inv-cs.json
+  _applyProfile: true
   data:
     resourceType: Bundle
     id: example1
@@ -1481,8 +1491,9 @@ tests:
         - coding:
           - code: none
             system: http://terminology.hl7.org/CodeSystem/endpoint-payload-type
-  valid: true
-- desc: graham/ext-derived
+  issues:
+  - { code: fs301, path: [meta, lastUpdated] }
+- desc: fhir-tests/ext-derived
   schemas: []
   _loadProfile:
   - ext-base.json
@@ -1517,7 +1528,7 @@ tests:
   skip: true
   _skipReason: Profile defines fixed value on Extension.url; our checkFixed runs but doesn't catch it in the profile-on-extension context. Needs
     investigation. (DESIGN §15)
-- desc: graham/ext-derived-circle
+- desc: fhir-tests/ext-derived-circle
   schemas: []
   _loadProfile:
   - ext-base.json
@@ -1550,40 +1561,7 @@ tests:
         type:
         - code: string
   valid: true
-- desc: graham/ext-derived-circle
-  schemas: []
-  _loadProfile:
-  - ext-base.json
-  data:
-    resourceType: StructureDefinition
-    id: ext-derived
-    url: http://hl7.org/fhir/test/StructureDefinition/ext-derived
-    name: DerivedExtension
-    status: draft
-    publisher: HL7 Testcases
-    fhirVersion: 4.0.1
-    kind: complex-type
-    abstract: false
-    context:
-    - type: element
-      expression: Element
-    type: Extension
-    baseDefinition: http://hl7.org/fhir/test/StructureDefinition/ext-derived
-    derivation: constraint
-    differential:
-      element:
-      - id: Extension.extension
-        path: Extension.extension
-        min: 0
-      - id: Extension.url
-        path: Extension.url
-        fixedUri: http://hl7.org/fhir/test/StructureDefinition/ext-derived
-      - id: Extension.value[x]
-        path: Extension.value[x]
-        type:
-        - code: string
-  valid: true
-- desc: graham/additional-bindings-observation-2
+- desc: fhir-tests/additional-bindings-observation-2
   schemas: []
   _loadProfile:
   - additional-bindings-profile-2.json
@@ -1596,7 +1574,7 @@ tests:
       - system: http://loinc.org
         code: 100066-0
   valid: true
-- desc: graham/obs-percent
+- desc: fhir-tests/obs-percent
   schemas: []
   _loadProfile:
   - obs-percent-profile.json
@@ -1657,7 +1635,7 @@ tests:
       reference: Patient/example
     effectiveDateTime: '2020-10-11'
   valid: true
-- desc: graham/params-recursion
+- desc: fhir-tests/params-recursion
   schemas: []
   _loadProfile:
   - params-recursion-profile.json
@@ -1840,7 +1818,7 @@ tests:
   skip: true
   _skipReason: Identifier.value typed as string in FHIR; Java reference validator accepts JSON numbers (string-from-number coercion). We are strict.
     (see DESIGN §15 → "Permissive JSON shape")
-- desc: graham/ab-list-slicing
+- desc: fhir-tests/ab-list-slicing
   schemas: []
   _loadProfile:
   - ab/StructureDefinition-my-appointment-profile.json
@@ -1879,7 +1857,7 @@ tests:
   skip: true
   _skipReason: 'unmappable Java outs=["ERROR: Hyperlink ''#hcListExample/MyAppointmentExample'' at ''div/table/tr/td/a'' for ''Appointment: status
     = proposed'' does not resolve"] (DESIGN §15)'
-- desc: graham/type-slicing-multiple
+- desc: fhir-tests/type-slicing-multiple
   schemas: []
   _loadProfile:
   - type-slicing-multiple-profile.json
@@ -1900,7 +1878,7 @@ tests:
         resourceType: PractitionerRole
         active: true
   valid: true
-- desc: graham/type-slicing-multipleb
+- desc: fhir-tests/type-slicing-multipleb
   schemas: []
   _loadProfile:
   - type-slicing-multiple-profileb.json
@@ -1921,7 +1899,7 @@ tests:
         resourceType: PractitionerRole
         active: true
   valid: true
-- desc: graham/profile-slicing-multiple
+- desc: fhir-tests/profile-slicing-multiple
   schemas: []
   _loadProfile:
   - profile-slicing-multiple-profile.json
@@ -1945,7 +1923,7 @@ tests:
         resourceType: PractitionerRole
         active: true
   valid: true
-- desc: graham/profile-slicing-multipleb
+- desc: fhir-tests/profile-slicing-multipleb
   schemas: []
   _loadProfile:
   - profile-slicing-multiple-profileb.json
@@ -1969,7 +1947,7 @@ tests:
         resourceType: PractitionerRole
         active: true
   valid: true
-- desc: graham/opdef-params
+- desc: fhir-tests/opdef-params
   schemas: []
   _loadProfile:
   - opdef-in-profile.json
@@ -2061,7 +2039,7 @@ tests:
     a parameter ''in'' but this is not in the parameters list in the operation definition", "ERROR: The parameter ''questionnaire'' has a value
     for ''min'' of ''1'' in the ''in'' profile 1 that is different to ''0'' which is the value in the parameter definition in the operation definition"]
     (DESIGN §15)'
-- desc: graham/opdef2-params
+- desc: fhir-tests/opdef2-params
   schemas: []
   _loadProfile:
   - opdef2-in-profile.json
@@ -2204,7 +2182,7 @@ tests:
     outputProfile: http://hl7.org/fhir/uv/sdc/StructureDefinition/parameters-opdef2-params-out
   skip: true
   _skipReason: no java outcome (DESIGN §15)
-- desc: graham/cc-pattern-system-only
+- desc: fhir-tests/cc-pattern-system-only
   schemas: []
   _loadProfile:
   - cc-pattern-system-only-cs.json
@@ -2229,7 +2207,7 @@ tests:
           - system: https://gematik.de/fhir/isik/CodeSystem/TestCodeSystem
   skip: true
   _skipReason: no java outcome (DESIGN §15)
-- desc: graham/standards-status-x-r4
+- desc: fhir-tests/standards-status-x-r4
   schemas: []
   _loadProfile:
   - cs-stds-status-ext.json
@@ -2246,10 +2224,14 @@ tests:
     experimental: false
     content: not-present
   valid: true
-- desc: graham/standards-status-x-r4b
+- desc: fhir-tests/standards-status-x-r4b
   schemas: []
   _loadProfile:
   - cs-stds-status-ext.json
+  skip: true
+  _skipReason: upstream manifest distinguishes r4 vs r4b by `version` (4.0 vs 4.3),
+    which would require the `hl7.fhir.r4b.core` package fixture; not shipped locally.
+    Functionally identical to standards-status-x-r4 given our R4-only core. (DESIGN §15)
   data:
     resourceType: CodeSystem
     extension:
@@ -2262,8 +2244,7 @@ tests:
     status: draft
     experimental: false
     content: not-present
-  valid: true
-- desc: graham/bundle-resolve-deep
+- desc: fhir-tests/bundle-resolve-deep
   schemas: []
   _loadProfile:
   - bundle-resolve-deep-profile.json
@@ -2313,7 +2294,7 @@ tests:
           reference: '#contained-device'
   skip: true
   _skipReason: no java outcome (DESIGN §15)
-- desc: graham/pat-fixed-date
+- desc: fhir-tests/pat-fixed-date
   schemas: []
   _loadProfile:
   - pat-fixed-date-profile.json
@@ -2323,7 +2304,7 @@ tests:
     birthDate: '2024-01-01'
   skip: true
   _skipReason: no java outcome (DESIGN §15)
-- desc: graham/pat-minvalue-date
+- desc: fhir-tests/pat-minvalue-date
   schemas: []
   _loadProfile:
   - pat-minvalue-date-profile.json
@@ -2333,7 +2314,7 @@ tests:
     birthDate: '2024-01-01'
   skip: true
   _skipReason: no java outcome (DESIGN §15)
-- desc: graham/param-mintime
+- desc: fhir-tests/param-mintime
   schemas: []
   _loadProfile:
   - param-mintime-profile.json
@@ -2348,7 +2329,7 @@ tests:
       valueTime: '14:12:00'
   skip: true
   _skipReason: no java outcome (DESIGN §15)
-- desc: graham/obs-max-decimal
+- desc: fhir-tests/obs-max-decimal
   schemas: []
   _loadProfile:
   - obs-max-decimal-profile.json
@@ -2365,7 +2346,7 @@ tests:
       code: mg
   skip: true
   _skipReason: no java outcome (DESIGN §15)
-- desc: graham/toplevel-minvalueduration-pass
+- desc: fhir-tests/toplevel-minvalueduration-pass
   schemas: []
   _loadProfile:
   - toplevel-minvalueduration-profile.json
@@ -2374,16 +2355,19 @@ tests:
     id: test-minvalue-duration-pass
     birthDate: '1950-01-01'
   valid: true
-- desc: graham/toplevel-minvalueduration-fail
+- desc: fhir-tests/toplevel-minvalueduration-fail
   schemas: []
   _loadProfile:
   - toplevel-minvalueduration-profile.json
+  _applyProfile: true
+  skip: true
+  _skipReason: minValueDuration/maxValueDuration constraints not enforced
+    by our validator (DESIGN §15 — temporal-value constraints are a future feature)
   data:
     resourceType: Patient
     id: test-minvalue-duration-fail
     birthDate: '1850-01-01'
-  valid: true
-- desc: graham/toplevel-maxvalueduration-pass
+- desc: fhir-tests/toplevel-maxvalueduration-pass
   schemas: []
   _loadProfile:
   - toplevel-maxvalueduration-profile.json
@@ -2392,16 +2376,19 @@ tests:
     id: test-maxvalue-duration-pass
     birthDate: '2020-01-01'
   valid: true
-- desc: graham/toplevel-maxvalueduration-fail
+- desc: fhir-tests/toplevel-maxvalueduration-fail
   schemas: []
   _loadProfile:
   - toplevel-maxvalueduration-profile.json
+  _applyProfile: true
+  skip: true
+  _skipReason: minValueDuration/maxValueDuration constraints not enforced
+    by our validator (DESIGN §15 — temporal-value constraints are a future feature)
   data:
     resourceType: Patient
     id: test-maxvalue-duration-fail
     birthDate: '2100-01-01'
-  valid: true
-- desc: graham/media-mime-type-tx
+- desc: fhir-tests/media-mime-type-tx
   schemas: []
   _loadProfile:
   - media-mime-type-profile.json
@@ -2414,7 +2401,7 @@ tests:
       data: SGVsbG8gV29ybGQ=
   skip: true
   _skipReason: no java outcome (DESIGN §15)
-- desc: graham/media-mime-type-notx
+- desc: fhir-tests/media-mime-type-notx
   schemas: []
   _loadProfile:
   - media-mime-type-profile.json

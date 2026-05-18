@@ -1,5 +1,5 @@
 suite: '@default slice — fallback overlay for unmatched items'
-# A slice named `@default` (sansara convention) acts as a catch-all overlay
+# A slice named `@default` (aidbox convention) acts as a catch-all overlay
 # for items that don't match any other slice. Its schema is applied just
 # like a normal slice's schema (with fs301/fs101/etc firing normally on
 # constraint violations). It does NOT consume a discriminator match —

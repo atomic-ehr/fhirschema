@@ -5,7 +5,10 @@
       "Bash(bun tsc:*)",
       "Bash(bun test:*)",
       "Bash(node:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(zulip:*)",
+      "WebFetch(domain:chat.fhir.org)",
+      "WebFetch(domain:hl7.org)"
     ],
     "deny": [],
     "ask": []

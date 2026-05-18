@@ -813,12 +813,24 @@ For each array element with `slicing`:
 3. After all items: for each slice, if count < min or count > max → fs902.
 ```
 
-### 10.4 Reslicing
+### 10.4 Nested slicing vs FHIR "reslicing"
 
-A slice's `schema.elements[...]` may itself contain a `slicing` block. The
-algorithm is recursive — slice classification on the inner array uses the
-same matching rules. No special data structure needed; nested `slicing`
-falls out naturally.
+Two distinct features share confusing names.
+
+- **Nested slicing (our `slicing-nested.yaml`)**: a slice's
+  `schema.elements[...]` may itself contain a `slicing` block. The
+  algorithm is recursive — slice classification on the inner array
+  uses the same matching rules. No special data structure needed;
+  nested `slicing` falls out naturally.
+
+- **Reslicing (FHIR-spec, our `slicing-inherited.yaml`)**: a derived
+  profile sub-divides a parent slice via slash notation (e.g.
+  `example/example1`) with `sliceIsConstraining: true`. The child
+  slice merges into the same-named parent slice; constraints
+  (min/max/value) tighten as in §5.4. We implement merge-not-replace —
+  the parent slice's discriminators/match are kept and the child's
+  refinements layer on top. The R4 spec text is ambiguous on this
+  point and implementations differ; merge is our choice.
 
 ### 10.5 Inheritance of slicing
 
@@ -827,6 +839,22 @@ is **unioned** across overlays: a slice defined in the parent and a new
 slice defined in the child both apply. A slice with the same name as a
 parent slice **overrides** it (last-write-wins on the slice schema; min/max
 take the tightest bound as in §5.4).
+
+### 10.6 Implicit IR defaults
+
+The FHIR R4 SD spec makes `slicing.rules` cardinality 1..1. Our IR is
+permissive and treats absent fields as:
+
+- absent `rules` → `open`
+- absent `ordered` (when `rules: openAtEnd`) → `true` (openAtEnd
+  implicitly requires ordering per the slicing-rules value set)
+- absent `ordered` (other rules) → `false`
+
+`@default` slice support diverges from spec: the spec restricts
+`@default` to `rules: closed`, but our walker accepts `@default` under
+any rules and routes unmatched items into it. This is intentional —
+it makes the IR composable when a base profile is open and a derived
+profile adds `@default` to capture the residue.
 
 ---
 
@@ -879,7 +907,7 @@ Two data-driven hooks at `validate()` entry:
 
 If neither resolves and no schemas were passed in `schemas[]`, the validator
 returns `{ valid: true, issues: [] }` silently — matching the
-`without-strict-mode` behavior of the reference validators (sansara
+`without-strict-mode` behavior of the reference validators (aidbox
 `unknown-schemas-test`). The `options.strict: true` flag (see §5.1) flips
 both unresolved-`resourceType` and unresolved-`meta.profile` into hard
 `fs701` errors.
@@ -897,7 +925,7 @@ DiagnosticReport, not against Patient.contained's element-def.
 Idempotent across nesting depth (contained inside contained, Bundle in
 Bundle). Fall-through: if `ctx.resolve(resourceType)` returns nothing, the
 outer walk continues normally — unknown resource types don't trigger a
-sub-walk (matches sansara's non-strict default).
+sub-walk (matches aidbox's non-strict default).
 
 ---
 
@@ -1024,11 +1052,16 @@ Literal validation (JSON type correct, value invalid):
 
 | Code  | Name                     | Severity | Description |
 |-------|--------------------------|----------|-------------|
-| fs501 | invalid-code-for-binding | error    | Code not in required value set |
-| fs502 | code-not-in-preferred    | warning  | Code not in preferred value set |
-| fs503 | code-not-in-extensible   | warning  | Code not in extensible value set |
-| fs504 | invalid-display          | error    | Coding.display doesn't match canonical CodeSystem display |
-| fs904 | unmatched-not-at-end     | error    | `rules: openAtEnd` violated: matched item appears after an unmatched one |
+| fs501 | invalid-code-for-binding | error       | Code not in required value set |
+| fs502 | code-not-in-preferred    | information | Code not in preferred value set |
+| fs503 | code-not-in-extensible   | warning     | Code not in extensible value set |
+| fs504 | invalid-display          | error       | Coding.display doesn't match canonical CodeSystem display |
+
+Note: fs504 is emitted as **error**, which is stricter than the HAPI/Java
+reference convention (warning). The Coding-datatype spec uses SHALL
+language so error is defensible; a future flag could relax to warning
+for HAPI parity. Tests should pin `severity` explicitly when asserting
+fs504.
 
 ### fs6xx — Constraints
 
@@ -1057,6 +1090,20 @@ Literal validation (JSON type correct, value invalid):
 | fs901 | slice-not-matched | Item matched zero (closed) or multiple slices |
 | fs902 | slice-cardinality | Per-slice min/max violated |
 | fs903 | slice-out-of-order | `slicing.ordered: true` violated — item appears before its declared slice |
+| fs904 | slice-after-openend | Matched item appears after an unmatched item under `rules: openAtEnd` |
+
+Notes:
+- **fs901 overload**: this code covers both "unmatched under closed rules"
+  AND "item ambiguously matches multiple defined slices". The latter is a
+  profile-authoring issue per spec (discriminators should make slices
+  unique), not a data-validation outcome — we treat it as a data error
+  because the runtime ambiguity is what we can detect.
+- **openAtEnd implicit ordering**: per FHIR R4
+  (`valueset-resource-slicing-rules`), openAtEnd requires the slices to
+  be ordered. Our IR treats openAtEnd as implicitly ordered even when
+  `ordered: true` is absent on the slicing block.
+- **`slicing.rules` default**: FHIR R4 makes `slicing.rules` 1..1. When
+  the IR omits it, our walker treats the absent rule as `open`.
 
 ### fs10xx — References (deferred)
 
@@ -1073,6 +1120,14 @@ Literal validation (JSON type correct, value invalid):
 |--------|-----------------------|----------|----------------------------------------------------------------------------|
 | fs1201 | bundle-duplicate-id   | error    | Two Bundle entries share `resourceType/id` with distinct fullUrls          |
 | fs1202 | bundle-type-structure | error    | Bundle.type=document → first must be Composition; =message → MessageHeader |
+
+Notes:
+- **fs1201 vs bdl-5**: the literal text of bdl-5 in R4 targets fullUrl
+  uniqueness, not Type/id uniqueness. fs1201 is a stricter project rule
+  that matches HAPI behaviour and the upstream Java validator: two
+  entries with the same logical `Type/id` but distinct fullUrls represent
+  two different logical resources sharing an id, which makes intra-bundle
+  reference resolution ambiguous (also fires fs1004 warning).
 
 ### fs11xx — Extensions
 
@@ -1165,11 +1220,6 @@ priority order:
   `extensions: { [url]: ... }` convenience map (sibling to `slicing`) is
   still TODO — validator currently uses the full `slicing` block for
   extension URL routing.
-- **Constraint context variables.** Pluggable FHIRPath engine doesn't yet
-  receive `%resource`, `%context` env. Some real-world R4 invariants (dom-3,
-  dom-4) reference them and may fire spuriously at root scope; affected
-  sansara cases are `skip: true` with explicit notes in
-  test/cases/validator/constraints.yaml.
 - **OperationOutcome adapter.** Caller-side adapter from `ValidationIssue[]`
   to `OperationOutcome` for FHIR-facing APIs.
 - **Permissive JSON shape (Java parity).** The HL7 Java reference
@@ -1183,19 +1233,8 @@ priority order:
   `options.permissiveArrayShape: true` (symmetric to `options.strict`).
   Until then, Graham tests that depend on Java's permissive scalar
   acceptance are skipped with explicit notes
-  (see [test/cases/imports/GRAHAM.md](test/cases/imports/GRAHAM.md) →
+  (see [test/cases/imports/FHIR-TEST-CASES.md](test/cases/imports/FHIR-TEST-CASES.md) →
   "Java permissive defaults").
-
-- **`Reference.refers: ["Resource"]` is a meta-type (allow-any).** FHIR
-  uses `Resource` as the abstract base type meaning "any resource".
-  When the `refers` list contains `Resource`, the reference target check
-  (`fs1001`) should accept any concrete resource type, not require a
-  literal `Resource` segment in the URL. We currently do strict equality
-  on `parseReferenceType(ref) ∈ allowed`, so `refers: ["Resource"]` +
-  `reference: "Patient/1"` fires `fs1001` while Java accepts it.
-  Affected Graham cases: `ref-policy-default-r4`, `ref-policy-default-r5`,
-  `bundle-document-versioned-references-good`. Fix: special-case `Resource`
-  (and `DomainResource`) in `checkReferenceTarget` as allow-any.
 
 - **`fhir_comments` non-string entries.** We tolerate `fhir_comments` as
   a meta-key everywhere (matches Java's default behavior). But Java has
@@ -1211,13 +1250,18 @@ priority order:
   only honor the literal `refers` list; profile-via-FHIRPath narrowing
   isn't supported.
 
-- **R4 `Resource.id` typing.** In R4 SDs, `Resource.id` is typed as
-  `string` plus a `typeCode` extension carrying the actual `id`
-  constraint. Our translator doesn't lift the typeCode extension, so
-  R4-loaded id fields validate as plain strings (underscore, length>64,
-  etc. don't fire `fs110`). R5 normalized this so the equivalent R5
-  cases work. Affected: Graham `resource-invalid-id-3` (R4-only),
-  `patient-id-bad-*` R4 variants. Translator follow-up.
+- **R4 `Resource.id` typing.** In R4 SDs, `Resource.id` is declared with
+  `code: "http://hl7.org/fhirpath/System.String"` and
+  `extension.valueUrl: "string"` — the typeCode extension says `"string"`,
+  not `"id"`. The translator correctly extracts what the SD encodes, so
+  R4 ids validate as plain strings (no `fs110` on underscore, length>64,
+  slash, etc.). The R4 spec **text** mandates id-pattern conformance, but
+  this isn't reflected in the SD; R5 normalized this to `type: "id"`.
+  To match Java reference-validator behaviour on R4 ids, the translator
+  would need a version-aware shim: when `fhirVersion` is 4.x AND the
+  element path is `Resource.id`, override the type to `id`. Affected:
+  upstream `resource-invalid-id-3` (R4-only), `patient-id-bad-*` R4
+  variants — currently `skip: true`.
 
 - **Extension-only primitive with required binding.** A primitive field
   with `binding.strength: required` cannot be satisfied by `_field`
@@ -1228,12 +1272,46 @@ priority order:
   `walkObject`'s shadow-handling branch: when a `_field` is encountered
   with no corresponding value, we look up the field's binding and emit
   `fs501` if strength is `required` (no terminology engine required —
-  the rule is purely about value presence). Sansara takes the
+  the rule is purely about value presence). Aidbox takes the
   permissive interpretation here (extension-only satisfies because its
   binding check is value-driven); we diverge for spec compliance. See
   `test/cases/validator/real-resources.yaml` ("ServiceRequest with
-  primitive extension on status/intent") and `graham-r4-bad.yaml`
+  primitive extension on status/intent") and `fhir-tests-r4-bad.yaml`
   (allergy `_category`).
+
+- **Profile-level Identifier-value pattern constraint.** Profiles that
+  refine `Identifier.value` with a string-length or regex pattern
+  (e.g. minimum-length 20 digits in the `jv-patient` upstream test) do
+  not currently produce a validation issue. Affected: `fhir-tests/jv-patient-bad`.
+
+- **min/maxValueDuration constraints.** Temporal-value constraints
+  asserted on a date/dateTime element (`minValueDuration`,
+  `maxValueDuration` in an SD differential) are not enforced. Affected:
+  `fhir-tests/toplevel-{min,max}valueduration-fail`. Future feature.
+
+### 15.1 Stricter-than-spec behaviour (documented)
+
+Cases where the validator deliberately rejects input that the literal
+FHIR R4 spec would permit, because the rejection matches widely-shared
+canonical-form conventions and HAPI/Java reference behaviour.
+
+- **dateTime / date calendar validation.** The R4 dateTime/date regex
+  permits any day 01–31 in any month and Feb 29 in any year — i.e. no
+  semantic month-length or leap-year check. Our validator additionally
+  rejects calendar-impossible dates (`2024-02-31`, `2023-02-29`) with
+  `fs108` / `fs107`. Tested in `primitives.yaml`.
+
+- **`integer64` "-0".** The R5 integer64 regex
+  `-?([0]|([1-9][0-9]*))` technically matches `-0`. We reject `-0` on
+  canonical-form grounds (zero has only one normal representation).
+  Tested in `primitives.yaml`.
+
+- **Inactive codes in a strict-VS context.** When a ValueSet has
+  `inactive=false` filter (excluding inactive concepts) and the
+  instance code is inactive in its CodeSystem, the strict reading of
+  the filter would mandate a binding failure. We follow the R5 spec
+  note that inactive-code usage is warning-only by design; the
+  validator does not emit `fs501` here.
 
 The current implementation also uses placeholder error codes
 (`FS-001..FS-041`) instead of the canonical `fsNNN` scheme. Bringing the
@@ -1253,19 +1331,19 @@ implementation gains the surface to pass them.
 
 Two registries track per-case import progress against each source:
 
-- **[test/cases/imports/SANSARA.md](test/cases/imports/SANSARA.md)** — every
-  `deftest` / `testing` block in sansara's fhir-clj validator suite, marked
+- **[test/cases/imports/AIDBOX.md](test/cases/imports/AIDBOX.md)** — every
+  `deftest` / `testing` block in aidbox's fhir-clj validator suite, marked
   imported / pending / N/A (with reason).
-- **[test/cases/imports/GRAHAM.md](test/cases/imports/GRAHAM.md)** — Graham
-  Grieve's fhir-test-cases manifest, broken down by module + the
+- **[test/cases/imports/FHIR-TEST-CASES.md](test/cases/imports/FHIR-TEST-CASES.md)** — the
+  HL7 fhir-test-cases manifest, broken down by module + the
   importable-today subset + a java-message → `fsNNN` mapping table.
 
 Update these when importing.
 
 ### 16.1 External sources
 
-- **sansara/fhir-clj validator tests**
-  ([../sansara/box/libs/fhir-clj/test/fhir/validator/core_test.clj](../sansara/box/libs/fhir-clj/test/fhir/validator/core_test.clj),
+- **aidbox/fhir-clj validator tests**
+  ([../aidbox/box/libs/fhir-clj/test/fhir/validator/core_test.clj](../aidbox/box/libs/fhir-clj/test/fhir/validator/core_test.clj),
   ~3,400 lines). Internal Atomic-EHR reference validator written in Clojure.
   Uses `matcho` matchers against full FHIR R4/R5 package contexts. Each test
   case is rewritten by hand into the YAML format here when the relevant
@@ -1281,8 +1359,8 @@ Update these when importing.
   pick a test, rewrite as a YAML case, map FHIR severity/issue-type to our
   `fsNNN`.
 
-- **sansara FHIRSchema fragments**
-  ([../sansara/box/libs/fhir-clj/resources/fhir-schemas-samples/](../sansara/box/libs/fhir-clj/resources/fhir-schemas-samples/)).
+- **aidbox FHIRSchema fragments**
+  ([../aidbox/box/libs/fhir-clj/resources/fhir-schemas-samples/](../aidbox/box/libs/fhir-clj/resources/fhir-schemas-samples/)).
   Hand-written small FHIRSchema profiles (patient with constraint,
   us-core-patient extension, slicing variants). Reusable as fixtures for
   inheritance and slicing tests.
@@ -1294,32 +1372,32 @@ expected outcome:
 
 | Feature in import case | Required local capability | Status |
 |------------------------|----------------------------|--------|
-| Plain primitive checks | done | imported from sansara `primitives-test` |
+| Plain primitive checks | done | imported from aidbox `primitives-test` |
 | Structure / cardinality | done | hand-seeded |
 | Inheritance / SchemaSet | done | hand-seeded |
 | Primitive extensions | done | hand-seeded |
-| Real-resource validation (R4 fixtures + meta.profile) | done | sansara `required-element` partly imported |
+| Real-resource validation (R4 fixtures + meta.profile) | done | aidbox `required-element` partly imported |
 | Pattern matching (`pattern[X]`, fs205, deep-partial) | done | hand-seeded |
 | Fixed value matching (`fixed[X]`, fs206, exact equality) | done | hand-seeded |
-| Choice types `value[x]` (fs801, fs802) | done | hand-seeded + sansara `validation-c/poly` |
-| Slicing (collection, fs901, fs902) | done | hand-seeded + sansara `slicing-validation/Simple slicings` + `extension-test` |
-| Cardinality on profiles | done | sansara `cardinality-test` |
-| Empty arrays / empty composites (FHIR no-empty rule) | done | sansara `validation-c/empty complex type` |
-| US Core profile validation | done (both valid + invalid sub-extension after F4) | sansara `extension-test` |
+| Choice types `value[x]` (fs801, fs802) | done | hand-seeded + aidbox `validation-c/poly` |
+| Slicing (collection, fs901, fs902) | done | hand-seeded + aidbox `slicing-validation/Simple slicings` + `extension-test` |
+| Cardinality on profiles | done | aidbox `cardinality-test` |
+| Empty arrays / empty composites (FHIR no-empty rule) | done | aidbox `validation-c/empty complex type` |
+| US Core profile validation | done (both valid + invalid sub-extension after F4) | aidbox `extension-test` |
 | Graham fhir-test-cases (HL7 R5 curated) | done | 5 hand-picked cases (patient-good, group-choice-good, group-minimal, list-empty2, group-choice-bad1) |
-| Inner-resource walk (Bundle.entry, Patient.contained) | done | sansara `validation-c/Bundle` + `contained` (simplified) |
-| Strict mode (`options.strict: true`) | done | sansara `unknown-schemas-test/profile` (both strict + non-strict) |
+| Inner-resource walk (Bundle.entry, Patient.contained) | done | aidbox `validation-c/Bundle` + `contained` (simplified) |
+| Strict mode (`options.strict: true`) | done | aidbox `unknown-schemas-test/profile` (both strict + non-strict) |
 | Reference target sync check (fs1001) | done | hand-crafted (Graham references module uses external `java/*` files) |
 | Resource `id` strict validation | done | Graham `patient-id-bad-*`, `resource-invalid-id-*` (no code changes needed) |
 | Excluded keys (`max: 0` → `excluded[]`, fs207) | done | hand-crafted; translator hoists `max="0"` to parent's `excluded[]` |
-| Ordered slicing (fs903) | done | hand-crafted; sansara `slicing-validation/ordered slicing` needs profile fixtures |
-| `@default` slice (fallback overlay for unmatched items) | done | hand-crafted; sansara `slicing-validation/@default slice` needs profile fixtures |
-| FHIRPath constraints (fs601) — pluggable engine | done | hand-crafted (7) + sansara `Patient.contact pat-1` + `Organization org-1` |
+| Ordered slicing (fs903) | done | hand-crafted; aidbox `slicing-validation/ordered slicing` needs profile fixtures |
+| `@default` slice (fallback overlay for unmatched items) | done | hand-crafted; aidbox `slicing-validation/@default slice` needs profile fixtures |
+| FHIRPath constraints (fs601) — pluggable engine | done | hand-crafted (7) + aidbox `Patient.contact pat-1` + `Organization org-1` |
 | Top-level root constraints (translator gap) | done | unlocks R4 invariants on root (dom-*, org-*, etc.) |
 | Issue severity (`'error' \| 'warning' \| 'information'`) | done | constraints carry their declared severity; runner asserts only errors by default |
 | Terminology bindings (fs501/502/503) — pluggable | done | hand-crafted (7) |
 | Reference resolution (fs1002) — pluggable | done | hand-crafted (4); fragment/urn skipped |
-| Extension URL dereferencing (deep validation) | done | sansara us-core-race invalid sub-extension now passes |
+| Extension URL dereferencing (deep validation) | done | aidbox us-core-race invalid sub-extension now passes |
 | Reslicing (slicing inside slice.schema) | done | recursive walk handles it; hand-crafted (2) |
 | openAtEnd slicing (fs904) | done | hand-crafted (5) |
 | modifierExtension MU rule (fs1102) | done | hand-crafted (3) |
@@ -1333,7 +1411,7 @@ expected outcome:
 When adding a new validator capability:
 
 1. Implement the capability.
-2. Look up sansara/fhir-clj tests that exercise it; pick the smallest 3-5.
+2. Look up aidbox/fhir-clj tests that exercise it; pick the smallest 3-5.
 3. Rewrite as YAML cases under `test/cases/validator/<topic>.yaml`.
 4. Land both in the same PR.
 
@@ -1352,8 +1430,8 @@ the build pipeline downloads and translates `hl7.fhir.r4.core` on demand:
 - Refresh: `rm -rf test/fixtures && bun run prepare-fixtures`.
 
 Current PACKAGES list ([scripts/prepare-fixtures.ts](scripts/prepare-fixtures.ts)):
-- `hl7.fhir.r4.core@4.0.1` — 638 schemas (used by most sansara imports)
-- `hl7.fhir.us.core@5.0.1` — 51 schemas (used by sansara `extension-test`)
+- `hl7.fhir.r4.core@4.0.1` — 638 schemas (used by most aidbox imports)
+- `hl7.fhir.us.core@5.0.1` — 51 schemas (used by aidbox `extension-test`)
 - `hl7.fhir.r5.core@5.0.0` — 286 schemas (used by Graham R5 fhir-test-cases samples)
 
 Each test suite file selects which packages it needs via `defaults.usePackages: ['hl7.fhir.r4.core', ...]` or the legacy shortcut `defaults.useR4: true`.

@@ -2,7 +2,7 @@ suite: Graham fhir-test-cases — IG-package (R4)
 defaults:
   useR4: true
 tests:
-- desc: graham/dr-eh
+- desc: fhir-tests/dr-eh
   schemas: []
   data:
     resourceType: DocumentReference
@@ -51,7 +51,7 @@ tests:
   - hl7.fhir.us.core@3.1.0
   skip: true
   _skipReason: fs1001 not firing on Reference target check inside loaded profile chain; needs investigation. (DESIGN §15)
-- desc: graham/us-docref.json
+- desc: fhir-tests/us-docref.json
   schemas: []
   data:
     resourceType: DocumentReference
@@ -87,7 +87,7 @@ tests:
   issues:
   - code: fs501
   - code: fs501
-- desc: graham/us-cond
+- desc: fhir-tests/us-cond
   schemas: []
   data:
     resourceType: Condition
@@ -131,7 +131,7 @@ tests:
   _usePackages:
   - hl7.fhir.us.core@3.1.1
   valid: true
-- desc: graham/obs-de
+- desc: fhir-tests/obs-de
   schemas: []
   data:
     resourceType: Observation
@@ -206,7 +206,7 @@ tests:
   skip: true
   _skipReason: fs206 not firing on profile-defined fixed value in nested Observation.component; checkFixed misses profile-loaded context. (DESIGN
     §15)
-- desc: graham/obs-de-notx
+- desc: fhir-tests/obs-de-notx
   schemas: []
   data:
     resourceType: Observation
@@ -280,7 +280,7 @@ tests:
   - kbv.mio.diga@1.0.0-festlegung
   skip: true
   _skipReason: Same as obs-de + fs1001 not firing on Reference target check. (DESIGN §15)
-- desc: graham/med-example
+- desc: fhir-tests/med-example
   schemas: []
   data:
     resourceType: Bundle
@@ -338,7 +338,7 @@ tests:
   - de.basisprofil.r4@1.0.0
   skip: true
   _skipReason: 'Combination: missing fs206 + surprise fs101 (number-as-code permissive coercion). (DESIGN §15 → permissive coercion)'
-- desc: graham/profile-compliesWith
+- desc: fhir-tests/profile-compliesWith
   schemas: []
   data:
     resourceType: StructureDefinition
@@ -3877,7 +3877,7 @@ tests:
   _usePackages:
   - hl7.fhir.us.core@8.0.0-ballot
   valid: true
-- desc: graham/bnd-slicing-cgm
+- desc: fhir-tests/bnd-slicing-cgm
   schemas: []
   data:
     resourceType: Bundle
@@ -4165,7 +4165,7 @@ tests:
   - hl7.fhir.uv.cgm@1.0.0-ballot
   _applyProfileUrl: http://hl7.org/fhir/uv/cgm/StructureDefinition/cgm-data-submission-bundle
   valid: true
-- desc: graham/valueset-dependency-version-1
+- desc: fhir-tests/valueset-dependency-version-1
   schemas: []
   data:
     resourceType: Condition
@@ -4187,7 +4187,7 @@ tests:
   - hl7.fhir.test.verA@2.0.0
   - hl7.fhir.test.verB@1.0.0
   valid: true
-- desc: graham/valueset-dependency-version-2
+- desc: fhir-tests/valueset-dependency-version-2
   schemas: []
   data:
     resourceType: Condition
@@ -4209,7 +4209,7 @@ tests:
   - hl7.fhir.test.verA@2.0.0
   - hl7.fhir.test.verB@2.0.0
   valid: true
-- desc: graham/valueset-dependency-version-3
+- desc: fhir-tests/valueset-dependency-version-3
   schemas: []
   data:
     resourceType: Condition
@@ -4231,7 +4231,7 @@ tests:
   - hl7.fhir.test.verA@2.0.0
   - hl7.fhir.test.verB@1.0.0
   valid: true
-- desc: graham/valueset-dependency-version-4
+- desc: fhir-tests/valueset-dependency-version-4
   schemas: []
   data:
     resourceType: Condition
@@ -4253,7 +4253,7 @@ tests:
   - hl7.fhir.test.verA@2.0.0
   - hl7.fhir.test.verB@2.0.0
   valid: true
-- desc: graham/valueset-dependency-version-5
+- desc: fhir-tests/valueset-dependency-version-5
   schemas: []
   data:
     resourceType: Condition
@@ -4275,7 +4275,7 @@ tests:
   - hl7.fhir.test.verA@2.0.0
   - hl7.fhir.test.verC@1.0.0
   valid: true
-- desc: graham/valueset-dependency-version-6
+- desc: fhir-tests/valueset-dependency-version-6
   schemas: []
   data:
     resourceType: Condition
@@ -4297,7 +4297,7 @@ tests:
   - hl7.fhir.test.verA@2.0.0
   - hl7.fhir.test.verC@1.0.0
   valid: true
-- desc: graham/condition-with-extensions-on-pattern
+- desc: fhir-tests/condition-with-extensions-on-pattern
   schemas: []
   data:
     resourceType: Condition
@@ -4339,7 +4339,7 @@ tests:
   _skipReason: 'unmappable Java messages outs=["ERROR: Unknown code ''A54.4† M73.04*'' in the CodeSystem ''http://fhir.de/CodeSystem/dimdi/icd-10-gm''
     version ''2020''", ''WARNING: Constraint failed: icd-5: \''Wenn die Diagnosesicherheit "G (Gesichert)" verwendet wird, dann muss clinicalStatus
     auf "active" und verificationStatus auf "confirmed" gesetzt werden.\''''] (DESIGN §15)'
-- desc: graham/no.gastronet
+- desc: fhir-tests/no.gastronet
   schemas: []
   data:
     resourceType: Bundle
@@ -4695,7 +4695,7 @@ tests:
   _skipReason: 'unmappable Java messages outs=[''INFORMATION: Reference to draft CodeSystem http://ehelse.no/fhir/CodeSystem/colonoscopy-model-specific-codes'',
     "ERROR: Unknown code ''10821000202101'' in the CodeSystem ''http://snomed.info/sct'' version ''http://snomed.info/sct/900000000000207008/version/20250201''
     (International Edition)"] (DESIGN §15)'
-- desc: graham/no.gastronet.message-limit
+- desc: fhir-tests/no.gastronet.message-limit
   schemas: []
   data:
     resourceType: Bundle
@@ -5047,7 +5047,7 @@ tests:
         name: Test Clinic
   skip: true
   _skipReason: no java outcome (DESIGN §15)
-- desc: graham/mimic
+- desc: fhir-tests/mimic
   schemas: []
   data:
     id: 59bbcf99-d3c2-5224-945e-1d35f73d1ccc
@@ -5091,7 +5091,7 @@ tests:
   _skipReason: 'unmappable Java messages outs=["WARNING: A definition for CodeSystem ''http://fhir.mimic.mit.edu/CodeSystem/admission-class''
     could not be found, so the code cannot be validated", "WARNING: A definition for CodeSystem ''http://fhir.mimic.mit.edu/CodeSystem/admission-type''
     could not be found, so the code cannot be validated"] (DESIGN §15)'
-- desc: graham/bundle-urn
+- desc: fhir-tests/bundle-urn
   schemas: []
   data:
     resourceType: Bundle
@@ -5259,7 +5259,7 @@ tests:
   _skipReason: 'unmappable Java messages outs=["INFORMATION: The URL value ''#jFE6f3a0zoZFHfj5'' might be wrong because it appears to point to
     an internal target, but there is no matching target", "INFORMATION: The URL value ''#wOHXO3dHsmGHTjyu'' might be wrong because it appears
     to point to an internal target, but there is no matching target"] (DESIGN §15)'
-- desc: graham/ips-htmlrefs-forwards
+- desc: fhir-tests/ips-htmlrefs-forwards
   schemas: []
   data:
     resourceType: Bundle
@@ -5433,7 +5433,7 @@ tests:
     elements and attributes described in chapters 7-11 (except section 4 of chapter 9) and 15 of the HTML 4.0 standard, <a> elements (either name
     or href), images and internally contained style attributes''", "ERROR: Invalid attribute name in the XHTML (''idref'' on ''tr'')"] (DESIGN
     §15)'
-- desc: graham/ips-link
+- desc: fhir-tests/ips-link
   schemas: []
   data:
     resourceType: Bundle
@@ -5796,7 +5796,7 @@ tests:
   skip: true
   _skipReason: 'unmappable Java messages outs=["ERROR: The html id ''AAA1234XJ'' was not found in the xhtml", "ERROR: The target of the textLink
     data reference ''#AAA1234XJ'' was not found in the resource"] (DESIGN §15)'
-- desc: graham/scoring-test
+- desc: fhir-tests/scoring-test
   schemas: []
   data:
     resourceType: Patient
@@ -5987,7 +5987,7 @@ tests:
     was not found in the value set \''Detailed Ethnicity Including Absence Reasons\'' (http://cts.nlm.nih.gov/fhir/ValueSet/2.16.840.1.113883.4.642.40.2.48.1|20250419),
     and a code from this value set is required: Cannot process resource http://cts.nlm.nih.gov/fhir/ValueSet/2.16.840.1.114222.4.11.877|20240606
     at "exclude[0].filter" due to the presence of the modifier extension vsacOpModifier''] (DESIGN §15)'
-- desc: graham/sdc-inv-1
+- desc: fhir-tests/sdc-inv-1
   schemas: []
   data:
     resourceType: Questionnaire

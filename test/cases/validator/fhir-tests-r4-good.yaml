@@ -2,7 +2,7 @@ suite: Graham fhir-test-cases — R4 good cases
 defaults:
   useR4: true
 tests:
-- desc: graham/patient-example-ra4
+- desc: fhir-tests/patient-example-ra4
   schemas: []
   data:
     resourceType: Patient
@@ -45,7 +45,7 @@ tests:
       postalCode: '74117'
       country: USA
   valid: true
-- desc: graham/dr-example-org-2
+- desc: fhir-tests/dr-example-org-2
   schemas: []
   data:
     resourceType: DocumentReference
@@ -58,7 +58,7 @@ tests:
         title: Physical
         creation: '2005-12-24'
   valid: true
-- desc: graham/care-plan
+- desc: fhir-tests/care-plan
   schemas: []
   data:
     resourceType: CarePlan
@@ -94,7 +94,7 @@ tests:
         description: The first antenatal encounter. This is where a detailed physical examination is performed.             and the pregnanacy
           discussed with the mother-to-be.
   valid: true
-- desc: graham/line-pattern-card-test
+- desc: fhir-tests/line-pattern-card-test
   schemas: []
   data:
     resourceType: Patient
@@ -130,14 +130,14 @@ tests:
       postalCode: '98764'
       country: DE
   valid: true
-- desc: graham/resource-invalid-id-0
+- desc: fhir-tests/resource-invalid-id-0
   schemas: []
   data:
     resourceType: Location
     id: foo-bar
     name: A Location
   valid: true
-- desc: graham/resource-invalid-eid-0
+- desc: fhir-tests/resource-invalid-eid-0
   schemas: []
   data:
     resourceType: Location
@@ -148,7 +148,7 @@ tests:
       longitude: 3.24
       latitude: 3.24
   valid: true
-- desc: graham/resource-invalid-eid-1
+- desc: fhir-tests/resource-invalid-eid-1
   schemas: []
   data:
     resourceType: Location
@@ -159,7 +159,7 @@ tests:
       longitude: 3.24
       latitude: 3.24
   valid: true
-- desc: graham/document-manifest
+- desc: fhir-tests/document-manifest
   schemas: []
   data:
     resourceType: DocumentManifest
@@ -283,12 +283,12 @@ tests:
     content:
     - reference: '#2'
   valid: true
-- desc: graham/params-empty-r4
+- desc: fhir-tests/params-empty-r4
   schemas: []
   data:
     resourceType: Parameters
   valid: true
-- desc: graham/structureDefinition-11179-objectClass-R4
+- desc: fhir-tests/structureDefinition-11179-objectClass-R4
   schemas: []
   data:
     resourceType: StructureDefinition
@@ -525,7 +525,7 @@ tests:
             boundaries and meaning and whose properties and behavior follow the same rules; e.g. Person, Prescription, Encounter, etc.
           valueSet: http://hl7.org/fhir/ValueSet/dataelement-sdcobjectclass
   valid: true
-- desc: graham/json-good
+- desc: fhir-tests/json-good
   schemas: []
   data:
     resourceType: Patient
@@ -544,7 +544,7 @@ tests:
       postalCode: '7468'
       country: AU
   valid: true
-- desc: graham/ai1
+- desc: fhir-tests/ai1
   schemas: []
   data:
     resourceType: Patient
@@ -560,7 +560,7 @@ tests:
     gender: male
     birthDate: '1980-01-01'
   valid: true
-- desc: graham/ai2
+- desc: fhir-tests/ai2
   schemas: []
   data:
     resourceType: Patient
@@ -568,7 +568,7 @@ tests:
     name:
     - family: Smith
   valid: true
-- desc: graham/sd-device
+- desc: fhir-tests/sd-device
   schemas: []
   data:
     resourceType: StructureDefinition
@@ -604,7 +604,7 @@ tests:
         min: 1
         fixedUri: http://hl7.org/fhir/sid/imei
   valid: true
-- desc: graham/bundle-document-versioned-references-good
+- desc: fhir-tests/bundle-document-versioned-references-good
   schemas: []
   data:
     resourceType: Bundle
@@ -690,7 +690,7 @@ tests:
     type: document
     timestamp: '2024-12-01T13:28:17.239+02:00'
   valid: true
-- desc: graham/contained
+- desc: fhir-tests/contained
   schemas: []
   data:
     resourceType: Questionnaire
@@ -707,7 +707,7 @@ tests:
       url: http://example.com/fhir/ValueSet/options-1
       status: draft
   valid: true
-- desc: graham/pat-security-good1
+- desc: fhir-tests/pat-security-good1
   schemas: []
   data:
     resourceType: Patient
@@ -718,7 +718,7 @@ tests:
     name:
     - text: Standard Name
   valid: true
-- desc: graham/pat-security-good2
+- desc: fhir-tests/pat-security-good2
   schemas: []
   data:
     resourceType: Patient
@@ -729,7 +729,7 @@ tests:
     name:
     - text: Standard <script>somescript</script>
   valid: true
-- desc: graham/pat-security-good3
+- desc: fhir-tests/pat-security-good3
   schemas: []
   data:
     resourceType: Patient
@@ -740,7 +740,7 @@ tests:
     name:
     - text: Standard Name
   valid: true
-- desc: graham/sp-diff-expression
+- desc: fhir-tests/sp-diff-expression
   schemas: []
   data:
     resourceType: SearchParameter
@@ -768,7 +768,7 @@ tests:
     - exact
     - contains
   valid: true
-- desc: graham/parameters-reference
+- desc: fhir-tests/parameters-reference
   schemas: []
   data:
     resourceType: Parameters
@@ -896,7 +896,7 @@ tests:
   valid: true
   skip: true
   _skipReason: 'Investigation pending: Java accepts identifier.value as number; we emit fs101 (expected string). (DESIGN §15 (TODO: triage))'
-- desc: graham/bundle-id-1
+- desc: fhir-tests/bundle-id-1
   schemas: []
   data:
     resourceType: Bundle
@@ -910,7 +910,7 @@ tests:
     total: 1
     type: searchset
   valid: true
-- desc: graham/contained-resource-bad-id-ignore
+- desc: fhir-tests/contained-resource-bad-id-ignore
   schemas: []
   data:
     resourceType: Condition
@@ -924,7 +924,7 @@ tests:
         given:
         - Patricia
   valid: true
-- desc: graham/bundle-profiles
+- desc: fhir-tests/bundle-profiles
   schemas: []
   data:
     resourceType: Bundle
@@ -983,7 +983,7 @@ tests:
           postalCode: '12345'
           country: Test
   valid: true
-- desc: graham/params-reference-fullUrl-extension
+- desc: fhir-tests/params-reference-fullUrl-extension
   schemas: []
   data:
     resourceType: Parameters
@@ -1007,7 +1007,7 @@ tests:
           - Jane
         gender: female
   valid: true
-- desc: graham/params-reference-transaction-bundle
+- desc: fhir-tests/params-reference-transaction-bundle
   schemas: []
   data:
     resourceType: Parameters
@@ -1036,7 +1036,7 @@ tests:
             gender: female
         type: transaction
   valid: true
-- desc: graham/params-reference-part-transaction
+- desc: fhir-tests/params-reference-part-transaction
   schemas: []
   data:
     resourceType: Parameters
@@ -1067,7 +1067,7 @@ tests:
               gender: female
           type: transaction
   valid: true
-- desc: graham/extension-version-restriction-range-r4
+- desc: fhir-tests/extension-version-restriction-range-r4
   schemas: []
   data:
     resourceType: Patient
@@ -1076,7 +1076,7 @@ tests:
     - url: http://hl7.org/fhir/test/StructureDefinition/version-range
       valueCode: something
   valid: true
-- desc: graham/extension-version-restriction-range-ctxt-r4
+- desc: fhir-tests/extension-version-restriction-range-ctxt-r4
   schemas: []
   data:
     resourceType: Patient
@@ -1085,7 +1085,7 @@ tests:
     - url: http://hl7.org/fhir/test/StructureDefinition/version-range
       valueCode: something
   valid: true
-- desc: graham/ref-policy-default-r4
+- desc: fhir-tests/ref-policy-default-r4
   schemas: []
   data:
     resourceType: Bundle
@@ -1154,7 +1154,7 @@ tests:
   skip: true
   _skipReason: Bundle.entry.fullUrl typo `uin:uuid:` (vs `urn:uuid:`) in upstream Graham data. Our fs1003 is correct; Java seemingly tolerates
     the typo. (DESIGN §15 → fs1003 absolute-URL rule)
-- desc: graham/ref-policy-default-apply-r5
+- desc: fhir-tests/ref-policy-default-apply-r5
   schemas: []
   data:
     resourceType: Bundle
@@ -1222,7 +1222,7 @@ tests:
   valid: true
   skip: true
   _skipReason: Same Graham data typo `uin:uuid:`. (DESIGN §15 → fs1003 absolute-URL rule)
-- desc: graham/standards-status-r4
+- desc: fhir-tests/standards-status-r4
   schemas: []
   data:
     resourceType: CodeSystem

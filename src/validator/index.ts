@@ -308,7 +308,7 @@ function walk(
       return;
     }
     // FHIR rule: empty arrays are not allowed in JSON. If a collection is
-    // empty the field must be omitted. (sansara: type "empty-value")
+    // empty the field must be omitted. (aidbox: type "empty-value")
     if (value.length === 0) {
       issues.push({ code: FS.TOO_FEW, path, expected: 'non-empty array', got: 0 });
       return;

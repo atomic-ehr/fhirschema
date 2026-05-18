@@ -2,7 +2,7 @@ suite: Graham fhir-test-cases — R4 bad cases
 defaults:
   useR4: true
 tests:
-- desc: 'graham/attachment-with-invalid-binary: Media.content.data not base64 → fs104'
+- desc: 'fhir-tests/attachment-with-invalid-binary: Media.content.data not base64 → fs104'
   schemas: []
   data:
     resourceType: Media
@@ -16,7 +16,7 @@ tests:
     path:
     - content
     - data
-- desc: 'graham/empty-array: DocumentReference.category[0].coding=[] → fs303'
+- desc: 'fhir-tests/empty-array: DocumentReference.category[0].coding=[] → fs303'
   schemas: []
   data:
     resourceType: DocumentReference
@@ -33,7 +33,7 @@ tests:
     - category
     - 0
     - coding
-- desc: 'graham/ai3: Patient with extra property `unknownElement` → fs201'
+- desc: 'fhir-tests/ai3: Patient with extra property `unknownElement` → fs201'
   schemas: []
   data:
     resourceType: Patient
@@ -53,7 +53,7 @@ tests:
   - code: fs201
     path:
     - unknownElement
-- desc: 'graham/ai4: Patient.birthDate = "not a date" → fs107'
+- desc: 'fhir-tests/ai4: Patient.birthDate = "not a date" → fs107'
   schemas: []
   data:
     resourceType: Patient
@@ -64,7 +64,7 @@ tests:
   - code: fs107
     path:
     - birthDate
-- desc: 'graham/allergy: _category extension-only with required binding → fs501'
+- desc: 'fhir-tests/allergy: _category extension-only with required binding → fs501'
   schemas: []
   data:
     resourceType: AllergyIntolerance
@@ -83,7 +83,7 @@ tests:
   - code: fs501
     path:
     - category
-- desc: 'graham/attachment-tx: data field not valid base64 → fs104'
+- desc: 'fhir-tests/attachment-tx: data field not valid base64 → fs104'
   schemas: []
   data:
     resourceType: Parameters
@@ -99,7 +99,7 @@ tests:
     - 0
     - valueAttachment
     - data
-- desc: graham/bundle-duplicate-id
+- desc: fhir-tests/bundle-duplicate-id
   schemas: []
   data:
     resourceType: Bundle
@@ -119,7 +119,7 @@ tests:
   issues:
   - code: fs1003
   - code: fs1003
-- desc: graham/resource-invalid-id-3
+- desc: fhir-tests/resource-invalid-id-3
   schemas: []
   data:
     resourceType: Location
@@ -136,7 +136,7 @@ tests:
   skip: true
   _skipReason: 'R4 translator gap: Resource.id typed `string` (typeCode extension not lifted); R5 normalized — equivalent R5 cases work. (DESIGN
     §15 → "R4 Resource.id typing")'
-- desc: graham/comments-4
+- desc: fhir-tests/comments-4
   schemas: []
   data:
     resourceType: Patient
@@ -149,7 +149,7 @@ tests:
   skip: true
   _skipReason: fhir_comments uniformly tolerated (matches Java default); Java strict-mode fs201 on non-string entries is not implemented. (DESIGN
     §15 → "fhir_comments non-string entries")
-- desc: graham/ai6
+- desc: fhir-tests/ai6
   schemas: []
   data:
     resourceType: Patient
@@ -169,8 +169,8 @@ tests:
   - code: fs301
   skip: true
   _skipReason: 'Profile-loading case mis-classified into candidate bucket: references unloaded `http://example.org/other-patient-profile` via
-    meta.profile. Belongs in profile-loading import. (see test/cases/imports/GRAHAM.md "Importable today")'
-- desc: graham/ai7
+    meta.profile. Belongs in profile-loading import. (see test/cases/imports/FHIR-TEST-CASES.md "Importable today")'
+- desc: fhir-tests/ai7
   schemas: []
   data:
     resourceType: StructureDefinition

@@ -1,10 +1,10 @@
-suite: 'recursive schemas via elementReference (sansara L198)'
+suite: 'recursive schemas via elementReference (aidbox L198)'
 # Questionnaire.item is array<BackboneElement>; jQuestionnaire.item.item
 # is `elementReference: [http://hl7.org/fhir/StructureDefinition/Questionnaire,
 # elements, item]` — cyclic. The validator must follow the reference on
 # walk-in so deep nested items get validated against the same shape.
 #
-# Sansara also exercises this via the SDC IG (sdc-questionnaire profile).
+# Aidbox also exercises this via the SDC IG (sdc-questionnaire profile).
 # That case is skipped here: it needs the SDC package wired up; pure R4
 # Questionnaire is enough to exercise the elementReference path.
 

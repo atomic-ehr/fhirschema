@@ -1,5 +1,5 @@
-suite: 'primitive extension on choice type (sansara L2593)'
-# Regression for https://github.com/HealthSamurai/sansara/issues/6913.
+suite: 'primitive extension on choice type (aidbox L2593)'
+# Regression for https://github.com/HealthSamurai/aidbox/issues/6913.
 # `_definitionCanonical` is the primitive-extension shadow of a choice
 # variant (PlanDefinition.action.definition[x] has variants canonical,
 # uri). The validator must not treat the shadow as a separate union
