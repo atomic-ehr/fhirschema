@@ -143,16 +143,19 @@ Simple vs complex extension shaping is not yet reconstructed:
 `Extension.extension` (`0..0` for simple, `0..*` for complex), `Extension.value[x]`
 (`1..1` for simple, `0..0` for complex), and the extension root element's cardinality.
 
-### 4. `contentReference` recursion
+### 4. `value[x]` choice type-list edge cases
 
-Recursive backbone elements reached via `contentReference` (FHIRSchema
-`elementReference`) are not expanded past the reference, e.g.
-`Parameters.parameter.part.part` (CDex `CDexParametersSubmitAttachment`).
+A few vital-signs / reslicing profiles disagree on the exact multi-type list emitted
+on a `value[x]` / `component.value[x]` element. Notably, when a single `value[x]` is
+re-sliced to different types across component slices, the merged element can collapse
+to one variant's type (e.g. mCODE `GenomicVariant` — the resliced
+`component.value[x]` loses its Quantity sub-children).
 
-### 5. `value[x]` choice type-list edge cases
+### Resolved
 
-A few vital-signs-style profiles disagree on the exact multi-type list emitted on a
-`value[x]` / `component.value[x]` element.
+- **`contentReference` recursion** (recursive backbones like
+  `Parameters.parameter.part.part`) — now expanded one level per reference, gated by
+  source. Fixed DaVinci PDex (37/37 exact) and CDex.
 
 ## Tests
 
