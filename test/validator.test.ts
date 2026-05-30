@@ -74,9 +74,11 @@ const referenceResolverAdapter: ReferenceResolver = {
 };
 import {
   buildResolverMap,
+  fhirTestCasesAvailable,
   loadPackageFixtures,
   loadProfileSchema,
   loadSuites,
+  packageFixturesAvailable,
   subsetMatch,
   type ValidatorCase,
   type ValidatorSuite,
@@ -148,7 +150,9 @@ for (const file of files) {
     ...(defaults?.useR4 ? ['hl7.fhir.r4.core'] : []),
     ...(defaults?.usePackages ?? []),
   ];
-  const baseMap = pkgIds.length ? mergeMaps(pkgIds.map(getPackageMap)) : undefined;
+  const suiteFixturesReady = pkgIds.every(packageFixturesAvailable);
+  const baseMap =
+    pkgIds.length && suiteFixturesReady ? mergeMaps(pkgIds.map(getPackageMap)) : undefined;
 
   describe(label, () => {
     for (const t of tests) {
@@ -157,6 +161,22 @@ for (const file of files) {
         continue;
       }
       if (focused && !t.only) continue;
+
+      // Skip (don't fail) cases whose package/profile fixtures aren't prepared
+      // locally — they need `bun run prepare-fixtures` + a ~/fhir-test-cases
+      // checkout. Cases whose fixtures are present still run.
+      const tUsePkgs = (t as { _usePackages?: unknown })._usePackages;
+      const extraPkgs = Array.isArray(tUsePkgs)
+        ? tUsePkgs.filter((x): x is string => typeof x === 'string')
+        : [];
+      const needsProfiles = (t as { _loadProfile?: unknown })._loadProfile != null;
+      if (
+        ![...pkgIds, ...extraPkgs].every(packageFixturesAvailable) ||
+        (needsProfiles && !fhirTestCasesAvailable())
+      ) {
+        it.skip(t.desc, () => {});
+        continue;
+      }
 
       it(t.desc, () => {
         // `_loadProfile: ["validator/some-profile.json", ...]` — read each
