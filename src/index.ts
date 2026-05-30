@@ -15,9 +15,29 @@ export type {
   OperationOutcome,
   OperationOutcomeIssue,
   Resource,
+  // FHIR datatype interfaces (canonical source — was duplicated in src/types.ts)
+  FHIRValue,
+  FHIRCodeableConcept,
+  FHIRCoding,
+  FHIRQuantity,
+  FHIRReference,
+  FHIRIdentifier,
+  FHIRPeriod,
+  FHIRRange,
+  FHIRRatio,
+  FHIRAttachment,
+  FHIRContactPoint,
+  FHIRHumanName,
+  FHIRAddress,
+  FHIRTiming,
+  FHIRSignature,
+  FHIRAnnotation,
+  FHIRMoney,
+  FHIRAge,
+  FHIRCount,
+  FHIRDistance,
+  FHIRDuration,
 } from './converter/types.js';
-
-export * from './types.js';
 
 // Validator (single-pass, data-driven, snapshot-less)
 export { validate } from './validator/index.js';
