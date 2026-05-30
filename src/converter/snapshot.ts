@@ -342,7 +342,11 @@ async function expandInheritedTypeElements(
     }
 
     if (!element.type) continue;
-    const anchorKey = elementKey(element);
+    // Include the type signature in the anchor: a value[x] resliced per parent
+    // slice yields several same-(path,sliceName) rows with different types
+    // (e.g. one CodeableConcept, one canonical, one Quantity). Each must expand
+    // its own datatype children; the child-level indexByKey dedups the results.
+    const anchorKey = `${elementKey(element)}|${element.type.map((t) => t.code).join(',')}`;
     if (processedAnchors.has(anchorKey)) continue;
     processedAnchors.add(anchorKey);
     for (const typeRef of element.type) {

@@ -143,19 +143,16 @@ Simple vs complex extension shaping is not yet reconstructed:
 `Extension.extension` (`0..0` for simple, `0..*` for complex), `Extension.value[x]`
 (`1..1` for simple, `0..0` for complex), and the extension root element's cardinality.
 
-### 4. `value[x]` choice type-list edge cases
-
-A few vital-signs / reslicing profiles disagree on the exact multi-type list emitted
-on a `value[x]` / `component.value[x]` element. Notably, when a single `value[x]` is
-re-sliced to different types across component slices, the merged element can collapse
-to one variant's type (e.g. mCODE `GenomicVariant` — the resliced
-`component.value[x]` loses its Quantity sub-children).
-
 ### Resolved
 
+- **Resliced `value[x]` datatype children** — when a `value[x]` is constrained to
+  different types under different parent slices (one CodeableConcept, one Quantity,
+  one canonical, …), each variant's datatype children are now expanded. The
+  per-anchor expansion key includes the element's type signature, so same-path rows
+  no longer collapse to the first type. Fixed CDex (8/8) and mCODE (53/53).
 - **`contentReference` recursion** (recursive backbones like
   `Parameters.parameter.part.part`) — now expanded one level per reference, gated by
-  source. Fixed DaVinci PDex (37/37 exact) and CDex.
+  source. Fixed DaVinci PDex (37/37) and CDex.
 
 ## Tests
 
