@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import { merge } from '../../src/validator/profile';
+import { mergeFhirSchema } from '../../src/converter/merge';
 
 // merge() is the FHIRSchema overlay primitive used to fold a base→leaf chain.
 // `required` / `excluded` are per-node arrays naming required/forbidden children.
@@ -17,7 +17,7 @@ describe('merge: required/excluded arrays are unioned, not replaced', () => {
       // biome-ignore lint/suspicious/noExplicitAny: test fixture
     } as any;
 
-    const merged = merge(base, overlay, { unionArrays: true }) as { required?: string[] };
+    const merged = mergeFhirSchema(base, overlay, { unionArrays: true }) as { required?: string[] };
     expect(new Set(merged.required)).toEqual(new Set(['status', 'code', 'category']));
   });
 
@@ -35,7 +35,7 @@ describe('merge: required/excluded arrays are unioned, not replaced', () => {
       // biome-ignore lint/suspicious/noExplicitAny: test fixture
     } as any;
 
-    const merged = merge(base, overlay, { unionArrays: true }) as {
+    const merged = mergeFhirSchema(base, overlay, { unionArrays: true }) as {
       elements?: { component?: { required?: string[] } };
     };
     expect(new Set(merged.elements?.component?.required)).toEqual(new Set(['code', 'value']));
@@ -52,7 +52,7 @@ describe('merge: required/excluded arrays are unioned, not replaced', () => {
       // biome-ignore lint/suspicious/noExplicitAny: test fixture
     } as any;
 
-    const merged = merge(base, overlay, { unionArrays: true }) as { required?: string[] };
+    const merged = mergeFhirSchema(base, overlay, { unionArrays: true }) as { required?: string[] };
     expect(merged.required).toEqual(['status']);
   });
 
@@ -66,7 +66,7 @@ describe('merge: required/excluded arrays are unioned, not replaced', () => {
       // biome-ignore lint/suspicious/noExplicitAny: test fixture
     } as any;
 
-    const merged = merge(base, overlay, { unionArrays: true }) as { excluded?: string[] };
+    const merged = mergeFhirSchema(base, overlay, { unionArrays: true }) as { excluded?: string[] };
     expect(new Set(merged.excluded)).toEqual(new Set(['a', 'b']));
   });
 });

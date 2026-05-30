@@ -1,17 +1,23 @@
-import type { FHIRSchema, FHIRSchemaElement } from '../converter/types';
+import type { FHIRSchema, FHIRSchemaElement } from './types';
 
-interface MergeOptions {
+export interface FhirSchemaMergeOptions {
   // Union `required` / `excluded` arrays across the chain instead of letting the
   // last overlay replace them. Needed for snapshot generation (a base requirement
-  // must survive a derived layer that does not restate it). Off by default to keep
-  // the validator's established overlay semantics.
+  // must survive a derived layer that does not restate it). Off by default.
   unionArrays?: boolean;
 }
 
-const merge = (
+type FhirSchemaNode = Pick<FHIRSchemaElement, 'elements' | 'slicing' | 'required' | 'excluded'> &
+  Partial<Pick<FHIRSchema, 'name' | 'base' | 'url'>>;
+
+// Overlay-merge two FHIRSchema nodes: a `base` and an `overlay` that constrains it.
+// This is the "smart merge" at the heart of snapshot generation — folding a
+// base→leaf profile chain into one effective schema. Overlay scalar fields win;
+// `elements` and `slicing.slices` merge recursively.
+export const mergeFhirSchema = (
   base?: FhirSchemaNode,
   overlay?: FhirSchemaNode,
-  options: MergeOptions = {},
+  options: FhirSchemaMergeOptions = {},
 ): FhirSchemaNode | undefined => {
   if (base === undefined) return overlay;
   if (overlay === undefined) return base;
@@ -24,7 +30,7 @@ const merge = (
       : keys.reduce(
           (acc, k) => ({
             ...acc,
-            [k]: merge(obj1?.[k], obj2?.[k], options),
+            [k]: mergeFhirSchema(obj1?.[k], obj2?.[k], options),
           }),
           {},
         );
@@ -52,8 +58,3 @@ const merge = (
 
   return result;
 };
-
-type FhirSchemaNode = Pick<FHIRSchemaElement, 'elements' | 'slicing' | 'required' | 'excluded'> &
-  Partial<Pick<FHIRSchema, 'name' | 'base' | 'url'>>;
-
-export { merge };

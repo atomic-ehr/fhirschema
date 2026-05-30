@@ -1,4 +1,4 @@
-import { merge } from '../validator/profile.js';
+import { mergeFhirSchema } from './merge.js';
 import { toStructureDefinition } from './reverse.js';
 import { translate } from './index.js';
 import type { FHIRSchema, StructureDefinition, StructureDefinitionElement } from './types.js';
@@ -225,7 +225,7 @@ function mergeSchemas(baseToLeafSchemas: FHIRSchema[]): FHIRSchema {
   }
 
   return baseToLeafSchemas.reduce(
-    (acc, schema) => merge(acc, schema, { unionArrays: true }) as FHIRSchema,
+    (acc, schema) => mergeFhirSchema(acc, schema, { unionArrays: true }) as FHIRSchema,
   );
 }
 

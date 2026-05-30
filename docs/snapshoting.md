@@ -27,11 +27,12 @@ Implemented in `src/converter/snapshot.ts`:
    referenced by `structuredefinition-implements` extensions. Returns base→leaf order.
    Each link must have a `differential.element` (`ensureDifferential`).
 2. **`translate`** (`src/converter/index.ts`) — each SD differential → FHIRSchema.
-3. **`mergeSchemas`** — fold the chain with `merge` (`src/validator/profile.ts`) in
-   base→leaf order. Snapshot mode passes `{ unionArrays: true }` so `required` /
+3. **`mergeSchemas`** — fold the chain with `mergeFhirSchema` (`src/converter/merge.ts`)
+   in base→leaf order. Snapshot mode passes `{ unionArrays: true }` so `required` /
    `excluded` are **unioned** across the chain (a base requirement must survive a
-   derived layer that doesn't restate it). The validator uses the same `merge` without
-   that flag, keeping its established overlay semantics.
+   derived layer that doesn't restate it). This is the overlay-merge primitive at the
+   heart of snapshot generation; overlay scalar fields win, `elements` and
+   `slicing.slices` merge recursively.
 4. **`toStructureDefinition`** (`src/converter/reverse.ts`) — merged FHIRSchema → SD
    differential-style element list (the reverse converter).
 5. **`rewriteChoicePathsToSourceStyle`** — rewrite typed choice paths
@@ -159,7 +160,7 @@ A few vital-signs-style profiles disagree on the exact multi-type list emitted o
   `test/unit/snapshot-datatype-expansion.test.ts`,
   `snapshot-choice-children.test.ts`,
   `reverse-slice-type.test.ts`, `reverse-slice-cardinality.test.ts`,
-  `reverse-extension-slot.test.ts`, `merge-required-union.test.ts`.
+  `reverse-extension-slot.test.ts`, `merge-fhirschema.test.ts`.
 - Generator/reverse/roundtrip: `test/unit/snapshot-generator.test.ts`,
   `reverse-converter.test.ts`, `test/golden/roundtrip.test.ts`.
 - Integration parity (cached packages): `test/integration/ig-snapshot-packages.test.ts`.
