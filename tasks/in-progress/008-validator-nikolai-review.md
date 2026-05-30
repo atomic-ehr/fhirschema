@@ -20,8 +20,8 @@ Status legend: ☐ todo · ◐ partial · ☑ done · ⊘ n/a
 
 - ☐ **N1. `overlays` → `schemaSet`.** The carried-set name says nothing; rename the
   `Overlay` type + all `overlays` params/locals to a говорящее `schemaSet` / `SchemaNode`.
-- ☐ **N2. Merge the two schema-collection blocks in `validate()`** (input schemas +
-  additionalProfiles, and `findDeclaredProfiles` → resolve) into one helper.
+- ☑ **N2. Merge the two schema-collection blocks in `validate()`** into one
+  `collectSchemaSet(ctx, schemas, data, strict, issues)` helper. Pure refactor.
 
 ## Architecture (serious — 2-3 review cycles each)
 

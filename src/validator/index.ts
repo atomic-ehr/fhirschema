@@ -147,29 +147,7 @@ export function validate(
   const issues: ValidationIssue[] = [];
   const strict = options?.strict === true;
 
-  // Expand input list: each schema brings its inheritance chain + additional profiles.
-  const overlays: Overlay[] = [];
-  for (const s of schemas) {
-    addSchemaOverlays(ctx, s, s.url, overlays, issues);
-    for (const ap of s.additionalProfiles ?? []) {
-      addResolvedProfile(ctx, ap, overlays, issues, {
-        reportMissing: true,
-        path: [],
-        schema: s.url,
-      });
-    }
-  }
-
-  // Data-driven schema discovery (FHIR resource validation):
-  //   1. `data.resourceType` → resolve the base resource schema.
-  //   2. `data.meta.profile[]` → resolve each declared profile.
-  // Each adds its inheritance chain to the SchemaSet.
-  for (const declared of findDeclaredProfiles(data)) {
-    addResolvedProfile(ctx, declared.ref, overlays, issues, {
-      reportMissing: strict,
-      path: declared.path,
-    });
-  }
+  const overlays = collectSchemaSet(ctx, schemas, data, strict, issues);
 
   if (overlays.length > 0) {
     // Stash the resource being walked (becomes %resource / %context) and
@@ -192,6 +170,40 @@ export function validate(
 }
 
 // ─── overlay collection ────────────────────────────────────────────────────
+
+// Build the SchemaSet for a validation in one place: the explicit input schemas
+// (+ their `additionalProfiles`), then data-driven discovery from the resource
+// itself (`data.resourceType` → base schema, `data.meta.profile[]` → profiles).
+// Each entry brings its full inheritance chain.
+function collectSchemaSet(
+  ctx: ValidateContext,
+  schemas: InputSchema[],
+  data: unknown,
+  strict: boolean,
+  issues: ValidationIssue[],
+): Overlay[] {
+  const overlays: Overlay[] = [];
+
+  for (const s of schemas) {
+    addSchemaOverlays(ctx, s, s.url, overlays, issues);
+    for (const ap of s.additionalProfiles ?? []) {
+      addResolvedProfile(ctx, ap, overlays, issues, {
+        reportMissing: true,
+        path: [],
+        schema: s.url,
+      });
+    }
+  }
+
+  for (const declared of findDeclaredProfiles(data)) {
+    addResolvedProfile(ctx, declared.ref, overlays, issues, {
+      reportMissing: strict,
+      path: declared.path,
+    });
+  }
+
+  return overlays;
+}
 
 function addSchemaOverlays(
   ctx: ValidateContext,
