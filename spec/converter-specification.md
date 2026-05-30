@@ -8,9 +8,17 @@ The converter transforms FHIR StructureDefinitions into the simplified FHIRSchem
 
 ### StructureDefinition
 The converter accepts standard FHIR StructureDefinition resources with:
-- **snapshot**: Complete view of all elements is not needed, we use differential only.
+- **snapshot**: Not used as primary converter input.
 - **differential**: Changes from base definition (required)
 - **metadata**: Resource identification and classification
+
+### Differential-Only Policy
+
+`fhirschema` conversion is differential-driven.
+
+1. `StructureDefinition -> FHIRSchema` must use `differential.element` as source of truth.
+2. `snapshot.element` is not the canonical conversion input model.
+3. If a workflow only has snapshot content, it should derive/prepare differential first.
 
 ## Output Format
 
@@ -184,7 +192,7 @@ Slices of slices maintain hierarchy through path tracking
 Content references may create cycles, handled through lazy resolution
 
 ### Missing Differential
-If no differential, attempt to derive from snapshot
+Converter workflows should provide a differential. Behavior for missing differential is workflow-specific and should not rely on snapshot fallback semantics.
 
 ### Profile-Specific Bindings
 Bindings on choice types resolved from parent element

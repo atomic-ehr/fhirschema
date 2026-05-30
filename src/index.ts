@@ -1,5 +1,8 @@
 // Export converter functionality
 export { translate } from './converter/index.js';
+export { toStructureDefinition } from './converter/reverse.js';
+export { generateSnapshot } from './converter/snapshot.js';
+export type { SnapshotGenerationOptions, StructureDefinitionResolver } from './converter/snapshot.js';
 // Re-export specific converter types that might be useful
 export type {
   Action,
