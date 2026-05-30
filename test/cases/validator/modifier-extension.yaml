@@ -1,13 +1,26 @@
 suite: 'modifierExtension must-understand (fs1102)'
-# Every modifierExtension MUST be understood (resolvable by URL). When ctx
-# can't resolve the URL, emit fs1102 — error severity per FHIR spec
-# (consumer cannot safely interpret the resource).
+# A system MUST understand every modifierExtension. "Understanding" is
+# DECLARATIVE — the system lists the modifier-extension URLs it implements in
+# `systemContext.settings.understoodModifierExtensions` — NOT "the URL resolves"
+# (resolving a definition doesn't mean the system implements its meaning).
+# The check is opt-in via `errorOnUnknownModifierExtension` (default off).
 
 defaults:
   useR4: true
 
 tests:
-  - desc: 'modifierExtension with known URL (resolvable) → valid'
+  - desc: 'by default an unknown modifierExtension is NOT an error (resolving != understanding)'
+    schemas: []
+    data:
+      resourceType: Patient
+      modifierExtension:
+        - url: 'http://example.com/unknown-modifier'
+    valid: true
+
+  - desc: 'with the flag on, a modifierExtension in the understood list is valid'
+    settings:
+      errorOnUnknownModifierExtension: true
+      understoodModifierExtensions: ['http://hl7.org/fhir/StructureDefinition/patient-animal']
     schemas: []
     data:
       resourceType: Patient
@@ -18,7 +31,10 @@ tests:
               valueCodeableConcept: { coding: [{ code: dog }] }
     valid: true
 
-  - desc: 'modifierExtension with unknown URL → fs1102'
+  - desc: 'with the flag on, a modifierExtension not in the understood list → fs1102'
+    settings:
+      errorOnUnknownModifierExtension: true
+      understoodModifierExtensions: ['http://hl7.org/fhir/StructureDefinition/patient-animal']
     schemas: []
     data:
       resourceType: Patient
@@ -27,7 +43,7 @@ tests:
     issues:
       - { code: fs1102, path: [modifierExtension, 0] }
 
-  - desc: 'regular extension with unknown URL — silent (fs1101 is informational, not implemented)'
+  - desc: 'a regular extension with an unknown URL is not an error (opportunistic; warns only)'
     schemas: []
     data:
       resourceType: Patient

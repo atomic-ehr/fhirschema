@@ -88,10 +88,15 @@ const CASES_DIR = join(import.meta.dir, 'cases', 'validator');
 const files = loadSuites<ValidatorSuite>(CASES_DIR);
 
 /** Build a ctx.resolve from a list of schemas + optional base map. */
-function makeCtx(schemas: FHIRSchema[], base?: Map<string, FHIRSchema>): ValidateContext {
+function makeCtx(
+  schemas: FHIRSchema[],
+  base?: Map<string, FHIRSchema>,
+  settings?: Record<string, unknown>,
+): ValidateContext {
   const overlay = buildResolverMap(schemas);
   return {
     resolve: (ref) => overlay.get(ref) ?? base?.get(ref),
+    ...(settings && Object.keys(settings).length > 0 ? { settings } : {}),
   };
 }
 
@@ -229,16 +234,22 @@ for (const file of files) {
           const ids = [...r4, ...tup.filter((x): x is string => typeof x === 'string')];
           effectiveBase = mergeMaps(ids.map(getPackageMap));
         }
-        const ctx = makeCtx(registry, effectiveBase);
-        const suiteOpts: Record<string, unknown> = {};
         const d = defaults as
           | {
               useFhirpath?: boolean;
               useTerminology?: boolean;
               useTxServer?: boolean;
               useReferenceResolver?: boolean;
+              settings?: Record<string, unknown>;
             }
           | undefined;
+        // System-context settings: suite `defaults.settings` overridden by test `settings`.
+        const settings = {
+          ...(d?.settings ?? {}),
+          ...((t as { settings?: Record<string, unknown> }).settings ?? {}),
+        };
+        const ctx = makeCtx(registry, effectiveBase, settings);
+        const suiteOpts: Record<string, unknown> = {};
         if (d?.useFhirpath === true) suiteOpts.fhirpath = fhirpathAdapter;
         if (d?.useTerminology === true) suiteOpts.terminology = terminologyAdapter;
         if (d?.useTxServer === true) suiteOpts.terminology = txAdapter;

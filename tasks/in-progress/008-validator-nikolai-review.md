@@ -43,12 +43,14 @@ Status legend: ☐ todo · ◐ partial · ☑ done · ⊘ n/a
   per-entry fullUrl) and Extension (URL deref) live in `handleBundle`/`handleExtension`,
   dispatched via `RESOURCE_HANDLERS` (keyed by `ctx.currentResourceType`) and
   `DATATYPE_HANDLERS` (keyed by overlay data types). Behavior-preserving (green).
-- ☐ **A4. Extension / modifierExtension semantics.**
-  - normal extension: opportunistic resolve — validate content if definition available,
-    else WARNING (not error). Same for extension-in-extension (no special case).
-  - modifierExtension: NOT "resolve by URL" (resolving ≠ understanding). Instead
-    `systemContext` carries a list of understood modifier-extension URLs; a flag
-    (default OFF) makes an unknown one error "modifier extension not understood".
+- ☑ **A4. Extension / modifierExtension semantics.**
+  - normal extension: `handleExtension` now emits `fs1101` WARNING (not error,
+    content left unvalidated) when an absolute-URL extension can't be resolved;
+    bare sub-extension names are excluded. extension-in-extension flows the same way.
+  - modifierExtension: no longer "resolve by URL". Gated on
+    `ctx.settings.errorOnUnknownModifierExtension` (default OFF) against the
+    declarative `ctx.settings.understoodModifierExtensions` list. Test harness gained
+    `settings` (system context) support. Tests: `modifier-extension.yaml`.
 
 ## Already done / n/a
 

@@ -563,15 +563,22 @@ function walkObject(
       continue;
     }
 
-    // modifierExtension MU rule: every entry's `url` MUST resolve. If not,
-    // emit fs1102 error (consumer cannot safely interpret the resource).
-    if (baseKey === 'modifierExtension' && Array.isArray(obj[key])) {
+    // modifierExtension must-understand: a system MUST understand every
+    // modifier extension. "Understanding" is declarative — the URL is listed in
+    // settings.understoodModifierExtensions — NOT "the URL resolves" (resolving
+    // a definition ≠ implementing its meaning). Opt-in via
+    // settings.errorOnUnknownModifierExtension (off by default).
+    if (
+      baseKey === 'modifierExtension' &&
+      ctx.settings.errorOnUnknownModifierExtension &&
+      Array.isArray(obj[key])
+    ) {
+      const understood = new Set(ctx.settings.understoodModifierExtensions ?? []);
       const items = obj[key] as unknown[];
       for (let i = 0; i < items.length; i++) {
-        const it = items[i];
-        const url = (it as { url?: unknown } | null)?.url;
+        const url = (items[i] as { url?: unknown } | null)?.url;
         if (typeof url !== 'string') continue;
-        if (!ctx.resolve(url)) {
+        if (!understood.has(url)) {
           addIssue(ctx, {
             code: FS.MODIFIER_EXTENSION_NOT_UNDERSTOOD,
             severity: 'error',
@@ -699,11 +706,16 @@ function handleExtension(
   ctx: Ctx,
   expanded: Overlay[],
   obj: Record<string, unknown>,
-  _path: (string | number)[],
+  path: (string | number)[],
 ): Overlay[] {
   if (typeof obj.url !== 'string' || !obj.url.includes('://')) return expanded;
   const extSchema = ctx.resolve(obj.url);
-  if (!extSchema) return expanded;
+  if (!extSchema) {
+    // Opportunistic: definition not available → warn (not error) and leave the
+    // content unvalidated. (Bare sub-extension names are excluded above.)
+    addIssue(ctx, { code: FS.UNKNOWN_EXTENSION, severity: 'warning', path, got: obj.url });
+    return expanded;
+  }
   const chain: Overlay[] = [];
   addSchemaOverlays(ctx, extSchema, extSchema.url, chain);
   return [...expanded, ...chain];
