@@ -42,3 +42,7 @@ running on Bun.
   proposed change would violate either, stop and discuss.
 * Error codes follow the `fsNNN` scheme defined in DESIGN.md §13. Codes are
   stable identifiers; tests assert on `code` + `path`, never on messages.
+* Conversion rule: `StructureDefinition -> FHIRSchema` always uses
+  `differential.element` as the source of truth, never `snapshot.element`.
+  Snapshot generation goes differential → FHIRSchema merge → snapshot
+  (see `docs/snapshoting.md`).

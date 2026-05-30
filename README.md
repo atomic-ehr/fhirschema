@@ -30,7 +30,31 @@ const fhirSchema = translate(structureDefinition);
 ```
 
 The translator is a pure function — no I/O, no caches, no other-schema
-peeking. See [DESIGN.md §3](DESIGN.md#3-translator-structuredefinition--fhirschema).
+peeking. Conversion treats `StructureDefinition.differential.element` as the
+source of truth (snapshot is not the canonical input; expand to a differential
+first if only a snapshot is available). See [DESIGN.md §3](DESIGN.md#3-translator-structuredefinition--fhirschema).
+
+### Convert FHIRSchema back to a StructureDefinition
+
+```ts
+import { toStructureDefinition } from '@atomic-ehr/fhirschema';
+
+const structureDefinition = toStructureDefinition(fhirSchema);
+```
+
+Lossy-roundtrip corner cases: `docs/reverse-converter-corner-cases.md`.
+
+### Generate a snapshot from a differential (via FHIRSchema merge)
+
+```ts
+import { generateSnapshot } from '@atomic-ehr/fhirschema';
+
+const withSnapshot = await generateSnapshot(profileSD, {
+  resolver: (canonicalUrl) => baseDefinitionsByUrl[canonicalUrl],
+});
+```
+
+Pipeline and parity against official IG snapshots: `docs/snapshoting.md`.
 
 ### Validate a resource
 
