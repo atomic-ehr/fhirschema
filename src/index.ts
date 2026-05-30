@@ -47,3 +47,7 @@ export type {
   ValidationIssue,
   ValidationResult,
 } from './validator/index.js';
+
+// FHIR OperationOutcome adapter for ValidationIssue[] (FHIR-facing APIs)
+export { toOperationOutcome, FS_CODE_SYSTEM } from './validator/operation-outcome.js';
+export type { OperationOutcomeOptions } from './validator/operation-outcome.js';

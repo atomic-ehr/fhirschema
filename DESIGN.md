@@ -1220,8 +1220,6 @@ priority order:
   `extensions: { [url]: ... }` convenience map (sibling to `slicing`) is
   still TODO — validator currently uses the full `slicing` block for
   extension URL routing.
-- **OperationOutcome adapter.** Caller-side adapter from `ValidationIssue[]`
-  to `OperationOutcome` for FHIR-facing APIs.
 - **Permissive JSON shape (Java parity).** The HL7 Java reference
   validator is permissive by default on certain JSON-shape questions
   (e.g. accepts a scalar where a `0..*` element requires an array; turns
