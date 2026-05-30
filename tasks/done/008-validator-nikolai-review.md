@@ -18,8 +18,11 @@ Status legend: ☐ todo · ◐ partial · ☑ done · ⊘ n/a
 
 ## Naming / structure
 
-- ☐ **N1. `overlays` → `schemaSet`.** The carried-set name says nothing; rename the
-  `Overlay` type + all `overlays` params/locals to a говорящее `schemaSet` / `SchemaNode`.
+- ☑ **N1. `overlays` → `schemaSet`.** Renamed the whole concept consistently: type
+  `Overlay → SchemaNode`, `overlays → schemaSet`, and every derived form
+  (`childOverlays → childSchemas`, `resolvedOverlays → resolvedSchemas`,
+  `expandTypeOverlays → expandTypeSchemas`, `addSchemaOverlays → addSchemas`,
+  `findChildOverlays → findChildSchemas`, `ELEMENT_OVERLAY → ELEMENT_SCHEMA`) + comments.
 - ☑ **N2. Merge the two schema-collection blocks in `validate()`** into one
   `collectSchemaSet(ctx, schemas, data, strict, issues)` helper. Pure refactor.
 

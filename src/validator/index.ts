@@ -155,15 +155,15 @@ function addIssue(ctx: Ctx, issue: ValidationIssue): void {
   ctx.issues.push(issue);
 }
 
-// ─── overlay model ─────────────────────────────────────────────────────────
+// ─── schema-set model ────────────────────────────────────────────────────────
 
-// At each scope we carry a set of "overlays": one per schema currently active.
-// At root: each overlay is a whole FHIRSchema. Below root: each overlay is a
+// At each scope we carry a SchemaSet: one SchemaNode per schema currently active.
+// At root: each node wraps a whole FHIRSchema. Below root: each node wraps a
 // FHIRSchemaElement (the child def from the parent's `elements`).
-type Overlay = {
+type SchemaNode = {
   // The element/schema rules in effect at this scope.
   el: FHIRSchemaElement;
-  // Which input schema this overlay traces back to (for issue.schema).
+  // Which input schema this node traces back to (for issue.schema).
   source?: string;
 };
 
@@ -199,9 +199,9 @@ export function validate(
 // Collect the SchemaSet and walk, into the given session. Reused for inner
 // resources (Bundle.entry, contained) with a child session.
 function runValidation(ctx: Ctx, schemas: InputSchema[], data: unknown): void {
-  const overlays = collectSchemaSet(ctx, schemas, data);
-  if (overlays.length > 0) {
-    walkObject(ctx, overlays, data, [], true);
+  const schemaSet = collectSchemaSet(ctx, schemas, data);
+  if (schemaSet.length > 0) {
+    walkObject(ctx, schemaSet, data, [], true);
   }
 }
 
@@ -211,17 +211,17 @@ function runValidation(ctx: Ctx, schemas: InputSchema[], data: unknown): void {
 // Resource* — not the bare presence of a `resourceType` key — so a plain field
 // named `resourceType` on a non-resource type stays an ordinary element.
 //
-// The outer overlays are inherited into the inner walk, so a constraint a
+// The outer schemaSet are inherited into the inner walk, so a constraint a
 // Bundle/profile imposes on this resource slot still applies to the inner
 // resource (then re-pathed under the current scope).
 function tryInnerResource(
   ctx: Ctx,
-  overlays: Overlay[],
+  schemaSet: SchemaNode[],
   obj: Record<string, unknown>,
   path: (string | number)[],
 ): boolean {
   if (typeof obj.resourceType !== 'string') return false;
-  const type = pickType(overlays);
+  const type = pickType(schemaSet);
   if (!type || !isResourceType(ctx, type)) return false;
   if (!ctx.resolve(obj.resourceType)) return false;
 
@@ -232,7 +232,7 @@ function tryInnerResource(
     currentResourceType: obj.resourceType,
   };
   const innerOverlays = collectSchemaSet(innerCtx, [], obj);
-  walkObject(innerCtx, [...overlays, ...innerOverlays], obj, [], true);
+  walkObject(innerCtx, [...schemaSet, ...innerOverlays], obj, [], true);
   for (const i of innerCtx.issues) {
     addIssue(ctx, { ...i, path: [...path, ...i.path] });
   }
@@ -254,20 +254,20 @@ function isResourceType(ctx: Ctx, type: string): boolean {
   return false;
 }
 
-// ─── overlay collection ────────────────────────────────────────────────────
+// ─── schema-set collection ────────────────────────────────────────────────────
 
 // Build the SchemaSet for a validation in one place: the explicit input schemas
 // (+ their `additionalProfiles`), then data-driven discovery from the resource
 // itself (`data.resourceType` → base schema, `data.meta.profile[]` → profiles).
 // Each entry brings its full inheritance chain.
-function collectSchemaSet(ctx: Ctx, schemas: InputSchema[], data: unknown): Overlay[] {
-  const overlays: Overlay[] = [];
+function collectSchemaSet(ctx: Ctx, schemas: InputSchema[], data: unknown): SchemaNode[] {
+  const schemaSet: SchemaNode[] = [];
   const strict = ctx.opts.strict === true;
 
   for (const s of schemas) {
-    addSchemaOverlays(ctx, s, s.url, overlays);
+    addSchemas(ctx, s, s.url, schemaSet);
     for (const ap of s.additionalProfiles ?? []) {
-      addResolvedProfile(ctx, ap, overlays, {
+      addResolvedProfile(ctx, ap, schemaSet, {
         reportMissing: true,
         path: [],
         schema: s.url,
@@ -276,20 +276,20 @@ function collectSchemaSet(ctx: Ctx, schemas: InputSchema[], data: unknown): Over
   }
 
   for (const declared of findDeclaredProfiles(data)) {
-    addResolvedProfile(ctx, declared.ref, overlays, {
+    addResolvedProfile(ctx, declared.ref, schemaSet, {
       reportMissing: strict,
       path: declared.path,
     });
   }
 
-  return overlays;
+  return schemaSet;
 }
 
-function addSchemaOverlays(
+function addSchemas(
   ctx: Ctx,
   schema: FHIRSchema,
   source: string | undefined,
-  out: Overlay[],
+  out: SchemaNode[],
 ): void {
   collectChain(ctx, schema, source, out, new Set());
 }
@@ -297,12 +297,12 @@ function addSchemaOverlays(
 function addResolvedProfile(
   ctx: Ctx,
   ref: string,
-  out: Overlay[],
+  out: SchemaNode[],
   missing: { reportMissing: boolean; path: (string | number)[]; schema?: string },
 ): void {
   const resolved = ctx.resolve(ref);
   if (resolved) {
-    addSchemaOverlays(ctx, resolved, resolved.url, out);
+    addSchemas(ctx, resolved, resolved.url, out);
     return;
   }
   if (!missing.reportMissing) return;
@@ -338,7 +338,7 @@ function collectChain(
   ctx: Ctx,
   schema: FHIRSchema,
   source: string | undefined,
-  out: Overlay[],
+  out: SchemaNode[],
   visited: Set<string>,
 ): void {
   const key = schema.url ?? schema.name ?? '';
@@ -374,15 +374,15 @@ function collectChain(
 
 // ─── core walker ───────────────────────────────────────────────────────────
 
-function walk(ctx: Ctx, overlays: Overlay[], value: unknown, path: (string | number)[]): void {
-  if (overlays.length === 0) return;
+function walk(ctx: Ctx, schemaSet: SchemaNode[], value: unknown, path: (string | number)[]): void {
+  if (schemaSet.length === 0) return;
 
   // Resolve `elementReference`: an element-def may point to another schema's
   // element via `[schemaUrl, ...path]`. The reference is fully substituted —
   // cyclic refs work because resolution happens fresh on each walk-in.
-  const resolvedOverlays = overlays.map((o) => resolveElementReference(ctx, o));
+  const resolvedSchemas = schemaSet.map((o) => resolveElementReference(ctx, o));
 
-  const declaredArray = resolvedOverlays.some((o) => o.el.array === true);
+  const declaredArray = resolvedSchemas.some((o) => o.el.array === true);
 
   if (Array.isArray(value)) {
     if (!declaredArray) {
@@ -395,8 +395,8 @@ function walk(ctx: Ctx, overlays: Overlay[], value: unknown, path: (string | num
       addIssue(ctx, { code: FS.UNEXPECTED_EMPTY_ARRAY, path, expected: 'non-empty array', got: 0 });
       return;
     }
-    checkArrayCardinality(ctx, resolvedOverlays, value, path);
-    walkArrayItems(ctx, resolvedOverlays, value, path);
+    checkArrayCardinality(ctx, resolvedSchemas, value, path);
+    walkArrayItems(ctx, resolvedSchemas, value, path);
     return;
   }
 
@@ -408,16 +408,16 @@ function walk(ctx: Ctx, overlays: Overlay[], value: unknown, path: (string | num
   // pattern[X] check (deep-partial) and fixed[X] check (strict equality).
   // Both run before the primitive/object branches so type checks still emit
   // their own issues independently.
-  checkPatterns(ctx, resolvedOverlays, value, path);
-  checkFixed(ctx, resolvedOverlays, value, path);
+  checkPatterns(ctx, resolvedSchemas, value, path);
+  checkFixed(ctx, resolvedSchemas, value, path);
 
   // Terminology bindings (fs5xx). Pluggable; skipped if no engine wired.
   if (ctx.opts.terminology) {
-    checkBindings(ctx, resolvedOverlays, value, path);
+    checkBindings(ctx, resolvedSchemas, value, path);
   }
 
   // primitive / null / object
-  const type = pickType(resolvedOverlays);
+  const type = pickType(resolvedSchemas);
 
   if (type && isPrimitiveType(type)) {
     if (value === null) return; // primitive extension placeholder
@@ -450,12 +450,12 @@ function walk(ctx: Ctx, overlays: Overlay[], value: unknown, path: (string | num
     return;
   }
 
-  walkObject(ctx, resolvedOverlays, value as Record<string, unknown>, path, false);
+  walkObject(ctx, resolvedSchemas, value as Record<string, unknown>, path, false);
 }
 
 function walkObject(
   ctx: Ctx,
-  overlays: Overlay[],
+  schemaSet: SchemaNode[],
   data: unknown,
   path: (string | number)[],
   atRoot: boolean,
@@ -470,7 +470,7 @@ function walkObject(
 
   // Inner-resource walk (Bundle.entry.resource, contained[], Parameters
   // .parameter.resource). Handled before the rest of the scope.
-  if (!atRoot && tryInnerResource(ctx, overlays, obj, path)) return;
+  if (!atRoot && tryInnerResource(ctx, schemaSet, obj, path)) return;
 
   // Corner-case dispatch by current resource type (e.g. Bundle integrity +
   // entry.fullUrl), at the resource root. Keeps walkObject generic.
@@ -478,9 +478,9 @@ function walkObject(
     RESOURCE_HANDLERS[ctx.currentResourceType]?.(ctx, obj, path);
   }
 
-  // Expand overlays through `type` references: e.g. element typed `HumanName`
-  // pulls in HumanName's elements as additional overlays at this scope.
-  let expanded = expandTypeOverlays(ctx, overlays, path);
+  // Expand schemaSet through `type` references: e.g. element typed `HumanName`
+  // pulls in HumanName's elements as additional schemaSet at this scope.
+  let expanded = expandTypeSchemas(ctx, schemaSet, path);
 
   // Corner-case dispatch by current data type (e.g. Extension URL deref).
   for (const t of dataTypesOf(expanded)) {
@@ -489,9 +489,9 @@ function walkObject(
   }
 
   // Reference target type check (fs1001) + resolver (fs1002). Operates on
-  // overlays before expansion — `refers` lives on the parent element-def,
+  // schemaSet before expansion — `refers` lives on the parent element-def,
   // not on Reference's own elements.
-  checkReferenceTarget(ctx, overlays, obj, path);
+  checkReferenceTarget(ctx, schemaSet, obj, path);
 
   // FHIRPath constraints (fs601). Skipped if no evaluator wired.
   if (ctx.opts.fhirpath) {
@@ -512,11 +512,11 @@ function walkObject(
   // Profile narrowing intersects; base widening is not allowed.
   const choiceGroups = collectChoiceGroups(expanded);
 
-  // Excluded keys union across overlays — any overlay forbidding the key
+  // Excluded keys union across the SchemaSet — any node forbidding the key
   // makes it forbidden globally.
   const excluded = collectStrings(expanded, (o) => o.el.excluded);
 
-  // Required keys union across overlays.
+  // Required keys union across schemaSet.
   // A choice parent (key in `choiceGroups`) is satisfied by ANY variant.
   const required = collectStrings(expanded, (o) => o.el.required);
   for (const r of required) {
@@ -556,9 +556,9 @@ function walkObject(
       continue;
     }
 
-    const childOverlays = findChildOverlays(expanded, baseKey);
+    const childSchemas = findChildSchemas(expanded, baseKey);
 
-    if (childOverlays.length === 0) {
+    if (childSchemas.length === 0) {
       addIssue(ctx, { code: FS.UNKNOWN_ELEMENT, path: [...path, key], got: key });
       continue;
     }
@@ -591,7 +591,7 @@ function walkObject(
 
     if (isShadow) {
       // `_field` is only valid for primitive-typed fields.
-      const type = pickType(childOverlays);
+      const type = pickType(childSchemas);
       if (!type || !isPrimitiveType(type)) {
         addIssue(ctx, {
           code: FS.INVALID_PRIMITIVE_EXTENSION,
@@ -610,7 +610,7 @@ function walkObject(
       //    present with one of the specified values" — Elliot
       // Reference Java validator emits this even without a tx server.
       if (!(baseKey in obj)) {
-        for (const o of childOverlays) {
+        for (const o of childSchemas) {
           const b = (o.el as { binding?: { strength?: string; valueSet?: string } }).binding;
           if (b?.strength === 'required' && b.valueSet) {
             addIssue(ctx, {
@@ -627,13 +627,13 @@ function walkObject(
       // Deep `_field` validation: payload shape (object for scalar primitive,
       // array<object|null> for array primitive) plus walking into Element
       // (id + extension[]). Extension's own elements are resolved via the
-      // standard expandTypeOverlays path.
-      const isArrayPrimitive = childOverlays.some((o) => o.el.array === true);
+      // standard expandTypeSchemas path.
+      const isArrayPrimitive = childSchemas.some((o) => o.el.array === true);
       validateShadowPayload(ctx, obj[key], [...path, key], isArrayPrimitive);
       continue;
     }
 
-    walk(ctx, childOverlays, obj[key], [...path, key]);
+    walk(ctx, childSchemas, obj[key], [...path, key]);
   }
 }
 
@@ -653,10 +653,10 @@ const DATATYPE_HANDLERS: Record<
   string,
   (
     ctx: Ctx,
-    expanded: Overlay[],
+    expanded: SchemaNode[],
     obj: Record<string, unknown>,
     path: (string | number)[],
-  ) => Overlay[]
+  ) => SchemaNode[]
 > = {
   Extension: handleExtension,
 };
@@ -669,9 +669,9 @@ function resourceTypeOf(data: unknown): string | undefined {
   return undefined;
 }
 
-function dataTypesOf(overlays: Overlay[]): Set<string> {
+function dataTypesOf(schemaSet: SchemaNode[]): Set<string> {
   const out = new Set<string>();
-  for (const o of overlays) {
+  for (const o of schemaSet) {
     const t = (o.el as { type?: string }).type;
     if (t) out.add(t);
   }
@@ -698,16 +698,16 @@ function handleBundle(ctx: Ctx, obj: Record<string, unknown>, path: (string | nu
 }
 
 // Extension URL dereferencing: when this scope is an Extension carrying an
-// absolute-URL `url`, pull its definition by URL and apply as extra overlays
+// absolute-URL `url`, pull its definition by URL and apply as extra schemaSet
 // (so e.g. us-core-race sub-extensions validate). Short bare URLs (sub-extension
 // names like "species") are NOT resolved — they collide with the resolver's
 // `name` index and would deref to unrelated canonicals.
 function handleExtension(
   ctx: Ctx,
-  expanded: Overlay[],
+  expanded: SchemaNode[],
   obj: Record<string, unknown>,
   path: (string | number)[],
-): Overlay[] {
+): SchemaNode[] {
   if (typeof obj.url !== 'string' || !obj.url.includes('://')) return expanded;
   const extSchema = ctx.resolve(obj.url);
   if (!extSchema) {
@@ -716,18 +716,18 @@ function handleExtension(
     addIssue(ctx, { code: FS.UNKNOWN_EXTENSION, severity: 'warning', path, got: obj.url });
     return expanded;
   }
-  const chain: Overlay[] = [];
-  addSchemaOverlays(ctx, extSchema, extSchema.url, chain);
+  const chain: SchemaNode[] = [];
+  addSchemas(ctx, extSchema, extSchema.url, chain);
   return [...expanded, ...chain];
 }
 
-// Inline overlay describing the Element complex type: `{id?, extension?[]}`.
+// Inline SchemaNode describing the Element complex type: `{id?, extension?[]}`.
 // Used to walk `_field` payloads so primitive-extension extensions get full
 // validation (URL deref, choice intersection, required-key checks).
 //
 // Only emitted when Extension is resolvable. If not (e.g. inline-schema
 // tests with no R4 loaded), we fall back to a shape-only check upstream.
-const ELEMENT_OVERLAY: Overlay = {
+const ELEMENT_SCHEMA: SchemaNode = {
   el: {
     elements: {
       id: { type: 'id' },
@@ -770,7 +770,7 @@ function validateShadowPayload(
         continue;
       }
       if (deep) {
-        walkObject(ctx, [ELEMENT_OVERLAY], item, [...path, i], false);
+        walkObject(ctx, [ELEMENT_SCHEMA], item, [...path, i], false);
       }
     }
     return;
@@ -785,33 +785,33 @@ function validateShadowPayload(
     return;
   }
   if (deep) {
-    walkObject(ctx, [ELEMENT_OVERLAY], payload, path, false);
+    walkObject(ctx, [ELEMENT_SCHEMA], payload, path, false);
   }
 }
 
-// ─── overlay helpers ───────────────────────────────────────────────────────
+// ─── schema-set helpers ───────────────────────────────────────────────────────
 
-function pickType(overlays: Overlay[]): string | undefined {
-  for (const o of overlays) {
+function pickType(schemaSet: SchemaNode[]): string | undefined {
+  for (const o of schemaSet) {
     if (o.el.type) return o.el.type;
   }
   return undefined;
 }
 
 function collectStrings(
-  overlays: Overlay[],
-  getValues: (o: Overlay) => string[] | undefined,
+  schemaSet: SchemaNode[],
+  getValues: (o: SchemaNode) => string[] | undefined,
 ): Set<string> {
   const out = new Set<string>();
-  for (const o of overlays) {
+  for (const o of schemaSet) {
     for (const value of getValues(o) ?? []) out.add(value);
   }
   return out;
 }
 
-function findChildOverlays(overlays: Overlay[], key: string): Overlay[] {
-  const out: Overlay[] = [];
-  for (const o of overlays) {
+function findChildSchemas(schemaSet: SchemaNode[], key: string): SchemaNode[] {
+  const out: SchemaNode[] = [];
+  for (const o of schemaSet) {
     const child = o.el.elements?.[key];
     if (!child) continue;
     // Skip virtual choice parents (e.g. `deceased`, `value`): they exist in
@@ -824,7 +824,7 @@ function findChildOverlays(overlays: Overlay[], key: string): Overlay[] {
   return out;
 }
 
-function resolveElementReference(ctx: Ctx, o: Overlay): Overlay {
+function resolveElementReference(ctx: Ctx, o: SchemaNode): SchemaNode {
   const ref = (o.el as { elementReference?: string[] }).elementReference;
   if (!ref || ref.length === 0) return o;
   const [schemaUrl, ...segments] = ref;
@@ -847,9 +847,9 @@ function resolveElementReference(ctx: Ctx, o: Overlay): Overlay {
   return { el: cursor as FHIRSchemaElement, source: o.source };
 }
 
-function expandTypeOverlays(ctx: Ctx, overlays: Overlay[], path: (string | number)[]): Overlay[] {
-  const out: Overlay[] = [...overlays];
-  for (const o of overlays) {
+function expandTypeSchemas(ctx: Ctx, schemaSet: SchemaNode[], path: (string | number)[]): SchemaNode[] {
+  const out: SchemaNode[] = [...schemaSet];
+  for (const o of schemaSet) {
     const type = o.el.type;
     if (!type || isPrimitiveType(type) || PRIMITIVE_TYPES.has(type)) continue;
     // Resolve named complex type into its element-def.
@@ -864,7 +864,7 @@ function expandTypeOverlays(ctx: Ctx, overlays: Overlay[], path: (string | numbe
       continue;
     }
     // Walk the type's chain too.
-    const chain: Overlay[] = [];
+    const chain: SchemaNode[] = [];
     collectChain(ctx, sch, o.source, chain, new Set());
     out.push(...chain);
   }
@@ -872,15 +872,15 @@ function expandTypeOverlays(ctx: Ctx, overlays: Overlay[], path: (string | numbe
 }
 
 /**
- * Find `value[x]` choice groups across overlays. Returns parent-name → list
+ * Find `value[x]` choice groups across schemaSet. Returns parent-name → list
  * of allowed variant names (intersection — a profile narrows but never widens).
  * Empty intersection still emits a group; a present variant will then fail
  * fs801.
  */
-/** Union of variants for one choice parent across overlays. */
-function collectChoiceVariants(overlays: Overlay[], parent: string): string[] {
+/** Union of variants for one choice parent across schemaSet. */
+function collectChoiceVariants(schemaSet: SchemaNode[], parent: string): string[] {
   const out = new Set<string>();
-  for (const o of overlays) {
+  for (const o of schemaSet) {
     for (const [n, el] of Object.entries(o.el.elements ?? {})) {
       if (el.choiceOf === parent) out.add(n);
     }
@@ -892,9 +892,9 @@ function collectChoiceVariants(overlays: Overlay[], parent: string): string[] {
   return [...out];
 }
 
-function collectChoiceGroups(overlays: Overlay[]): Map<string, string[]> {
+function collectChoiceGroups(schemaSet: SchemaNode[]): Map<string, string[]> {
   const out = new Map<string, string[]>();
-  for (const o of overlays) {
+  for (const o of schemaSet) {
     for (const [name, el] of Object.entries(o.el.elements ?? {})) {
       if (Array.isArray(el.choices)) {
         const cur = out.get(name);
@@ -914,19 +914,19 @@ function collectChoiceGroups(overlays: Overlay[]): Map<string, string[]> {
 
 function checkChoiceGroups(
   ctx: Ctx,
-  overlays: Overlay[],
+  schemaSet: SchemaNode[],
   groups: Map<string, string[]>,
   obj: Record<string, unknown>,
   path: (string | number)[],
 ): void {
   for (const [parent, allowed] of groups) {
     // All known variant names for this parent: anything declared `choiceOf: parent`
-    // anywhere, plus the union of all `choices` lists across overlays.
-    const present = collectChoiceVariants(overlays, parent).filter(
+    // anywhere, plus the union of all `choices` lists across schemaSet.
+    const present = collectChoiceVariants(schemaSet, parent).filter(
       (v) => v in obj || `_${v}` in obj,
     );
 
-    // Variants present but narrowed away by some overlay's choices list.
+    // Variants present but narrowed away by some node's choices list.
     for (const v of present) {
       if (!allowed.includes(v)) {
         addIssue(ctx, {
@@ -976,7 +976,7 @@ type Slicing = {
 };
 
 /**
- * Merge slicing blocks across overlays on the same array element.
+ * Merge slicing blocks across schemaSet on the same array element.
  * - `slices`: union (last write wins on same slice name; profile typically
  *   adds new slices on top of the base). When the child slice has
  *   `sliceIsConstraining: true`, shallow-merge its fields onto the
@@ -984,13 +984,13 @@ type Slicing = {
  *   existing slice (e.g. add `max: 0`) while preserving the parent's
  *   match pattern and other fields.
  * - `rules`: take the tightest (closed > openAtEnd > open).
- * - `ordered`: any overlay claiming `true`.
- * Returns undefined if no overlay declared slicing.
+ * - `ordered`: any node claiming `true`.
+ * Returns undefined if no node declared slicing.
  */
-function mergeSlicing(overlays: Overlay[]): Slicing | undefined {
+function mergeSlicing(schemaSet: SchemaNode[]): Slicing | undefined {
   let merged: Slicing | undefined;
   const tightness: Record<string, number> = { open: 0, openAtEnd: 1, closed: 2 };
-  for (const o of overlays) {
+  for (const o of schemaSet) {
     const s = (o.el as unknown as { slicing?: Slicing }).slicing;
     if (!s) continue;
     if (!merged) merged = { slices: {} };
@@ -1057,19 +1057,19 @@ function effectiveMatch(def: SliceDef, sliceName?: string): unknown | undefined 
   return undefined;
 }
 
-function walkArrayItems(ctx: Ctx, overlays: Overlay[], arr: unknown[], path: (string | number)[]): void {
-  // Item-level overlays: strip `array` and the slicing block (slicing applies
+function walkArrayItems(ctx: Ctx, schemaSet: SchemaNode[], arr: unknown[], path: (string | number)[]): void {
+  // Item-level schemaSet: strip `array` and the slicing block (slicing applies
   // at the array level, not per item).
-  const itemOverlays = overlays.map((o) => ({
+  const itemSchemas = schemaSet.map((o) => ({
     ...o,
     el: stripArrayAndSlicing(o.el),
   }));
 
-  const slicing = mergeSlicing(overlays);
+  const slicing = mergeSlicing(schemaSet);
 
   if (!slicing) {
     for (let i = 0; i < arr.length; i++) {
-      walk(ctx, itemOverlays, arr[i], [...path, i]);
+      walk(ctx, itemSchemas, arr[i], [...path, i]);
     }
     return;
   }
@@ -1092,19 +1092,19 @@ function walkArrayItems(ctx: Ctx, overlays: Overlay[], arr: unknown[], path: (st
         expected: 'one matching slice',
         got: matched,
       });
-      walk(ctx, itemOverlays, item, [...path, i]);
+      walk(ctx, itemSchemas, item, [...path, i]);
       continue;
     }
 
     if (matched.length === 0) {
-      // `@default` slice (if present) is the fallback overlay for items
+      // `@default` slice (if present) is the fallback schema for items
       // that match no other slice. Its presence also suppresses the
       // closed-rule fs901 error.
       if (defaultSlice) {
         counts.set('@default', (counts.get('@default') ?? 0) + 1);
         walk(
           ctx,
-          withSliceSchema(itemOverlays, defaultSlice.schema),
+          withSliceSchema(itemSchemas, defaultSlice.schema),
           item,
           [...path, i],
         );
@@ -1119,11 +1119,11 @@ function walkArrayItems(ctx: Ctx, overlays: Overlay[], arr: unknown[], path: (st
       }
       // open / openAtEnd without @default: validate against base element only.
       sawUnmatched = true;
-      walk(ctx, itemOverlays, item, [...path, i]);
+      walk(ctx, itemSchemas, item, [...path, i]);
       continue;
     }
 
-    // Exactly one slice — validate item with slice schema overlay on top.
+    // Exactly one slice — validate item with the slice schema on top.
     const name = matched[0] as string;
     counts.set(name, (counts.get(name) ?? 0) + 1);
     const slice = (slicing.slices as Record<string, SliceDef>)[name];
@@ -1154,7 +1154,7 @@ function walkArrayItems(ctx: Ctx, overlays: Overlay[], arr: unknown[], path: (st
       }
     }
 
-    walk(ctx, withSliceSchema(itemOverlays, slice.schema), item, [...path, i]);
+    walk(ctx, withSliceSchema(itemSchemas, slice.schema), item, [...path, i]);
   }
 
   // Per-slice cardinality
@@ -1179,10 +1179,10 @@ function walkArrayItems(ctx: Ctx, overlays: Overlay[], arr: unknown[], path: (st
   }
 }
 
-function withSliceSchema(overlays: Overlay[], schema: FHIRSchemaElement | undefined): Overlay[] {
-  if (!schema) return overlays;
+function withSliceSchema(schemaSet: SchemaNode[], schema: FHIRSchemaElement | undefined): SchemaNode[] {
+  if (!schema) return schemaSet;
   return [
-    ...overlays,
+    ...schemaSet,
     {
       el: stripArrayAndSlicing(schema),
       source: undefined,
@@ -1203,8 +1203,8 @@ function stripArrayAndSlicing(el: FHIRSchemaElement): FHIRSchemaElement {
 
 /**
  * Evaluate `constraint` expressions via the pluggable FHIRPath engine.
- * One issue per failed constraint per overlay (union semantics — every
- * overlay's constraints apply).
+ * One issue per failed constraint per node (union semantics — every
+ * node's constraints apply).
  */
 /**
  * Constraint keys we DO NOT evaluate. These are FHIR baseline rules that
@@ -1388,13 +1388,13 @@ function forEachReference(
 
 function checkConstraints(
   ctx: Ctx,
-  overlays: Overlay[],
+  schemaSet: SchemaNode[],
   obj: Record<string, unknown>,
   path: (string | number)[],
 ): void {
   const engine = ctx.opts.fhirpath;
   if (!engine) return;
-  for (const o of overlays) {
+  for (const o of schemaSet) {
     const constraints = (o.el as { constraint?: Record<string, ConstraintDef> }).constraint;
     if (!constraints) continue;
     for (const [key, c] of Object.entries(constraints)) {
@@ -1452,7 +1452,7 @@ function isFHIRPathTruthy(result: unknown[]): boolean {
  */
 function checkReferenceTarget(
   ctx: Ctx,
-  overlays: Overlay[],
+  schemaSet: SchemaNode[],
   obj: Record<string, unknown>,
   path: (string | number)[],
 ): void {
@@ -1461,7 +1461,7 @@ function checkReferenceTarget(
   if (typeof ref !== 'string') return;
 
   // fs1001 — target type vs refers[]
-  const refers = collectRefers(overlays);
+  const refers = collectRefers(schemaSet);
   const targetType = parseReferenceType(ref);
   if (refers && targetType) {
     const allowed = refers.map(canonicalTail);
@@ -1494,9 +1494,9 @@ function checkReferenceTarget(
   }
 }
 
-function collectRefers(overlays: Overlay[]): string[] | undefined {
+function collectRefers(schemaSet: SchemaNode[]): string[] | undefined {
   const out = new Set<string>();
-  for (const o of overlays) {
+  for (const o of schemaSet) {
     for (const r of o.el.refers ?? []) out.add(r);
   }
   return out.size ? [...out] : undefined;
@@ -1518,10 +1518,10 @@ function canonicalTail(canonical: string): string {
 
 // ─── terminology bindings ────────────────────────────────────────────────
 
-function checkBindings(ctx: Ctx, overlays: Overlay[], value: unknown, path: (string | number)[]): void {
+function checkBindings(ctx: Ctx, schemaSet: SchemaNode[], value: unknown, path: (string | number)[]): void {
   const engine = ctx.opts.terminology;
   if (!engine) return;
-  for (const o of overlays) {
+  for (const o of schemaSet) {
     const b = (o.el as { binding?: { strength?: string; valueSet?: string } }).binding;
     if (!b?.valueSet || !b.strength) continue;
     if (b.strength === 'example') continue; // examples never validated
@@ -1582,8 +1582,8 @@ function checkBindings(ctx: Ctx, overlays: Overlay[], value: unknown, path: (str
 
 // ─── fixed[X] strict equality ─────────────────────────────────────────────
 
-function checkFixed(ctx: Ctx, overlays: Overlay[], value: unknown, path: (string | number)[]): void {
-  for (const o of overlays) {
+function checkFixed(ctx: Ctx, schemaSet: SchemaNode[], value: unknown, path: (string | number)[]): void {
+  for (const o of schemaSet) {
     const f = (o.el as { fixed?: { type: string; value: unknown } }).fixed;
     if (!f) continue;
     if (!deepEqual(f.value, value)) {
@@ -1620,8 +1620,8 @@ function deepEqual(a: unknown, b: unknown): boolean {
 
 // ─── pattern ─────────────────────────────────────────────────────────────
 
-function checkPatterns(ctx: Ctx, overlays: Overlay[], value: unknown, path: (string | number)[]): void {
-  for (const o of overlays) {
+function checkPatterns(ctx: Ctx, schemaSet: SchemaNode[], value: unknown, path: (string | number)[]): void {
+  for (const o of schemaSet) {
     const p = o.el.pattern;
     if (!p) continue;
     if (!matchPattern(p.value, value)) {
@@ -1671,14 +1671,14 @@ function matchPattern(pattern: unknown, value: unknown): boolean {
 
 function checkArrayCardinality(
   ctx: Ctx,
-  overlays: Overlay[],
+  schemaSet: SchemaNode[],
   arr: unknown[],
   path: (string | number)[],
 ): void {
-  // Take the tightest bounds across overlays.
+  // Take the tightest bounds across schemaSet.
   let min = 0;
   let max = Number.POSITIVE_INFINITY;
-  for (const o of overlays) {
+  for (const o of schemaSet) {
     if (typeof o.el.min === 'number' && o.el.min > min) min = o.el.min;
     if (typeof o.el.max === 'number' && o.el.max < max) max = o.el.max;
   }
