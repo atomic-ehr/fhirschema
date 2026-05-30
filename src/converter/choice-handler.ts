@@ -19,7 +19,7 @@ function capitalize(str: string): string {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
-function canonicalToName(url: string): string {
+function lastUrlSegment(url: string): string {
   const parts = url.split('/');
   return parts[parts.length - 1];
 }
@@ -37,7 +37,7 @@ export function expandChoiceElement(
   const expanded: StructureDefinitionElement[] = [];
 
   // Create the parent choice element
-  const choices = element.type.map((t) => fieldName + capitalize(canonicalToName(t.code)));
+  const choices = element.type.map((t) => fieldName + capitalize(lastUrlSegment(t.code)));
   const { type, binding, ...restElement } = element;
   const parentElement: StructureDefinitionElement = {
     ...restElement,
@@ -48,7 +48,7 @@ export function expandChoiceElement(
 
   // Create typed elements
   for (const type of element.type) {
-    const typeName = capitalize(canonicalToName(type.code));
+    const typeName = capitalize(lastUrlSegment(type.code));
     const typedElement: StructureDefinitionElement = {
       ...element,
       path: basePath + typeName,

@@ -185,7 +185,7 @@ async function buildBaseDefinitionChain(
   return chain;
 }
 
-async function buildBaseChain(
+async function buildResolvedBaseChain(
   leaf: StructureDefinition,
   resolver: StructureDefinitionResolver,
   maxDepth: number,
@@ -479,7 +479,7 @@ export async function generateSnapshot(
   options: SnapshotGenerationOptions,
 ): Promise<StructureDefinition> {
   const maxDepth = options.maxDepth ?? 32;
-  const chain = await buildBaseChain(structureDefinition, options.resolver, maxDepth);
+  const chain = await buildResolvedBaseChain(structureDefinition, options.resolver, maxDepth);
   const schemas = chain.map((sd) => translate(sd));
   const merged = foldSchemaChain(schemas);
   const asStructureDefinition = toStructureDefinition(merged, {

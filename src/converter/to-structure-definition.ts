@@ -103,7 +103,7 @@ function inferPatternType(value: unknown): string | undefined {
   return undefined;
 }
 
-function fromChoiceElementName(baseName: string, choiceName: string): string {
+function choiceVariantToType(baseName: string, choiceName: string): string {
   const suffix = choiceName.slice(baseName.length);
   if (!suffix) {
     return 'string';
@@ -470,7 +470,7 @@ function addElementTree(
         rootUrl,
       );
       choiceElement.type = child.choices.map((choiceName) => ({
-        code: fromChoiceElementName(name, choiceName),
+        code: choiceVariantToType(name, choiceName),
       }));
       elements.push(choiceElement);
 

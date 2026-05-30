@@ -12,7 +12,7 @@ import type {
 } from './types.js';
 
 // Type for the resource header being built
-interface ResourceHeader extends Record<string, unknown> {
+interface SchemaHeader extends Record<string, unknown> {
   name: string;
   type: string;
   url?: string;
@@ -29,17 +29,17 @@ interface ResourceHeader extends Record<string, unknown> {
   package_meta?: Record<string, unknown>;
 }
 
-function buildResourceHeader(
+function buildSchemaHeader(
   structureDefinition: StructureDefinition,
   context?: ConversionContext,
-): ResourceHeader {
+): SchemaHeader {
   // Build header following Clojure's select-keys order
   // From Clojure: (select-keys structure-definition [:name :type :url :version :description :package_name :package_version :package_id :kind :derivation])
-  const header: ResourceHeader = {
+  const header: SchemaHeader = {
     name: structureDefinition.name,
     type: structureDefinition.type,
     kind: structureDefinition.kind,
-    class: determineClass(structureDefinition), // Will be set below
+    class: computeSchemaClass(structureDefinition), // Will be set below
   };
 
   if (structureDefinition.url) header.url = structureDefinition.url;
@@ -60,7 +60,7 @@ function buildResourceHeader(
   if (structureDefinition.abstract) header.abstract = structureDefinition.abstract;
 
   // Set class (computed field)
-  header.class = determineClass(structureDefinition);
+  header.class = computeSchemaClass(structureDefinition);
 
   // Package metadata
   if (context?.package_meta) header.package_meta = context.package_meta;
@@ -68,7 +68,7 @@ function buildResourceHeader(
   return header;
 }
 
-function determineClass(structureDefinition: StructureDefinition): string {
+function computeSchemaClass(structureDefinition: StructureDefinition): string {
   if (structureDefinition.kind === 'resource' && structureDefinition.derivation === 'constraint') {
     return 'profile';
   }
@@ -179,12 +179,12 @@ export function translate(
 ): FHIRSchema {
   // Handle primitive types - they don't have differential elements
   if (structureDefinition.kind === 'primitive-type') {
-    const header = buildResourceHeader(structureDefinition, context);
+    const header = buildSchemaHeader(structureDefinition, context);
     const normalized = normalizeSchema(header);
     return normalized as FHIRSchema;
   }
 
-  const header = buildResourceHeader(structureDefinition, context);
+  const header = buildSchemaHeader(structureDefinition, context);
   const elements = getDifferential(structureDefinition);
 
   // Root element constraints — captured into FHIRSchema.constraint at top level.

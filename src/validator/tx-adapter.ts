@@ -39,7 +39,7 @@ export interface TxCache {
   set(key: string, verdict: TxLookupResult): void;
 }
 
-class MapCache implements TxCache {
+class InMemoryTxCache implements TxCache {
   private m = new Map<string, TxLookupResult>();
   get(k: string) {
     return this.m.get(k);
@@ -56,7 +56,7 @@ export class TxFhirOrgAdapter implements TerminologyEvaluator {
 
   constructor(opts: TxAdapterOptions = {}) {
     this.endpoint = (opts.endpoint ?? 'https://tx.health-samurai.io/fhir').replace(/\/$/, '');
-    this.cache = opts.cache === null ? null : (opts.cache ?? new MapCache());
+    this.cache = opts.cache === null ? null : (opts.cache ?? new InMemoryTxCache());
     this.timeoutSeconds = opts.timeoutSeconds ?? 10;
   }
 
