@@ -145,6 +145,9 @@ interface Ctx {
   issues: ValidationIssue[];
   resource: unknown;
   rootResource: unknown;
+  // resourceType of the resource currently being walked — drives the
+  // per-resource corner-case dispatcher (e.g. Bundle).
+  currentResourceType?: string;
 }
 
 // Single issue-emission point — also the natural hook for logging.
@@ -180,6 +183,7 @@ export function validate(
     issues: [],
     resource: data,
     rootResource: data,
+    currentResourceType: resourceTypeOf(data),
   };
 
   runValidation(session, schemas, data);
@@ -221,7 +225,12 @@ function tryInnerResource(
   if (!type || !isResourceType(ctx, type)) return false;
   if (!ctx.resolve(obj.resourceType)) return false;
 
-  const innerCtx: Ctx = { ...ctx, issues: [], resource: obj };
+  const innerCtx: Ctx = {
+    ...ctx,
+    issues: [],
+    resource: obj,
+    currentResourceType: obj.resourceType,
+  };
   const innerOverlays = collectSchemaSet(innerCtx, [], obj);
   walkObject(innerCtx, [...overlays, ...innerOverlays], obj, [], true);
   for (const i of innerCtx.issues) {
@@ -463,48 +472,20 @@ function walkObject(
   // .parameter.resource). Handled before the rest of the scope.
   if (!atRoot && tryInnerResource(ctx, overlays, obj, path)) return;
 
-  // Bundle.entry.fullUrl must be an absolute URL (or `urn:uuid:`/`urn:oid:`).
-  // FHIR Validator enforces this since ~2023 — previously unenforced.
-  // `fullUrl` is unique to Bundle.entry in the FHIR base spec, so its
-  // presence as a string at any non-root scope is a sufficient marker.
-  if (!atRoot && typeof obj.fullUrl === 'string') {
-    const url = obj.fullUrl;
-    if (!url.startsWith('urn:') && !/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(url)) {
-      addIssue(ctx, {
-        code: FS.FULLURL_NOT_ABSOLUTE,
-        path: [...path, 'fullUrl'],
-        got: url,
-      });
-    }
-  }
-
-  // Bundle integrity rules: run once at the Bundle root.
-  if (atRoot && obj.resourceType === 'Bundle') {
-    checkBundleIntegrity(ctx, obj, path);
+  // Corner-case dispatch by current resource type (e.g. Bundle integrity +
+  // entry.fullUrl), at the resource root. Keeps walkObject generic.
+  if (atRoot && ctx.currentResourceType) {
+    RESOURCE_HANDLERS[ctx.currentResourceType]?.(ctx, obj, path);
   }
 
   // Expand overlays through `type` references: e.g. element typed `HumanName`
   // pulls in HumanName's elements as additional overlays at this scope.
   let expanded = expandTypeOverlays(ctx, overlays, path);
 
-  // Extension URL dereferencing: when the current scope is an Extension
-  // (any overlay says type=Extension) AND data carries an absolute-URL
-  // `url`, pull the extension definition by URL and apply as additional
-  // overlay. This makes us-core-race etc. validate sub-extensions
-  // internally. Short bare URLs (sub-extension names like "species") are
-  // NOT resolved — they collide with the resolver's `name` index and
-  // would deref to unrelated canonicals (e.g. "test" → openEHR-test).
-  if (
-    typeof obj.url === 'string' &&
-    obj.url.includes('://') &&
-    expanded.some((o) => (o.el as { type?: string }).type === 'Extension')
-  ) {
-    const extSchema = ctx.resolve(obj.url);
-    if (extSchema) {
-      const chain: Overlay[] = [];
-      addSchemaOverlays(ctx, extSchema, extSchema.url, chain);
-      expanded = [...expanded, ...chain];
-    }
+  // Corner-case dispatch by current data type (e.g. Extension URL deref).
+  for (const t of dataTypesOf(expanded)) {
+    const handler = DATATYPE_HANDLERS[t];
+    if (handler) expanded = handler(ctx, expanded, obj, path);
   }
 
   // Reference target type check (fs1001) + resolver (fs1002). Operates on
@@ -647,6 +628,85 @@ function walkObject(
 
     walk(ctx, childOverlays, obj[key], [...path, key]);
   }
+}
+
+// ─── corner-case dispatchers ────────────────────────────────────────────────
+//
+// Resource-type and data-type specific rules live here, out of the generic
+// walkObject flow. Add an entry to register a new corner case.
+
+const RESOURCE_HANDLERS: Record<
+  string,
+  (ctx: Ctx, obj: Record<string, unknown>, path: (string | number)[]) => void
+> = {
+  Bundle: handleBundle,
+};
+
+const DATATYPE_HANDLERS: Record<
+  string,
+  (
+    ctx: Ctx,
+    expanded: Overlay[],
+    obj: Record<string, unknown>,
+    path: (string | number)[],
+  ) => Overlay[]
+> = {
+  Extension: handleExtension,
+};
+
+function resourceTypeOf(data: unknown): string | undefined {
+  if (data && typeof data === 'object' && !Array.isArray(data)) {
+    const rt = (data as { resourceType?: unknown }).resourceType;
+    if (typeof rt === 'string') return rt;
+  }
+  return undefined;
+}
+
+function dataTypesOf(overlays: Overlay[]): Set<string> {
+  const out = new Set<string>();
+  for (const o of overlays) {
+    const t = (o.el as { type?: string }).type;
+    if (t) out.add(t);
+  }
+  return out;
+}
+
+// Bundle integrity + every entry's `fullUrl` must be an absolute URL (or a
+// `urn:` form). Runs once at the Bundle root.
+function handleBundle(ctx: Ctx, obj: Record<string, unknown>, path: (string | number)[]): void {
+  checkBundleIntegrity(ctx, obj, path);
+
+  const entries = Array.isArray(obj.entry) ? obj.entry : [];
+  for (let i = 0; i < entries.length; i++) {
+    const fullUrl = (entries[i] as { fullUrl?: unknown } | null)?.fullUrl;
+    if (typeof fullUrl !== 'string') continue;
+    if (!fullUrl.startsWith('urn:') && !/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(fullUrl)) {
+      addIssue(ctx, {
+        code: FS.FULLURL_NOT_ABSOLUTE,
+        path: [...path, 'entry', i, 'fullUrl'],
+        got: fullUrl,
+      });
+    }
+  }
+}
+
+// Extension URL dereferencing: when this scope is an Extension carrying an
+// absolute-URL `url`, pull its definition by URL and apply as extra overlays
+// (so e.g. us-core-race sub-extensions validate). Short bare URLs (sub-extension
+// names like "species") are NOT resolved — they collide with the resolver's
+// `name` index and would deref to unrelated canonicals.
+function handleExtension(
+  ctx: Ctx,
+  expanded: Overlay[],
+  obj: Record<string, unknown>,
+  _path: (string | number)[],
+): Overlay[] {
+  if (typeof obj.url !== 'string' || !obj.url.includes('://')) return expanded;
+  const extSchema = ctx.resolve(obj.url);
+  if (!extSchema) return expanded;
+  const chain: Overlay[] = [];
+  addSchemaOverlays(ctx, extSchema, extSchema.url, chain);
+  return [...expanded, ...chain];
 }
 
 // Inline overlay describing the Element complex type: `{id?, extension?[]}`.

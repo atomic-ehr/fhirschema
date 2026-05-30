@@ -39,9 +39,10 @@ Status legend: ☐ todo · ◐ partial · ☑ done · ⊘ n/a
   overlays (so a Bundle/profile constraint on the resource slot applies) plus the inner
   resource's own chain. Tests: `inner-resource.yaml`. (One-pass collection (d) deferred —
   current per-scope resolution is correct; one-pass is an optimization.)
-- ☐ **A3. Corner-case dispatcher.** Pull Bundle (fullUrl, integrity) + Extension out of
-  the main flow into two dispatchers: by `currentResourceType` (Bundle) and by
-  `currentDataType` (Extension). Keep `walkObject` generic.
+- ☑ **A3. Corner-case dispatcher.** `walkObject` is now generic; Bundle (integrity +
+  per-entry fullUrl) and Extension (URL deref) live in `handleBundle`/`handleExtension`,
+  dispatched via `RESOURCE_HANDLERS` (keyed by `ctx.currentResourceType`) and
+  `DATATYPE_HANDLERS` (keyed by overlay data types). Behavior-preserving (green).
 - ☐ **A4. Extension / modifierExtension semantics.**
   - normal extension: opportunistic resolve — validate content if definition available,
     else WARNING (not error). Same for extension-in-extension (no special case).
