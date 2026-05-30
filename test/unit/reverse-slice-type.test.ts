@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import { toStructureDefinition } from '../../src/converter/reverse';
+import { toStructureDefinition } from '../../src/converter/to-structure-definition';
 import type { FHIRSchema } from '../../src/converter/types';
 
 const typeCodes = (el: { type?: Array<{ code: string }> }) => (el.type || []).map((t) => t.code);

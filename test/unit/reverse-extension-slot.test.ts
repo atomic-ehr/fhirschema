@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import { toStructureDefinition } from '../../src/converter/reverse';
+import { toStructureDefinition } from '../../src/converter/to-structure-definition';
 import type { FHIRSchema } from '../../src/converter/types';
 
 const ASSERTED = 'http://hl7.org/fhir/StructureDefinition/condition-assertedDate';

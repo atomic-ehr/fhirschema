@@ -1,5 +1,5 @@
 import { mergeFHIRSchema } from './merge.js';
-import { toStructureDefinition } from './reverse.js';
+import { toStructureDefinition } from './to-structure-definition.js';
 import { translate } from './index.js';
 import type { FHIRSchema, StructureDefinition, StructureDefinitionElement } from './types.js';
 

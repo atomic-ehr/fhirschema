@@ -33,7 +33,7 @@ Implemented in `src/converter/snapshot.ts`:
    derived layer that doesn't restate it). This is the overlay-merge primitive at the
    heart of snapshot generation; overlay scalar fields win, `elements` and
    `slicing.slices` merge recursively.
-4. **`toStructureDefinition`** (`src/converter/reverse.ts`) — merged FHIRSchema → SD
+4. **`toStructureDefinition`** (`src/converter/to-structure-definition.ts`) — merged FHIRSchema → SD
    differential-style element list (the reverse converter).
 5. **`rewriteChoicePathsToSourceStyle`** — rewrite typed choice paths
    (`valueQuantity.*`) to the source's `[x]` style (`value[x].*`). Done *before*
