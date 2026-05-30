@@ -233,6 +233,19 @@ function elementKey(element: { path: string; sliceName?: string }): string {
   return `${element.path}|${element.sliceName || ''}`;
 }
 
+// Direct children of `parentPath` within an element list (one path segment deeper).
+function directChildren(
+  elements: StructureDefinitionElement[],
+  parentPath: string,
+): StructureDefinitionElement[] {
+  const out: StructureDefinitionElement[] = [];
+  for (const e of elements) {
+    if (!e.path.startsWith(`${parentPath}.`)) continue;
+    if (!e.path.slice(parentPath.length + 1).includes('.')) out.push(e);
+  }
+  return out;
+}
+
 function cloneInheritedElement(
   template: StructureDefinitionElement,
   targetPath: string,
@@ -289,16 +302,49 @@ async function expandInheritedTypeElements(
   result.forEach((el, i) => indexByKey.set(elementKey(el), i));
   const templatesCache = new Map<string, StructureDefinitionElement[]>();
   const processedAnchors = new Set<string>();
+  const processedCref = new Set<string>();
   const sourcePaths = new Set((sourceElements || []).map((element) => element.path));
   const choiceMappings = buildChoiceTypedPrefixMappings(generatedElements);
 
   for (let index = 0; index < result.length; index += 1) {
     const element = result[index];
-    if (!element.type || !element.path.includes('.')) continue;
+    if (!element.path.includes('.')) continue;
+
+    // contentReference: a recursive backbone (e.g. Parameters.parameter.part →
+    // #Parameters.parameter) defines its children elsewhere. Surface the
+    // referenced node's direct children under this element, one level. Source
+    // gating bounds the recursion (a nested cref expands only as far as the
+    // source snapshot pins it).
+    if (element.contentReference && !processedCref.has(element.path)) {
+      processedCref.add(element.path);
+      const refPath = element.contentReference.split('#')[1];
+      if (refPath) {
+        for (const refChild of directChildren(result, refPath)) {
+          // Recursion copies the referenced node's structure, not a profile's
+          // reslices of it — skip slice rows (they'd produce phantom resliced
+          // recursive children like part.part:MemberPatient).
+          if (refChild.sliceName) continue;
+          const suffix = refChild.path.slice(refPath.length + 1);
+          const childPath = `${element.path}.${suffix}`;
+          if (
+            sourcePaths.size > 0 &&
+            !sourceHasPathOrChoiceVariant(sourcePaths, childPath, choiceMappings)
+          ) {
+            continue;
+          }
+          const child = cloneInheritedElement(refChild, childPath);
+          const key = elementKey(child);
+          if (indexByKey.has(key)) continue;
+          indexByKey.set(key, result.length);
+          result.push(child);
+        }
+      }
+    }
+
+    if (!element.type) continue;
     const anchorKey = elementKey(element);
     if (processedAnchors.has(anchorKey)) continue;
     processedAnchors.add(anchorKey);
-
     for (const typeRef of element.type) {
       const typeCode = typeRef.code;
       if (!typeCode) continue;

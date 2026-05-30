@@ -178,9 +178,12 @@ function buildBinding(
 function buildContentReference(
   elementReference: FHIRSchemaElement['elementReference'],
   rootType: string,
-  rootUrl: string,
 ): string | undefined {
-  if (!elementReference || elementReference.length < 3 || elementReference[0] !== rootUrl) {
+  // A FHIR contentReference is always within the same resource, so the target
+  // path is local. The first entry is the defining SD's url (the *base* for a
+  // profile, not the profile itself) — accept any url and rebuild the local
+  // `#ResourceType.path` from the `elements`/name markers.
+  if (!elementReference || elementReference.length < 3 || typeof elementReference[0] !== 'string') {
     return undefined;
   }
 
@@ -384,7 +387,7 @@ function buildBaseElement(
   }
 
   if (source.elementReference) {
-    const contentReference = buildContentReference(source.elementReference, rootType, rootUrl);
+    const contentReference = buildContentReference(source.elementReference, rootType);
     if (contentReference) {
       element.contentReference = contentReference;
     }
