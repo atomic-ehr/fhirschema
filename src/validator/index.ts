@@ -381,9 +381,9 @@ function walkObject(
   options?: ValidateOptions,
 ): void {
   if (data === null || typeof data !== 'object' || Array.isArray(data)) {
-    if (!atRoot) {
-      issues.push({ code: FS.EXPECTED_OBJECT, path, expected: 'object', got: jsTypeOf(data) });
-    }
+    // A non-object always fails here — including at root. (Previously root
+    // returned silently, letting an array/scalar resource pass unvalidated.)
+    issues.push({ code: FS.EXPECTED_OBJECT, path, expected: 'object', got: jsTypeOf(data) });
     return;
   }
   const obj = data as Record<string, unknown>;

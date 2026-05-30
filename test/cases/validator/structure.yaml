@@ -45,6 +45,19 @@ tests:
     issues:
       - { code: fs202, path: [name] }
 
+  # ─── root must be an object (no silent pass on non-object root) ───────
+  - desc: array at root is rejected, not silently passed
+    schemas: [{ elements: { id: { type: id } } }]
+    data: [1, 2, 3]
+    issues:
+      - { code: fs202, path: [] }
+
+  - desc: scalar at root is rejected
+    schemas: [{ elements: { id: { type: id } } }]
+    data: hello
+    issues:
+      - { code: fs202, path: [] }
+
   # ─── fs203 expected-array ─────────────────────────────────────────────
   - desc: scalar where array expected
     schemas: [{ elements: { tags: { type: string, array: true } } }]
