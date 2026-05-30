@@ -34,6 +34,25 @@ running on Bun.
 * No comments that restate what the code does. Comments are for non-obvious
   *why* — a hidden invariant, a workaround, a subtle ordering constraint.
 
+## Test fixtures (Graham / IG validator cases)
+
+The data-driven validator suite (`test/cases/validator/*.yaml`) runs many cases
+against real FHIR packages. Those packages are translated to FHIRSchema fixtures
+under `test/fixtures/<pkg>[@version]/` (gitignored) by
+`scripts/prepare-fixtures.ts`.
+
+* `bun run test` runs `prepare-fixtures` first (the `pretest` hook); plain
+  `bun test` does **not** — it uses whatever fixtures already exist.
+* A case whose package/profile fixtures are **absent is skipped, not failed**
+  (so a clean checkout is green). On CI/a fresh machine you'll see ~74
+  deliberate `skip: true` cases plus any unprepared ones.
+* To run the **full** suite (only the deliberate `skip: true` remain):
+  1. clone `https://github.com/FHIR/fhir-test-cases` as a **sibling** of this
+     repo (`../fhir-test-cases`) — needed for the local `.tgz` packages
+     (`hl7.fhir.test.verA/B/C`, `mimic`) and `_loadProfile` cases;
+  2. `bun run prepare-fixtures` (downloads the rest from simplifier.net);
+  3. `bun test`.
+
 ## Architectural changes
 
 * The translator is **stateless** (no I/O, no caches, no other-schema

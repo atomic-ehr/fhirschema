@@ -86,6 +86,21 @@ bunx tsc --noEmit       # typecheck
 bun run build           # build dist/
 ```
 
+### Test fixtures
+
+The data-driven validator cases run against real FHIR packages, translated to
+fixtures under `test/fixtures/` (gitignored). Cases whose fixtures aren't
+prepared **skip** rather than fail, so a clean checkout is green. To run the
+full suite:
+
+```bash
+git clone --depth 1 https://github.com/FHIR/fhir-test-cases ../fhir-test-cases
+bun run prepare-fixtures   # downloads packages + builds test/fixtures/
+bun test
+```
+
+See [CLAUDE.md](CLAUDE.md) → "Test fixtures" for details.
+
 ## Layout
 
 ```text
