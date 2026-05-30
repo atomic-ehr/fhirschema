@@ -2,7 +2,7 @@ import { calculateActions } from './action-calculator.js';
 import { expandChoiceElement, isChoiceElement } from './choice-handler.js';
 import { transformElement } from './element-transformer.js';
 import { enrichPath, parsePath } from './path-parser.js';
-import { applyActions } from './stack-processor.js';
+import { applyActions } from './apply-actions.js';
 import type {
   ConversionContext,
   FHIRSchema,
@@ -265,4 +265,4 @@ export { expandChoiceElement, isChoiceElement } from './choice-handler.js';
 export { transformElement } from './element-transformer.js';
 // Export all modules for testing
 export { enrichPath, getCommonPath, parsePath } from './path-parser.js';
-export { applyActions } from './stack-processor.js';
+export { applyActions } from './apply-actions.js';
