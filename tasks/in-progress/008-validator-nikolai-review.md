@@ -10,10 +10,11 @@ Status legend: ☐ todo · ◐ partial · ☑ done · ⊘ n/a
 - ☑ **B1. Non-object at root silently passes.** Dropped the `!atRoot` guard in
   `walkObject` — a non-object now always emits `fs202` and exits. Tests added in
   `structure.yaml` (array/scalar at root).
-- ☐ **B2. Empty-object check is wrong.** (≈470) filters out `resourceType` before the
-  emptiness test, and uses `EXPECTED_OBJECT`. Should be plain `Object.keys(obj).length
-  === 0`, and the code should be a distinct `UNEXPECTED_EMPTY_OBJECT`. Add
-  `UNEXPECTED_EMPTY_ARRAY` for the empty-array case (currently `TOO_FEW` in `walk()`).
+- ☑ **B2. Empty-object check.** Added `fs208 UNEXPECTED_EMPTY_OBJECT` /
+  `fs209 UNEXPECTED_EMPTY_ARRAY`. Empty-object check is now plain
+  `Object.keys(obj).length === 0` (a lone `resourceType` no longer counts as empty);
+  empty arrays emit fs209 instead of fs303. Updated affected Graham/aidbox cases +
+  DESIGN.md §13 registry.
 
 ## Naming / structure
 

@@ -283,7 +283,7 @@ tests:
       resourceType: Patient
       name: []
     issues:
-      - { code: fs303, path: [name] }
+      - { code: fs209, path: [name] }
 
   - desc: 'aidbox/validation-c: empty composite on complex field (maritalStatus = {})'
     schemas: []
@@ -291,7 +291,7 @@ tests:
       resourceType: Patient
       maritalStatus: {}
     issues:
-      - { code: fs202, path: [maritalStatus] }
+      - { code: fs208, path: [maritalStatus] }
 
   - desc: 'aidbox/validation-c: empty string on primitive (birthDate = "")'
     schemas: []

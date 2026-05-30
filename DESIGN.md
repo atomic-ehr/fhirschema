@@ -595,9 +595,9 @@ rule **inline**, replacing the equivalent FHIR FHIRPath invariants that the
 translator strips:
 
 - empty strings (`""`) → `fs117`
-- empty objects (no meaningful keys) → `fs202` with `expected: 'non-empty-object'`
-- empty arrays (`[]`) → `fs303` if `min > 0`, otherwise allowed only as
-  "field omitted" which idiomatic FHIR producers should avoid
+- empty objects (`{}`, non-root) → `fs208` (unexpected-empty-object)
+- empty arrays (`[]`) → `fs209` (unexpected-empty-array); a too-few non-empty
+  array (`length < min`) is `fs303`
 
 The translator should drop `constraint`s on `Element`/`BackboneElement` that
 encode this same rule (e.g. `ele-1`) to avoid double-firing. See §14.
@@ -1032,6 +1032,8 @@ Literal validation (JSON type correct, value invalid):
 | fs205 | pattern-mismatch  | `pattern[X]` value not satisfied (deep-partial match) |
 | fs206 | fixed-mismatch    | `fixed[X]` value not satisfied (exact equality) |
 | fs207 | excluded-element  | Field prohibited by `excluded[]` (from `max: "0"` in profile) is present in data |
+| fs208 | unexpected-empty-object | A non-root object is `{}` (empty). FHIR JSON forbids empty objects |
+| fs209 | unexpected-empty-array  | An array field is `[]` (empty). FHIR JSON forbids empty arrays — omit the field |
 
 ### fs3xx — Cardinality
 

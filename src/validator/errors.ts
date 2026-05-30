@@ -38,6 +38,8 @@ export const FS = {
   PATTERN_MISMATCH: 'fs205',
   FIXED_MISMATCH: 'fs206',
   EXCLUDED_ELEMENT: 'fs207',
+  UNEXPECTED_EMPTY_OBJECT: 'fs208',
+  UNEXPECTED_EMPTY_ARRAY: 'fs209',
 
   // fs3xx — cardinality
   REQUIRED: 'fs301',

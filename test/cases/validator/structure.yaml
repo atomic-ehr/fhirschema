@@ -35,7 +35,7 @@ tests:
     issues:
       - { code: fs202, path: [name] }
 
-  - desc: empty composite is rejected
+  - desc: empty composite is rejected (unexpected-empty-object, not expected-object)
     schemas:
       - elements:
           name: { type: HumanName }
@@ -43,7 +43,13 @@ tests:
       - { url: HumanName, name: HumanName, type: HumanName, kind: complex-type, class: complex-type, elements: { family: { type: string } } }
     data: { name: {} }
     issues:
-      - { code: fs202, path: [name] }
+      - { code: fs208, path: [name] }
+
+  - desc: empty array is rejected (unexpected-empty-array)
+    schemas: [{ elements: { tags: { type: string, array: true } } }]
+    data: { tags: [] }
+    issues:
+      - { code: fs209, path: [tags] }
 
   # ─── root must be an object (no silent pass on non-object root) ───────
   - desc: array at root is rejected, not silently passed

@@ -310,7 +310,7 @@ function walk(
     // FHIR rule: empty arrays are not allowed in JSON. If a collection is
     // empty the field must be omitted. (aidbox: type "empty-value")
     if (value.length === 0) {
-      issues.push({ code: FS.TOO_FEW, path, expected: 'non-empty array', got: 0 });
+      issues.push({ code: FS.UNEXPECTED_EMPTY_ARRAY, path, expected: 'non-empty array', got: 0 });
       return;
     }
     checkArrayCardinality(resolvedOverlays, value, path, issues);
@@ -465,11 +465,10 @@ function walkObject(
   // required-key check on an empty object still wants to report what's
   // missing, matching Graham java validator's output ("Object must have
   // some content" + "minimum required = 1, but only found 0").
-  // `_field` shadows count as content: an Element with only `_x.extension`
-  // (no value) is a valid representation per the primitive-extension rules.
-  const meaningfulKeys = Object.keys(obj).filter((k) => k !== 'resourceType');
-  if (meaningfulKeys.length === 0 && !atRoot) {
-    issues.push({ code: FS.EXPECTED_OBJECT, path, expected: 'non-empty-object' });
+  // An object with any key (incl. a lone `resourceType`, or a `_field` shadow
+  // carrying id/extension) is NOT empty — only a truly `{}` object is.
+  if (Object.keys(obj).length === 0 && !atRoot) {
+    issues.push({ code: FS.UNEXPECTED_EMPTY_OBJECT, path, expected: 'non-empty object' });
   }
 
   // Choice groups (value[x]): map parent → intersection of allowed variants.

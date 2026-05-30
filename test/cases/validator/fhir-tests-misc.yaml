@@ -4,8 +4,8 @@ suite: HL7 fhir-test-cases — R5 samples
 # validator messages to our fsNNN codes:
 #   "Unrecognized property X"                          → fs201
 #   "minimum required = N, but only found 0"           → fs301
-#   "Array cannot be empty"                            → fs303
-#   "Object must have some content"                    → fs202
+#   "Array cannot be empty"                            → fs209 (unexpected empty array)
+#   "Object must have some content"                    → fs208 (unexpected empty object)
 #   "Boolean values must be 'true' or 'false'"         → fs103 (json type) or fs108 (date)
 #   "Error parsing JSON: the primitive value must be"  → fs101 / fs102 / fs103
 
@@ -46,7 +46,7 @@ tests:
     valid: true
 
   # ─── bad (errorCount>0) — clear mappings ──────────────────────────────
-  - desc: 'fhir-tests/list-empty2: List.entry is empty array → fs303'
+  - desc: 'fhir-tests/list-empty2: List.entry is empty array → fs209'
     # "ERROR: List.entry: Array cannot be empty - the property should not be
     #  present if it has no values"
     schemas: []
@@ -57,7 +57,7 @@ tests:
       mode: changes
       entry: []
     issues:
-      - { code: fs303, path: [entry] }
+      - { code: fs209, path: [entry] }
 
   - desc: 'fhir-tests/group-choice-bad1: characteristic[0].value (no [x]) → fs201 + fs301'
     # Source: group-choice-bad1.json. Java reports:
@@ -141,7 +141,7 @@ tests:
     issues:
       - { code: fs201, path: [other] }
 
-  - desc: 'fhir-tests/list-empty1: List.entry[0] = {} → fs202 + fs301 on item'
+  - desc: 'fhir-tests/list-empty1: List.entry[0] = {} → fs208 + fs301 on item'
     schemas: []
     data:
       resourceType: List
@@ -150,7 +150,7 @@ tests:
       mode: changes
       entry: [{}]
     issues:
-      - { code: fs202, path: [entry, 0] }
+      - { code: fs208, path: [entry, 0] }
       - { code: fs301, path: [entry, 0, item] }
 
   - desc: 'fhir-tests/patient-id-bad-1: id with underscore → fs110'

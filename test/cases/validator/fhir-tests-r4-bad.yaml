@@ -16,7 +16,7 @@ tests:
     path:
     - content
     - data
-- desc: 'fhir-tests/empty-array: DocumentReference.category[0].coding=[] → fs303'
+- desc: 'fhir-tests/empty-array: DocumentReference.category[0].coding=[] → fs209'
   schemas: []
   data:
     resourceType: DocumentReference
@@ -28,7 +28,7 @@ tests:
         contentType: text/plain
         data: Zm9v
   issues:
-  - code: fs303
+  - code: fs209
     path:
     - category
     - 0
