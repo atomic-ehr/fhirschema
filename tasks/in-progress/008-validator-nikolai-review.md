@@ -25,12 +25,13 @@ Status legend: ☐ todo · ◐ partial · ☑ done · ⊘ n/a
 
 ## Architecture (serious — 2-3 review cycles each)
 
-- ☐ **A1. Three-level context: `systemContext` / `validateContext` / `opts`.**
-  `systemContext` = immutable across runs (resolve, schema catalog, loaded IGs,
-  default settings, understood modifier-extensions). `validateContext` = mutable per
-  call (schemaSet, issues, resource, root resource, current resource/data type, path).
-  `opts` = per-call options. All functions take these 3. Drop explicit `strict`,
-  `issues`, `path`. `addIssue(ctx, …)` pulls issues from ctx (logging hook).
+- ☑ **A1. Three-level context.** Internal functions now thread one `Ctx` session
+  bundling the system half (`resolve`, `settings`) + mutable session state (`issues`,
+  `resource`, `rootResource`) + `opts`. Dropped the explicit `issues`/`options`
+  params and the `InternalOptions._resource` hack; `addIssue(ctx, …)` is the single
+  emit point/log hook; `strict` reads from `ctx.opts`. (`path` + schemaSet kept as
+  scope-local params — Nikolai's "можно убрать" was optional and they're per-scope.)
+  Public `validate(ctx, …)` signature unchanged. Behavior-preserving (530 green).
 - ☐ **A2. Inner-resource resolution.** (a) extract a named helper
   `innerResourceResolution` that runs BEFORE the object walk; (b) gate on "the field's
   type is-a `Resource`" (inheritance), not the `atRoot` flag — an element literally

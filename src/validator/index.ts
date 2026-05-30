@@ -8,8 +8,22 @@ export { FS } from './errors.js';
 
 export type SchemaRef = string;
 
+// System context (immutable across validations): schema resolution + settings.
+// This is what the caller builds once and reuses for many validate() calls.
 export interface ValidateContext {
   resolve: (ref: SchemaRef) => FHIRSchema | undefined;
+  settings?: ValidateSettings;
+}
+
+export interface ValidateSettings {
+  /**
+   * Modifier-extension URLs this system understands. With
+   * `errorOnUnknownModifierExtension` on, a `modifierExtension` whose `url`
+   * is not listed emits fs1102 — the consumer cannot safely interpret the
+   * resource. (Per review: resolving a URL ≠ understanding the modifier.)
+   */
+  understoodModifierExtensions?: string[];
+  errorOnUnknownModifierExtension?: boolean;
 }
 
 export interface ValidateOptions {
@@ -115,14 +129,28 @@ export interface ValidationResult {
 // Input schema may carry `base` (canonical) or `additionalProfiles` to combine.
 export type InputSchema = FHIRSchema & { additionalProfiles?: string[] };
 
-// Internal `options` extension: the resource currently being walked (set
-// when we enter a resource) and the outermost resource (set once, preserved
-// through inner-resource walks). Used to populate %resource / %rootResource
-// FHIRPath env vars. Not exposed in `ValidateOptions`.
-type InternalOptions = ValidateOptions & {
-  _resource?: unknown;
-  _rootResource?: unknown;
-};
+// Per-validation context threaded through every walk/check function (the
+// "validateContext" / session of the three-context model). The `resolve` /
+// `settings` half is the immutable system context (copied in from the public
+// ValidateContext); the rest is mutable session state that accumulates as we
+// descend. `opts` are the per-call options.
+//
+//   resource      — the resource currently being walked (%resource / %context)
+//   rootResource  — the outermost resource (%rootResource), preserved through
+//                   inner-resource walks
+interface Ctx {
+  resolve: (ref: SchemaRef) => FHIRSchema | undefined;
+  settings: ValidateSettings;
+  opts: ValidateOptions;
+  issues: ValidationIssue[];
+  resource: unknown;
+  rootResource: unknown;
+}
+
+// Single issue-emission point — also the natural hook for logging.
+function addIssue(ctx: Ctx, issue: ValidationIssue): void {
+  ctx.issues.push(issue);
+}
 
 // ─── overlay model ─────────────────────────────────────────────────────────
 
@@ -144,29 +172,33 @@ export function validate(
   data: unknown,
   options?: ValidateOptions,
 ): ValidationResult {
-  const issues: ValidationIssue[] = [];
-  const strict = options?.strict === true;
+  // Build the per-call session from the system context + options.
+  const session: Ctx = {
+    resolve: ctx.resolve,
+    settings: ctx.settings ?? {},
+    opts: options ?? {},
+    issues: [],
+    resource: data,
+    rootResource: data,
+  };
 
-  const overlays = collectSchemaSet(ctx, schemas, data, strict, issues);
-
-  if (overlays.length > 0) {
-    // Stash the resource being walked (becomes %resource / %context) and
-    // preserve the outermost (%rootResource) across inner-resource walks.
-    const inner = options as InternalOptions | undefined;
-    const optsForWalk: InternalOptions = {
-      ...(options ?? {}),
-      _resource: data,
-      _rootResource: inner?._rootResource ?? data,
-    };
-    walkObject(ctx, overlays, data, [], issues, true, optsForWalk);
-  }
+  runValidation(session, schemas, data);
 
   // Normalize severity: default 'error' if not set by emit site.
-  for (const i of issues) {
+  for (const i of session.issues) {
     if (i.severity === undefined) i.severity = 'error';
   }
 
-  return { valid: issues.every((i) => i.severity !== 'error'), issues };
+  return { valid: session.issues.every((i) => i.severity !== 'error'), issues: session.issues };
+}
+
+// Collect the SchemaSet and walk, into the given session. Reused for inner
+// resources (Bundle.entry, contained) with a child session.
+function runValidation(ctx: Ctx, schemas: InputSchema[], data: unknown): void {
+  const overlays = collectSchemaSet(ctx, schemas, data);
+  if (overlays.length > 0) {
+    walkObject(ctx, overlays, data, [], true);
+  }
 }
 
 // ─── overlay collection ────────────────────────────────────────────────────
@@ -175,19 +207,14 @@ export function validate(
 // (+ their `additionalProfiles`), then data-driven discovery from the resource
 // itself (`data.resourceType` → base schema, `data.meta.profile[]` → profiles).
 // Each entry brings its full inheritance chain.
-function collectSchemaSet(
-  ctx: ValidateContext,
-  schemas: InputSchema[],
-  data: unknown,
-  strict: boolean,
-  issues: ValidationIssue[],
-): Overlay[] {
+function collectSchemaSet(ctx: Ctx, schemas: InputSchema[], data: unknown): Overlay[] {
   const overlays: Overlay[] = [];
+  const strict = ctx.opts.strict === true;
 
   for (const s of schemas) {
-    addSchemaOverlays(ctx, s, s.url, overlays, issues);
+    addSchemaOverlays(ctx, s, s.url, overlays);
     for (const ap of s.additionalProfiles ?? []) {
-      addResolvedProfile(ctx, ap, overlays, issues, {
+      addResolvedProfile(ctx, ap, overlays, {
         reportMissing: true,
         path: [],
         schema: s.url,
@@ -196,7 +223,7 @@ function collectSchemaSet(
   }
 
   for (const declared of findDeclaredProfiles(data)) {
-    addResolvedProfile(ctx, declared.ref, overlays, issues, {
+    addResolvedProfile(ctx, declared.ref, overlays, {
       reportMissing: strict,
       path: declared.path,
     });
@@ -206,29 +233,27 @@ function collectSchemaSet(
 }
 
 function addSchemaOverlays(
-  ctx: ValidateContext,
+  ctx: Ctx,
   schema: FHIRSchema,
   source: string | undefined,
   out: Overlay[],
-  issues: ValidationIssue[],
 ): void {
-  collectChain(ctx, schema, source, out, issues, new Set());
+  collectChain(ctx, schema, source, out, new Set());
 }
 
 function addResolvedProfile(
-  ctx: ValidateContext,
+  ctx: Ctx,
   ref: string,
   out: Overlay[],
-  issues: ValidationIssue[],
   missing: { reportMissing: boolean; path: (string | number)[]; schema?: string },
 ): void {
   const resolved = ctx.resolve(ref);
   if (resolved) {
-    addSchemaOverlays(ctx, resolved, resolved.url, out, issues);
+    addSchemaOverlays(ctx, resolved, resolved.url, out);
     return;
   }
   if (!missing.reportMissing) return;
-  issues.push({
+  addIssue(ctx, {
     code: FS.PROFILE_NOT_FOUND,
     path: missing.path,
     schema: missing.schema,
@@ -257,11 +282,10 @@ function findDeclaredProfiles(data: unknown): Array<{ ref: string; path: (string
 }
 
 function collectChain(
-  ctx: ValidateContext,
+  ctx: Ctx,
   schema: FHIRSchema,
   source: string | undefined,
   out: Overlay[],
-  issues: ValidationIssue[],
   visited: Set<string>,
 ): void {
   const key = schema.url ?? schema.name ?? '';
@@ -271,14 +295,14 @@ function collectChain(
   if (schema.base) {
     const parent = ctx.resolve(schema.base);
     if (!parent) {
-      issues.push({
+      addIssue(ctx, {
         code: FS.PROFILE_NOT_FOUND,
         path: [],
         schema: source,
         expected: schema.base,
       });
     } else {
-      collectChain(ctx, parent, source, out, issues, visited);
+      collectChain(ctx, parent, source, out, visited);
     }
   }
 
@@ -297,14 +321,7 @@ function collectChain(
 
 // ─── core walker ───────────────────────────────────────────────────────────
 
-function walk(
-  ctx: ValidateContext,
-  overlays: Overlay[],
-  value: unknown,
-  path: (string | number)[],
-  issues: ValidationIssue[],
-  options?: ValidateOptions,
-): void {
+function walk(ctx: Ctx, overlays: Overlay[], value: unknown, path: (string | number)[]): void {
   if (overlays.length === 0) return;
 
   // Resolve `elementReference`: an element-def may point to another schema's
@@ -316,34 +333,34 @@ function walk(
 
   if (Array.isArray(value)) {
     if (!declaredArray) {
-      issues.push({ code: FS.EXPECTED_ARRAY, path, expected: 'scalar', got: 'array' });
+      addIssue(ctx, { code: FS.EXPECTED_ARRAY, path, expected: 'scalar', got: 'array' });
       return;
     }
     // FHIR rule: empty arrays are not allowed in JSON. If a collection is
     // empty the field must be omitted. (aidbox: type "empty-value")
     if (value.length === 0) {
-      issues.push({ code: FS.UNEXPECTED_EMPTY_ARRAY, path, expected: 'non-empty array', got: 0 });
+      addIssue(ctx, { code: FS.UNEXPECTED_EMPTY_ARRAY, path, expected: 'non-empty array', got: 0 });
       return;
     }
-    checkArrayCardinality(resolvedOverlays, value, path, issues);
-    walkArrayItems(ctx, resolvedOverlays, value, path, issues, options);
+    checkArrayCardinality(ctx, resolvedOverlays, value, path);
+    walkArrayItems(ctx, resolvedOverlays, value, path);
     return;
   }
 
   if (declaredArray) {
-    issues.push({ code: FS.EXPECTED_ARRAY, path, expected: 'array', got: jsTypeOf(value) });
+    addIssue(ctx, { code: FS.EXPECTED_ARRAY, path, expected: 'array', got: jsTypeOf(value) });
     return;
   }
 
   // pattern[X] check (deep-partial) and fixed[X] check (strict equality).
   // Both run before the primitive/object branches so type checks still emit
   // their own issues independently.
-  checkPatterns(resolvedOverlays, value, path, issues);
-  checkFixed(resolvedOverlays, value, path, issues);
+  checkPatterns(ctx, resolvedOverlays, value, path);
+  checkFixed(ctx, resolvedOverlays, value, path);
 
   // Terminology bindings (fs5xx). Pluggable; skipped if no engine wired.
-  if (options?.terminology) {
-    checkBindings(resolvedOverlays, value, path, issues, options.terminology);
+  if (ctx.opts.terminology) {
+    checkBindings(ctx, resolvedOverlays, value, path);
   }
 
   // primitive / null / object
@@ -353,12 +370,12 @@ function walk(
     if (value === null) return; // primitive extension placeholder
     if (typeof value === 'object') {
       // object/array where a primitive value was expected
-      issues.push({ code: FS.EXPECTED_PRIMITIVE, path, expected: type, got: jsTypeOf(value) });
+      addIssue(ctx, { code: FS.EXPECTED_PRIMITIVE, path, expected: type, got: jsTypeOf(value) });
       return;
     }
     const check = checkPrimitive(type, value);
     if (!check.ok && check.code) {
-      issues.push({
+      addIssue(ctx, {
         code: check.code,
         path,
         expected: check.expected ?? type,
@@ -371,7 +388,7 @@ function walk(
   if (value === null) return;
   if (typeof value !== 'object') {
     // primitive value where complex type was expected
-    issues.push({
+    addIssue(ctx, {
       code: FS.EXPECTED_OBJECT,
       path,
       expected: type ?? 'object',
@@ -380,22 +397,20 @@ function walk(
     return;
   }
 
-  walkObject(ctx, resolvedOverlays, value as Record<string, unknown>, path, issues, false, options);
+  walkObject(ctx, resolvedOverlays, value as Record<string, unknown>, path, false);
 }
 
 function walkObject(
-  ctx: ValidateContext,
+  ctx: Ctx,
   overlays: Overlay[],
   data: unknown,
   path: (string | number)[],
-  issues: ValidationIssue[],
   atRoot: boolean,
-  options?: ValidateOptions,
 ): void {
   if (data === null || typeof data !== 'object' || Array.isArray(data)) {
     // A non-object always fails here — including at root. (Previously root
     // returned silently, letting an array/scalar resource pass unvalidated.)
-    issues.push({ code: FS.EXPECTED_OBJECT, path, expected: 'object', got: jsTypeOf(data) });
+    addIssue(ctx, { code: FS.EXPECTED_OBJECT, path, expected: 'object', got: jsTypeOf(data) });
     return;
   }
   const obj = data as Record<string, unknown>;
@@ -407,9 +422,12 @@ function walkObject(
   if (!atRoot && typeof obj.resourceType === 'string') {
     const innerSchema = ctx.resolve(obj.resourceType);
     if (innerSchema) {
-      const sub = validate(ctx, [], obj, options);
-      for (const i of sub.issues) {
-        issues.push({ ...i, path: [...path, ...i.path] });
+      // Re-validate the inner resource with its own SchemaSet and fresh issues,
+      // inheriting the system context + rootResource; re-path under this scope.
+      const innerCtx: Ctx = { ...ctx, issues: [], resource: obj };
+      runValidation(innerCtx, [], obj);
+      for (const i of innerCtx.issues) {
+        addIssue(ctx, { ...i, path: [...path, ...i.path] });
       }
       return;
     }
@@ -422,7 +440,7 @@ function walkObject(
   if (!atRoot && typeof obj.fullUrl === 'string') {
     const url = obj.fullUrl;
     if (!url.startsWith('urn:') && !/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(url)) {
-      issues.push({
+      addIssue(ctx, {
         code: FS.FULLURL_NOT_ABSOLUTE,
         path: [...path, 'fullUrl'],
         got: url,
@@ -432,12 +450,12 @@ function walkObject(
 
   // Bundle integrity rules: run once at the Bundle root.
   if (atRoot && obj.resourceType === 'Bundle') {
-    checkBundleIntegrity(obj, path, issues);
+    checkBundleIntegrity(ctx, obj, path);
   }
 
   // Expand overlays through `type` references: e.g. element typed `HumanName`
   // pulls in HumanName's elements as additional overlays at this scope.
-  let expanded = expandTypeOverlays(ctx, overlays, path, issues);
+  let expanded = expandTypeOverlays(ctx, overlays, path);
 
   // Extension URL dereferencing: when the current scope is an Extension
   // (any overlay says type=Extension) AND data carries an absolute-URL
@@ -454,7 +472,7 @@ function walkObject(
     const extSchema = ctx.resolve(obj.url);
     if (extSchema) {
       const chain: Overlay[] = [];
-      addSchemaOverlays(ctx, extSchema, extSchema.url, chain, issues);
+      addSchemaOverlays(ctx, extSchema, extSchema.url, chain);
       expanded = [...expanded, ...chain];
     }
   }
@@ -462,15 +480,11 @@ function walkObject(
   // Reference target type check (fs1001) + resolver (fs1002). Operates on
   // overlays before expansion — `refers` lives on the parent element-def,
   // not on Reference's own elements.
-  checkReferenceTarget(overlays, obj, path, issues, options?.referenceResolver);
+  checkReferenceTarget(ctx, overlays, obj, path);
 
   // FHIRPath constraints (fs601). Skipped if no evaluator wired.
-  if (options?.fhirpath) {
-    const internal = options as InternalOptions;
-    checkConstraints(expanded, obj, path, issues, options.fhirpath, {
-      resource: internal._resource,
-      rootResource: internal._rootResource,
-    });
+  if (ctx.opts.fhirpath) {
+    checkConstraints(ctx, expanded, obj, path);
   }
 
   // Empty composite check (only at non-root). Continue afterwards — a
@@ -480,7 +494,7 @@ function walkObject(
   // An object with any key (incl. a lone `resourceType`, or a `_field` shadow
   // carrying id/extension) is NOT empty — only a truly `{}` object is.
   if (Object.keys(obj).length === 0 && !atRoot) {
-    issues.push({ code: FS.UNEXPECTED_EMPTY_OBJECT, path, expected: 'non-empty object' });
+    addIssue(ctx, { code: FS.UNEXPECTED_EMPTY_OBJECT, path, expected: 'non-empty object' });
   }
 
   // Choice groups (value[x]): map parent → intersection of allowed variants.
@@ -502,18 +516,18 @@ function walkObject(
       const allVariants = collectChoiceVariants(expanded, r);
       const present = allVariants.some((v) => v in obj || `_${v}` in obj);
       if (!present) {
-        issues.push({ code: FS.REQUIRED, path: [...path, r], expected: r });
+        addIssue(ctx, { code: FS.REQUIRED, path: [...path, r], expected: r });
       }
       continue;
     }
     if (!(r in obj) && !(`_${r}` in obj)) {
-      issues.push({ code: FS.REQUIRED, path: [...path, r], expected: r });
+      addIssue(ctx, { code: FS.REQUIRED, path: [...path, r], expected: r });
     }
   }
 
   // Choice enforcement: at most one variant present (per parent), narrowed
   // choices respected.
-  checkChoiceGroups(expanded, choiceGroups, obj, path, issues);
+  checkChoiceGroups(ctx, expanded, choiceGroups, obj, path);
 
   // Iterate over data keys (data-driven traversal).
   for (const key of Object.keys(obj)) {
@@ -527,14 +541,14 @@ function walkObject(
 
     // Excluded keys: emit fs207 but otherwise stop (don't descend further).
     if (excluded.has(baseKey)) {
-      issues.push({ code: FS.EXCLUDED_ELEMENT, path: [...path, key], got: key });
+      addIssue(ctx, { code: FS.EXCLUDED_ELEMENT, path: [...path, key], got: key });
       continue;
     }
 
     const childOverlays = findChildOverlays(expanded, baseKey);
 
     if (childOverlays.length === 0) {
-      issues.push({ code: FS.UNKNOWN_ELEMENT, path: [...path, key], got: key });
+      addIssue(ctx, { code: FS.UNKNOWN_ELEMENT, path: [...path, key], got: key });
       continue;
     }
 
@@ -547,7 +561,7 @@ function walkObject(
         const url = (it as { url?: unknown } | null)?.url;
         if (typeof url !== 'string') continue;
         if (!ctx.resolve(url)) {
-          issues.push({
+          addIssue(ctx, {
             code: FS.MODIFIER_EXTENSION_NOT_UNDERSTOOD,
             severity: 'error',
             path: [...path, key, i],
@@ -561,7 +575,7 @@ function walkObject(
       // `_field` is only valid for primitive-typed fields.
       const type = pickType(childOverlays);
       if (!type || !isPrimitiveType(type)) {
-        issues.push({
+        addIssue(ctx, {
           code: FS.INVALID_PRIMITIVE_EXTENSION,
           path: [...path, key],
           expected: 'primitive field',
@@ -581,7 +595,7 @@ function walkObject(
         for (const o of childOverlays) {
           const b = (o.el as { binding?: { strength?: string; valueSet?: string } }).binding;
           if (b?.strength === 'required' && b.valueSet) {
-            issues.push({
+            addIssue(ctx, {
               code: FS.INVALID_CODE_FOR_BINDING,
               path: [...path, baseKey],
               schema: o.source,
@@ -597,11 +611,11 @@ function walkObject(
       // (id + extension[]). Extension's own elements are resolved via the
       // standard expandTypeOverlays path.
       const isArrayPrimitive = childOverlays.some((o) => o.el.array === true);
-      validateShadowPayload(ctx, obj[key], [...path, key], issues, isArrayPrimitive, options);
+      validateShadowPayload(ctx, obj[key], [...path, key], isArrayPrimitive);
       continue;
     }
 
-    walk(ctx, childOverlays, obj[key], [...path, key], issues, options);
+    walk(ctx, childOverlays, obj[key], [...path, key]);
   }
 }
 
@@ -622,12 +636,10 @@ const ELEMENT_OVERLAY: Overlay = {
 };
 
 function validateShadowPayload(
-  ctx: ValidateContext,
+  ctx: Ctx,
   payload: unknown,
   path: (string | number)[],
-  issues: ValidationIssue[],
   isArrayPrimitive: boolean,
-  options?: ValidateOptions,
 ): void {
   // Walking into the Element shape requires the Extension type to be
   // resolvable in ctx (R4 loaded). Otherwise shape-check only.
@@ -635,7 +647,7 @@ function validateShadowPayload(
 
   if (isArrayPrimitive) {
     if (!Array.isArray(payload)) {
-      issues.push({
+      addIssue(ctx, {
         code: FS.INVALID_PRIMITIVE_EXTENSION,
         path,
         expected: 'array of Element|null',
@@ -647,7 +659,7 @@ function validateShadowPayload(
       const item = payload[i];
       if (item === null) continue;
       if (typeof item !== 'object' || Array.isArray(item)) {
-        issues.push({
+        addIssue(ctx, {
           code: FS.INVALID_PRIMITIVE_EXTENSION,
           path: [...path, i],
           expected: 'Element object or null',
@@ -656,13 +668,13 @@ function validateShadowPayload(
         continue;
       }
       if (deep) {
-        walkObject(ctx, [ELEMENT_OVERLAY], item, [...path, i], issues, false, options);
+        walkObject(ctx, [ELEMENT_OVERLAY], item, [...path, i], false);
       }
     }
     return;
   }
   if (payload === null || typeof payload !== 'object' || Array.isArray(payload)) {
-    issues.push({
+    addIssue(ctx, {
       code: FS.INVALID_PRIMITIVE_EXTENSION,
       path,
       expected: 'Element object',
@@ -671,7 +683,7 @@ function validateShadowPayload(
     return;
   }
   if (deep) {
-    walkObject(ctx, [ELEMENT_OVERLAY], payload, path, issues, false, options);
+    walkObject(ctx, [ELEMENT_OVERLAY], payload, path, false);
   }
 }
 
@@ -710,7 +722,7 @@ function findChildOverlays(overlays: Overlay[], key: string): Overlay[] {
   return out;
 }
 
-function resolveElementReference(ctx: ValidateContext, o: Overlay): Overlay {
+function resolveElementReference(ctx: Ctx, o: Overlay): Overlay {
   const ref = (o.el as { elementReference?: string[] }).elementReference;
   if (!ref || ref.length === 0) return o;
   const [schemaUrl, ...segments] = ref;
@@ -733,12 +745,7 @@ function resolveElementReference(ctx: ValidateContext, o: Overlay): Overlay {
   return { el: cursor as FHIRSchemaElement, source: o.source };
 }
 
-function expandTypeOverlays(
-  ctx: ValidateContext,
-  overlays: Overlay[],
-  path: (string | number)[],
-  issues: ValidationIssue[],
-): Overlay[] {
+function expandTypeOverlays(ctx: Ctx, overlays: Overlay[], path: (string | number)[]): Overlay[] {
   const out: Overlay[] = [...overlays];
   for (const o of overlays) {
     const type = o.el.type;
@@ -746,7 +753,7 @@ function expandTypeOverlays(
     // Resolve named complex type into its element-def.
     const sch = ctx.resolve(type);
     if (!sch) {
-      issues.push({
+      addIssue(ctx, {
         code: FS.PROFILE_NOT_FOUND,
         path,
         schema: o.source,
@@ -756,7 +763,7 @@ function expandTypeOverlays(
     }
     // Walk the type's chain too.
     const chain: Overlay[] = [];
-    collectChain(ctx, sch, o.source, chain, issues, new Set());
+    collectChain(ctx, sch, o.source, chain, new Set());
     out.push(...chain);
   }
   return out;
@@ -804,11 +811,11 @@ function collectChoiceGroups(overlays: Overlay[]): Map<string, string[]> {
 }
 
 function checkChoiceGroups(
+  ctx: Ctx,
   overlays: Overlay[],
   groups: Map<string, string[]>,
   obj: Record<string, unknown>,
   path: (string | number)[],
-  issues: ValidationIssue[],
 ): void {
   for (const [parent, allowed] of groups) {
     // All known variant names for this parent: anything declared `choiceOf: parent`
@@ -820,7 +827,7 @@ function checkChoiceGroups(
     // Variants present but narrowed away by some overlay's choices list.
     for (const v of present) {
       if (!allowed.includes(v)) {
-        issues.push({
+        addIssue(ctx, {
           code: FS.INVALID_CHOICE_TYPE,
           path: [...path, v],
           expected: allowed,
@@ -832,7 +839,7 @@ function checkChoiceGroups(
     // Multiple allowed variants simultaneously present.
     const allowedPresent = present.filter((v) => allowed.includes(v));
     if (allowedPresent.length > 1) {
-      issues.push({
+      addIssue(ctx, {
         code: FS.MULTIPLE_CHOICE_VALUES,
         path,
         expected: parent,
@@ -948,14 +955,7 @@ function effectiveMatch(def: SliceDef, sliceName?: string): unknown | undefined 
   return undefined;
 }
 
-function walkArrayItems(
-  ctx: ValidateContext,
-  overlays: Overlay[],
-  arr: unknown[],
-  path: (string | number)[],
-  issues: ValidationIssue[],
-  options?: ValidateOptions,
-): void {
+function walkArrayItems(ctx: Ctx, overlays: Overlay[], arr: unknown[], path: (string | number)[]): void {
   // Item-level overlays: strip `array` and the slicing block (slicing applies
   // at the array level, not per item).
   const itemOverlays = overlays.map((o) => ({
@@ -967,7 +967,7 @@ function walkArrayItems(
 
   if (!slicing) {
     for (let i = 0; i < arr.length; i++) {
-      walk(ctx, itemOverlays, arr[i], [...path, i], issues, options);
+      walk(ctx, itemOverlays, arr[i], [...path, i]);
     }
     return;
   }
@@ -984,13 +984,13 @@ function walkArrayItems(
     const matched = classifyItem(item, slicing);
 
     if (matched.length > 1) {
-      issues.push({
+      addIssue(ctx, {
         code: FS.SLICE_NOT_MATCHED,
         path: [...path, i],
         expected: 'one matching slice',
         got: matched,
       });
-      walk(ctx, itemOverlays, item, [...path, i], issues, options);
+      walk(ctx, itemOverlays, item, [...path, i]);
       continue;
     }
 
@@ -1005,13 +1005,11 @@ function walkArrayItems(
           withSliceSchema(itemOverlays, defaultSlice.schema),
           item,
           [...path, i],
-          issues,
-          options,
         );
         continue;
       }
       if (slicing.rules === 'closed') {
-        issues.push({
+        addIssue(ctx, {
           code: FS.SLICE_NOT_MATCHED,
           path: [...path, i],
           expected: Object.keys(slicing.slices ?? {}),
@@ -1019,7 +1017,7 @@ function walkArrayItems(
       }
       // open / openAtEnd without @default: validate against base element only.
       sawUnmatched = true;
-      walk(ctx, itemOverlays, item, [...path, i], issues, options);
+      walk(ctx, itemOverlays, item, [...path, i]);
       continue;
     }
 
@@ -1030,7 +1028,7 @@ function walkArrayItems(
 
     // openAtEnd: a matched item appearing AFTER any unmatched one → fs904.
     if (slicing.rules === 'openAtEnd' && sawUnmatched) {
-      issues.push({
+      addIssue(ctx, {
         code: FS.UNMATCHED_NOT_AT_END,
         path: [...path, i],
         expected: 'matched items before unmatched',
@@ -1043,7 +1041,7 @@ function walkArrayItems(
     if (slicing.ordered === true) {
       const idx = sliceOrder.indexOf(name);
       if (idx < maxIdx) {
-        issues.push({
+        addIssue(ctx, {
           code: FS.SLICE_OUT_OF_ORDER,
           path: [...path, i],
           expected: { sliceOrder, after: sliceOrder[maxIdx] },
@@ -1054,14 +1052,14 @@ function walkArrayItems(
       }
     }
 
-    walk(ctx, withSliceSchema(itemOverlays, slice.schema), item, [...path, i], issues, options);
+    walk(ctx, withSliceSchema(itemOverlays, slice.schema), item, [...path, i]);
   }
 
   // Per-slice cardinality
   for (const [name, slice] of Object.entries(slicing.slices ?? {})) {
     const count = counts.get(name) ?? 0;
     if (typeof slice.min === 'number' && count < slice.min) {
-      issues.push({
+      addIssue(ctx, {
         code: FS.SLICE_CARDINALITY,
         path,
         expected: { slice: name, min: slice.min },
@@ -1069,7 +1067,7 @@ function walkArrayItems(
       });
     }
     if (typeof slice.max === 'number' && count > slice.max) {
-      issues.push({
+      addIssue(ctx, {
         code: FS.SLICE_CARDINALITY,
         path,
         expected: { slice: name, max: slice.max },
@@ -1140,9 +1138,9 @@ const DROPPED_CONSTRAINTS = new Set<string>([
  *   full target URL Z by Bundle resolution rules").
  */
 function checkBundleIntegrity(
+  ctx: Ctx,
   obj: Record<string, unknown>,
   path: (string | number)[],
-  issues: ValidationIssue[],
 ): void {
   const entries = Array.isArray(obj.entry) ? (obj.entry as unknown[]) : [];
   if (entries.length === 0) return;
@@ -1170,7 +1168,7 @@ function checkBundleIntegrity(
   if (obj.type === 'document') {
     const first = infos[0];
     if (first && first.resourceType !== 'Composition') {
-      issues.push({
+      addIssue(ctx, {
         code: FS.BUNDLE_TYPE_STRUCTURE,
         path: [...path, 'entry', 0, 'resource'],
         expected: 'Composition',
@@ -1180,7 +1178,7 @@ function checkBundleIntegrity(
   } else if (obj.type === 'message') {
     const first = infos[0];
     if (first && first.resourceType !== 'MessageHeader') {
-      issues.push({
+      addIssue(ctx, {
         code: FS.BUNDLE_TYPE_STRUCTURE,
         path: [...path, 'entry', 0, 'resource'],
         expected: 'MessageHeader',
@@ -1209,7 +1207,7 @@ function checkBundleIntegrity(
     const urls = new Set(list.map((e) => e.fullUrl ?? '<none>'));
     if (urls.size === 1) continue;
     for (const e of list) {
-      issues.push({
+      addIssue(ctx, {
         code: FS.BUNDLE_DUPLICATE_ID,
         path: [...path, 'entry', e.idx, 'resource', 'id'],
         expected: 'unique resourceType+id per Bundle',
@@ -1254,7 +1252,7 @@ function checkBundleIntegrity(
         // WARNING per Java behavior. Same Type/id with different fullUrls
         // is usually a versioning/history case where the referencing
         // system might still pick one validly. Not a hard error.
-        issues.push({
+        addIssue(ctx, {
           code: FS.BUNDLE_REFERENCE_AMBIGUOUS,
           severity: 'warning',
           path: refPath,
@@ -1287,13 +1285,13 @@ function forEachReference(
 }
 
 function checkConstraints(
+  ctx: Ctx,
   overlays: Overlay[],
   obj: Record<string, unknown>,
   path: (string | number)[],
-  issues: ValidationIssue[],
-  engine: FHIRPathEvaluator,
-  env: { resource?: unknown; rootResource?: unknown } = {},
 ): void {
+  const engine = ctx.opts.fhirpath;
+  if (!engine) return;
   for (const o of overlays) {
     const constraints = (o.el as { constraint?: Record<string, ConstraintDef> }).constraint;
     if (!constraints) continue;
@@ -1307,8 +1305,8 @@ function checkConstraints(
         // (current node being validated). Constraints like dom-3 reference
         // %resource explicitly.
         result = engine.evaluate(c.expression, obj, {
-          resource: env.resource ?? obj,
-          rootResource: env.rootResource ?? env.resource ?? obj,
+          resource: ctx.resource ?? obj,
+          rootResource: ctx.rootResource ?? ctx.resource ?? obj,
           context: obj,
         });
       } catch {
@@ -1318,7 +1316,7 @@ function checkConstraints(
       if (!isFHIRPathTruthy(result)) {
         const sev: IssueSeverity =
           c.severity === 'warning' || c.severity === 'information' ? c.severity : 'error';
-        issues.push({
+        addIssue(ctx, {
           code: FS.INVARIANT_VIOLATED,
           severity: sev,
           path,
@@ -1351,12 +1349,12 @@ function isFHIRPathTruthy(result: unknown[]): boolean {
  * require actually fetching the target. Out of scope for the pure validator.
  */
 function checkReferenceTarget(
+  ctx: Ctx,
   overlays: Overlay[],
   obj: Record<string, unknown>,
   path: (string | number)[],
-  issues: ValidationIssue[],
-  resolver?: ReferenceResolver,
 ): void {
+  const resolver = ctx.opts.referenceResolver;
   const ref = obj.reference;
   if (typeof ref !== 'string') return;
 
@@ -1371,7 +1369,7 @@ function checkReferenceTarget(
     if (allowed.includes('Resource') || allowed.includes('DomainResource')) {
       // allow-any; no check
     } else if (!allowed.includes(targetType)) {
-      issues.push({
+      addIssue(ctx, {
         code: FS.INVALID_REFERENCE_TYPE,
         path: [...path, 'reference'],
         expected: allowed,
@@ -1384,7 +1382,7 @@ function checkReferenceTarget(
   if (resolver && !ref.startsWith('#') && !ref.startsWith('urn:')) {
     const verdict = resolver.resolve(ref, { from: [...path, 'reference'] });
     if (verdict === 'unresolved') {
-      issues.push({
+      addIssue(ctx, {
         code: FS.UNRESOLVED_REFERENCE,
         severity: 'warning',
         path: [...path, 'reference'],
@@ -1418,13 +1416,9 @@ function canonicalTail(canonical: string): string {
 
 // ─── terminology bindings ────────────────────────────────────────────────
 
-function checkBindings(
-  overlays: Overlay[],
-  value: unknown,
-  path: (string | number)[],
-  issues: ValidationIssue[],
-  engine: TerminologyEvaluator,
-): void {
+function checkBindings(ctx: Ctx, overlays: Overlay[], value: unknown, path: (string | number)[]): void {
+  const engine = ctx.opts.terminology;
+  if (!engine) return;
   for (const o of overlays) {
     const b = (o.el as { binding?: { strength?: string; valueSet?: string } }).binding;
     if (!b?.valueSet || !b.strength) continue;
@@ -1442,7 +1436,7 @@ function checkBindings(
     // canonical display in the CodeSystem. Always error severity
     // (matches Java reference validator default).
     if (verdict === 'in' && 'displayMismatch' in result && result.displayMismatch) {
-      issues.push({
+      addIssue(ctx, {
         code: FS.INVALID_DISPLAY,
         severity: 'error',
         path,
@@ -1454,7 +1448,7 @@ function checkBindings(
 
     if (verdict !== 'not-in') continue; // 'in' and 'unknown' don't fire
     if (b.strength === 'required') {
-      issues.push({
+      addIssue(ctx, {
         code: FS.INVALID_CODE_FOR_BINDING,
         severity: 'error',
         path,
@@ -1463,7 +1457,7 @@ function checkBindings(
         got: value,
       });
     } else if (b.strength === 'extensible') {
-      issues.push({
+      addIssue(ctx, {
         code: FS.CODE_NOT_IN_EXTENSIBLE,
         severity: 'warning',
         path,
@@ -1472,7 +1466,7 @@ function checkBindings(
         got: value,
       });
     } else if (b.strength === 'preferred') {
-      issues.push({
+      addIssue(ctx, {
         code: FS.CODE_NOT_IN_PREFERRED,
         severity: 'information',
         path,
@@ -1486,17 +1480,12 @@ function checkBindings(
 
 // ─── fixed[X] strict equality ─────────────────────────────────────────────
 
-function checkFixed(
-  overlays: Overlay[],
-  value: unknown,
-  path: (string | number)[],
-  issues: ValidationIssue[],
-): void {
+function checkFixed(ctx: Ctx, overlays: Overlay[], value: unknown, path: (string | number)[]): void {
   for (const o of overlays) {
     const f = (o.el as { fixed?: { type: string; value: unknown } }).fixed;
     if (!f) continue;
     if (!deepEqual(f.value, value)) {
-      issues.push({
+      addIssue(ctx, {
         code: FS.FIXED_MISMATCH,
         path,
         schema: o.source,
@@ -1529,17 +1518,12 @@ function deepEqual(a: unknown, b: unknown): boolean {
 
 // ─── pattern ─────────────────────────────────────────────────────────────
 
-function checkPatterns(
-  overlays: Overlay[],
-  value: unknown,
-  path: (string | number)[],
-  issues: ValidationIssue[],
-): void {
+function checkPatterns(ctx: Ctx, overlays: Overlay[], value: unknown, path: (string | number)[]): void {
   for (const o of overlays) {
     const p = o.el.pattern;
     if (!p) continue;
     if (!matchPattern(p.value, value)) {
-      issues.push({
+      addIssue(ctx, {
         code: FS.PATTERN_MISMATCH,
         path,
         schema: o.source,
@@ -1584,10 +1568,10 @@ function matchPattern(pattern: unknown, value: unknown): boolean {
 }
 
 function checkArrayCardinality(
+  ctx: Ctx,
   overlays: Overlay[],
   arr: unknown[],
   path: (string | number)[],
-  issues: ValidationIssue[],
 ): void {
   // Take the tightest bounds across overlays.
   let min = 0;
@@ -1597,10 +1581,10 @@ function checkArrayCardinality(
     if (typeof o.el.max === 'number' && o.el.max < max) max = o.el.max;
   }
   if (arr.length < min) {
-    issues.push({ code: FS.TOO_FEW, path, expected: min, got: arr.length });
+    addIssue(ctx, { code: FS.TOO_FEW, path, expected: min, got: arr.length });
   }
   if (arr.length > max) {
-    issues.push({ code: FS.TOO_MANY, path, expected: max, got: arr.length });
+    addIssue(ctx, { code: FS.TOO_MANY, path, expected: max, got: arr.length });
   }
 }
 
