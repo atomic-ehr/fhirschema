@@ -26,7 +26,7 @@ import fhirpath from 'fhirpath';
 import type { FHIRSchema } from '../src/converter/types.js';
 import {
   validate,
-  type FhirpathEvaluator,
+  type FHIRPathEvaluator,
   type ReferenceResolver,
   type TerminologyEvaluator,
   type ValidateContext,
@@ -34,7 +34,7 @@ import {
 } from '../src/validator/index.js';
 import { TxFhirOrgAdapter } from '../src/validator/tx-adapter.js';
 
-const fhirpathAdapter: FhirpathEvaluator = {
+const fhirpathAdapter: FHIRPathEvaluator = {
   evaluate: (expr, root, env) =>
     // HL7 fhirpath.js: 3rd arg is env vars; keys WITHOUT the `%` prefix.
     fhirpath.evaluate(root, expr, env ?? {}) as unknown[],

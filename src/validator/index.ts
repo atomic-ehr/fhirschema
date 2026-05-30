@@ -26,7 +26,7 @@ export interface ValidateOptions {
    * deferred-validation pattern). Callers wire a real implementation
    * (HL7 fhirpath.js, atomic-ehr/fhirpath, or a custom adapter).
    */
-  fhirpath?: FhirpathEvaluator;
+  fhirpath?: FHIRPathEvaluator;
   /**
    * Pluggable terminology validator for `binding.valueSet` checks. If
    * absent, all bindings are silently skipped. The callback is sync; for
@@ -90,7 +90,7 @@ export interface TerminologyEvaluator {
  * FHIRPath result collection (an array). Constraint satisfaction is judged
  * truthy when the array is non-empty AND its first element is not `false`.
  */
-export interface FhirpathEvaluator {
+export interface FHIRPathEvaluator {
   evaluate(expression: string, root: unknown, context?: Record<string, unknown>): unknown[];
 }
 
@@ -1280,7 +1280,7 @@ function checkConstraints(
   obj: Record<string, unknown>,
   path: (string | number)[],
   issues: ValidationIssue[],
-  engine: FhirpathEvaluator,
+  engine: FHIRPathEvaluator,
   env: { resource?: unknown; rootResource?: unknown } = {},
 ): void {
   for (const o of overlays) {
@@ -1304,7 +1304,7 @@ function checkConstraints(
         // Engine threw — treat as failing constraint to surface the issue.
         result = [];
       }
-      if (!isFhirpathTruthy(result)) {
+      if (!isFHIRPathTruthy(result)) {
         const sev: IssueSeverity =
           c.severity === 'warning' || c.severity === 'information' ? c.severity : 'error';
         issues.push({
@@ -1323,7 +1323,7 @@ function checkConstraints(
 type ConstraintDef = { expression?: string; human?: string; severity?: string };
 
 /** FHIRPath truthy: non-empty collection whose first element is not `false`. */
-function isFhirpathTruthy(result: unknown[]): boolean {
+function isFHIRPathTruthy(result: unknown[]): boolean {
   if (!Array.isArray(result) || result.length === 0) return false;
   return result[0] !== false;
 }
