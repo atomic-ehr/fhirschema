@@ -89,7 +89,7 @@ const SUFFIX_TO_TYPE: Record<string, string> = {
   Meta: 'Meta',
 };
 
-function toFhirSuffix(typeName?: string): string | undefined {
+function toFHIRTypeSuffix(typeName?: string): string | undefined {
   if (!typeName || typeName.length === 0) {
     return undefined;
   }
@@ -119,7 +119,7 @@ function buildPatternFields(
   }
 
   const resolvedType = pattern.type || inferPatternType(pattern.value);
-  const suffix = toFhirSuffix(resolvedType);
+  const suffix = toFHIRTypeSuffix(resolvedType);
   if (!suffix) {
     return {};
   }

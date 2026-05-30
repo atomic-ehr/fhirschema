@@ -27,7 +27,7 @@ Implemented in `src/converter/snapshot.ts`:
    referenced by `structuredefinition-implements` extensions. Returns base→leaf order.
    Each link must have a `differential.element` (`ensureDifferential`).
 2. **`translate`** (`src/converter/index.ts`) — each SD differential → FHIRSchema.
-3. **`mergeSchemas`** — fold the chain with `mergeFhirSchema` (`src/converter/merge.ts`)
+3. **`foldSchemaChain`** — fold the chain with `mergeFHIRSchema` (`src/converter/merge.ts`)
    in base→leaf order. Snapshot mode passes `{ unionArrays: true }` so `required` /
    `excluded` are **unioned** across the chain (a base requirement must survive a
    derived layer that doesn't restate it). This is the overlay-merge primitive at the

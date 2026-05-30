@@ -1,4 +1,4 @@
-import { mergeFhirSchema } from './merge.js';
+import { mergeFHIRSchema } from './merge.js';
 import { toStructureDefinition } from './reverse.js';
 import { translate } from './index.js';
 import type { FHIRSchema, StructureDefinition, StructureDefinitionElement } from './types.js';
@@ -219,13 +219,13 @@ async function buildBaseChain(
   return combined;
 }
 
-function mergeSchemas(baseToLeafSchemas: FHIRSchema[]): FHIRSchema {
+function foldSchemaChain(baseToLeafSchemas: FHIRSchema[]): FHIRSchema {
   if (baseToLeafSchemas.length === 0) {
     throw new Error('Cannot merge empty schema chain');
   }
 
   return baseToLeafSchemas.reduce(
-    (acc, schema) => mergeFhirSchema(acc, schema, { unionArrays: true }) as FHIRSchema,
+    (acc, schema) => mergeFHIRSchema(acc, schema, { unionArrays: true }) as FHIRSchema,
   );
 }
 
@@ -481,7 +481,7 @@ export async function generateSnapshot(
   const maxDepth = options.maxDepth ?? 32;
   const chain = await buildBaseChain(structureDefinition, options.resolver, maxDepth);
   const schemas = chain.map((sd) => translate(sd));
-  const merged = mergeSchemas(schemas);
+  const merged = foldSchemaChain(schemas);
   const asStructureDefinition = toStructureDefinition(merged, {
     status: structureDefinition.status,
     emitChoiceVariants: 'strict',

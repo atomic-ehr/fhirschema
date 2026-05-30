@@ -1,24 +1,24 @@
 import type { FHIRSchema, FHIRSchemaElement } from './types';
 
-export interface FhirSchemaMergeOptions {
+export interface FHIRSchemaMergeOptions {
   // Union `required` / `excluded` arrays across the chain instead of letting the
   // last overlay replace them. Needed for snapshot generation (a base requirement
   // must survive a derived layer that does not restate it). Off by default.
   unionArrays?: boolean;
 }
 
-type FhirSchemaNode = Pick<FHIRSchemaElement, 'elements' | 'slicing' | 'required' | 'excluded'> &
+type FHIRSchemaNode = Pick<FHIRSchemaElement, 'elements' | 'slicing' | 'required' | 'excluded'> &
   Partial<Pick<FHIRSchema, 'name' | 'base' | 'url'>>;
 
 // Overlay-merge two FHIRSchema nodes: a `base` and an `overlay` that constrains it.
 // This is the "smart merge" at the heart of snapshot generation — folding a
 // base→leaf profile chain into one effective schema. Overlay scalar fields win;
 // `elements` and `slicing.slices` merge recursively.
-export const mergeFhirSchema = (
-  base?: FhirSchemaNode,
-  overlay?: FhirSchemaNode,
-  options: FhirSchemaMergeOptions = {},
-): FhirSchemaNode | undefined => {
+export const mergeFHIRSchema = (
+  base?: FHIRSchemaNode,
+  overlay?: FHIRSchemaNode,
+  options: FHIRSchemaMergeOptions = {},
+): FHIRSchemaNode | undefined => {
   if (base === undefined) return overlay;
   if (overlay === undefined) return base;
 
@@ -30,7 +30,7 @@ export const mergeFhirSchema = (
       : keys.reduce(
           (acc, k) => ({
             ...acc,
-            [k]: mergeFhirSchema(obj1?.[k], obj2?.[k], options),
+            [k]: mergeFHIRSchema(obj1?.[k], obj2?.[k], options),
           }),
           {},
         );
@@ -39,7 +39,7 @@ export const mergeFhirSchema = (
   const elements = deepMerge(base.elements, overlay.elements);
   const slices = deepMerge(base.slicing?.slices, overlay.slicing?.slices);
 
-  const cleanFields = ({ url, name, base, ...rest }: FhirSchemaNode) => rest;
+  const cleanFields = ({ url, name, base, ...rest }: FHIRSchemaNode) => rest;
   const result = Object.assign(
     cleanFields(base),
     overlay,

@@ -364,7 +364,7 @@ function buildElementContentReference(
   };
 }
 
-function clearElement(element: StructureDefinitionElement): ProcessingElement {
+function stripElementMetadata(element: StructureDefinitionElement): ProcessingElement {
   const {
     path,
     slicing,
@@ -401,7 +401,7 @@ export function transformElement(
   structureDefinition: StructureDefinition,
 ): FHIRSchemaElement {
   let transformed: ProcessingElement = preprocessElement(element) as ProcessingElement;
-  transformed = clearElement(transformed as StructureDefinitionElement);
+  transformed = stripElementMetadata(transformed as StructureDefinitionElement);
   transformed = buildElementBinding(transformed, structureDefinition);
   transformed = buildElementConstraints(transformed);
   transformed = buildElementContentReference(transformed, structureDefinition);

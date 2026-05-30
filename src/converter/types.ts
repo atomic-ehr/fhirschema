@@ -354,7 +354,7 @@ export interface StructureDefinition {
   };
 }
 
-type FhirOpenTypeSufix =
+type FHIROpenTypeSuffix =
   // https://hl7.org/fhir/datatypes.html#open
   // Primitive Types
   | 'Base64Binary'
@@ -469,13 +469,13 @@ export type FHIRSchemaElement = {
   index?: number; // For tracking element order
 } & {
   //defaultValue[x] (https://hl7.org/fhir/elementdefinition-definitions.html#ElementDefinition.defaultValue_x_)
-  [key in `defaultValue${FhirOpenTypeSufix}`]?: unknown;
+  [key in `defaultValue${FHIROpenTypeSuffix}`]?: unknown;
 } & {
   //fixed[x] (https://hl7.org/fhir/elementdefinition-definitions.html#ElementDefinition.fixed_x_)
-  [key in `fixed${FhirOpenTypeSufix}`]?: unknown;
+  [key in `fixed${FHIROpenTypeSuffix}`]?: unknown;
 } & {
   //pattern[x] (https://hl7.org/fhir/elementdefinition-definitions.html#ElementDefinition.pattern_x_)
-  [key in `pattern${FhirOpenTypeSufix}`]?: unknown;
+  [key in `pattern${FHIROpenTypeSuffix}`]?: unknown;
 };
 
 export interface PackageMeta {
