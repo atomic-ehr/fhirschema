@@ -232,9 +232,9 @@ describe('IG snapshot parity against package snapshots (cached from get-ig)', ()
     expect(totals.generated + totals.failed).toBe(totals.profiles);
     expect(totals.failed).toBeLessThanOrEqual(4);
     expect(totals.generated).toBeGreaterThanOrEqual(649);
-    expect(totals.exactKeySetMatches).toBeGreaterThanOrEqual(428);
-    expect(totals.avgPrecision).toBeGreaterThanOrEqual(0.998);
-    expect(totals.avgRecall).toBeGreaterThanOrEqual(0.93);
+    expect(totals.exactKeySetMatches).toBeGreaterThanOrEqual(624);
+    expect(totals.avgPrecision).toBeGreaterThanOrEqual(0.999);
+    expect(totals.avgRecall).toBeGreaterThanOrEqual(0.991);
   });
 
   it('US Core differential-based snapshot parity', async () => {
@@ -249,9 +249,10 @@ describe('IG snapshot parity against package snapshots (cached from get-ig)', ()
     expect(totals.generated + totals.failed).toBe(totals.profiles);
     expect(totals.failed).toBe(0);
     expect(totals.generated).toBe(totals.profiles);
-    expect(totals.exactKeySetMatches).toBeGreaterThanOrEqual(10);
-    expect(totals.avgPrecision).toBeGreaterThanOrEqual(0.98);
-    expect(totals.avgRecall).toBeGreaterThanOrEqual(0.81);
+    // Full key-set parity against the official US Core snapshots.
+    expect(totals.exactKeySetMatches).toBe(totals.profiles);
+    expect(totals.avgPrecision).toBe(1);
+    expect(totals.avgRecall).toBe(1);
   });
 
   it('DaVinci HRex differential-based compatibility run', async () => {
@@ -268,9 +269,29 @@ describe('IG snapshot parity against package snapshots (cached from get-ig)', ()
     expect(totals.generated + totals.failed).toBe(totals.profiles);
     expect(totals.failed).toBe(0);
     expect(totals.generated).toBe(totals.profiles);
-    expect(totals.exactKeySetMatches).toBeGreaterThanOrEqual(4);
-    expect(totals.avgPrecision).toBeGreaterThanOrEqual(0.84);
-    expect(totals.avgRecall).toBeGreaterThanOrEqual(0.71);
+    expect(totals.exactKeySetMatches).toBeGreaterThanOrEqual(12);
+    expect(totals.avgPrecision).toBeGreaterThanOrEqual(0.92);
+    expect(totals.avgRecall).toBeGreaterThanOrEqual(0.92);
+  });
+
+  it('DaVinci CDex differential-based compatibility run', async () => {
+    const totals = await compareSnapshots(
+      { id: 'hl7.fhir.us.davinci-cdex', version: '2.1.0' },
+      [
+        { id: 'hl7.fhir.r4.core', version: '4.0.1' },
+        { id: 'hl7.fhir.us.core', version: '8.0.0-ballot' },
+        { id: 'hl7.fhir.us.davinci-hrex', version: '1.1.0' },
+        { id: 'hl7.fhir.uv.sdc', version: '3.0.0' },
+        { id: 'hl7.fhir.r5.core', version: '5.0.0' },
+      ],
+    );
+
+    expect(totals.generated + totals.failed).toBe(totals.profiles);
+    expect(totals.failed).toBe(0);
+    expect(totals.generated).toBe(totals.profiles);
+    expect(totals.exactKeySetMatches).toBeGreaterThanOrEqual(6);
+    expect(totals.avgPrecision).toBe(1);
+    expect(totals.avgRecall).toBeGreaterThanOrEqual(0.99);
   });
 
   it('all discovered FHIR core packages (latest per id) snapshot compatibility', async () => {
@@ -283,10 +304,10 @@ describe('IG snapshot parity against package snapshots (cached from get-ig)', ()
         minRecall: number;
       }
     > = {
-      'hl7.fhir.r4.core': { minGenerated: 640, maxFailed: 10, minPrecision: 0.99, minRecall: 0.9 },
-      'hl7.fhir.r4b.core': { minGenerated: 640, maxFailed: 10, minPrecision: 0.99, minRecall: 0.9 },
-      'hl7.fhir.r5.core': { minGenerated: 280, maxFailed: 30, minPrecision: 0.99, minRecall: 0.8 },
-      'hl7.fhir.r6.core': { minGenerated: 220, maxFailed: 30, minPrecision: 0.99, minRecall: 0.8 },
+      'hl7.fhir.r4.core': { minGenerated: 640, maxFailed: 10, minPrecision: 0.999, minRecall: 0.99 },
+      'hl7.fhir.r4b.core': { minGenerated: 640, maxFailed: 10, minPrecision: 0.999, minRecall: 0.99 },
+      'hl7.fhir.r5.core': { minGenerated: 280, maxFailed: 30, minPrecision: 0.997, minRecall: 0.97 },
+      'hl7.fhir.r6.core': { minGenerated: 220, maxFailed: 30, minPrecision: 0.997, minRecall: 0.96 },
     };
 
     const cores = await discoverLatestCorePackages();

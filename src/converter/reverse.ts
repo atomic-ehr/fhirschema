@@ -522,7 +522,20 @@ function addElementTree(
     }
 
     if (hasMeaningfulFields(child) || child.elements || child.slicing) {
-      const element = buildBaseElement(elementPath, child, isRequired, rootType, rootUrl);
+      const isExtensionSlot = name === 'extension' || name === 'modifierExtension';
+      // The base extension/modifierExtension row is always the generic 0..* Extension
+      // slot. Any specific extension folded onto it (url, max, mustSupport) belongs to
+      // the named slices, not to the base. modifierExtension keeps its isModifier flag.
+      const element: StructureDefinitionElement =
+        isExtensionSlot && child.slicing
+          ? {
+              path: elementPath,
+              min: 0,
+              max: '*',
+              type: [{ code: 'Extension' }],
+              ...(name === 'modifierExtension' ? { isModifier: true } : {}),
+            }
+          : buildBaseElement(elementPath, child, isRequired, rootType, rootUrl);
 
       if (child.slicing) {
         element.slicing = {
@@ -547,11 +560,29 @@ function addElementTree(
           const sliceElement = buildBaseElement(elementPath, schema, false, rootType, rootUrl);
           sliceElement.sliceName = sliceName;
 
+          // A slice constrains the sliced element, so it carries the same FHIR type.
+          // FHIRSchema keeps the type on the parent only; restore it on the slice row.
+          if (!sliceElement.type || sliceElement.type.length === 0) {
+            const inheritedType = buildType(child);
+            if (inheritedType) {
+              sliceElement.type = inheritedType;
+            }
+          }
+
           if (sliceNode.min !== undefined) {
             sliceElement.min = sliceNode.min;
           }
           if (sliceNode.max !== undefined) {
             sliceElement.max = String(sliceNode.max);
+          }
+
+          // A slice with no explicit cardinality spans the sliced array's range:
+          // up to the parent's max (often unbounded), min 0.
+          if (sliceElement.max === undefined && child.array) {
+            sliceElement.max = child.max !== undefined ? String(child.max) : '*';
+            if (sliceElement.min === undefined) {
+              sliceElement.min = 0;
+            }
           }
 
           if (sliceNode.match !== undefined) {

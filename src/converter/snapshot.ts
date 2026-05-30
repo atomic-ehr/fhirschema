@@ -33,13 +33,14 @@ export interface SnapshotGenerationOptions {
 }
 
 const SD_IMPLEMENTS_URL = 'http://hl7.org/fhir/StructureDefinition/structuredefinition-implements';
-const INHERITED_TYPE_EXPANSION_ALLOWLIST = new Set([
-  'BackboneElement',
-  'Element',
-  'CodeableConcept',
-  'Coding',
-  'Quantity',
-]);
+
+// A FHIR type is a complex type / datatype / resource (whose children are expanded
+// one level into the snapshot) iff its code starts with an uppercase letter.
+// Primitive types (string, code, uri, ...) start lowercase; they expand only the
+// specific children a source profile pins (gated per-child at the call site).
+function isExpandableComplexType(typeCode: string): boolean {
+  return /^[A-Z]/.test(typeCode);
+}
 
 const TYPE_TO_SUFFIX: Record<string, string> = {
   base64Binary: 'Base64Binary',
@@ -223,7 +224,9 @@ function mergeSchemas(baseToLeafSchemas: FHIRSchema[]): FHIRSchema {
     throw new Error('Cannot merge empty schema chain');
   }
 
-  return baseToLeafSchemas.reduce((acc, schema) => merge(acc, schema) as FHIRSchema);
+  return baseToLeafSchemas.reduce(
+    (acc, schema) => merge(acc, schema, { unionArrays: true }) as FHIRSchema,
+  );
 }
 
 function elementKey(element: { path: string; sliceName?: string }): string {
@@ -282,7 +285,8 @@ async function expandInheritedTypeElements(
   sourceElements?: StructureDefinitionElement[],
 ): Promise<StructureDefinitionElement[]> {
   const result = [...generatedElements];
-  const seen = new Set(result.map((el) => elementKey(el)));
+  const indexByKey = new Map<string, number>();
+  result.forEach((el, i) => indexByKey.set(elementKey(el), i));
   const templatesCache = new Map<string, StructureDefinitionElement[]>();
   const processedAnchors = new Set<string>();
   const sourcePaths = new Set((sourceElements || []).map((element) => element.path));
@@ -298,7 +302,10 @@ async function expandInheritedTypeElements(
     for (const typeRef of element.type) {
       const typeCode = typeRef.code;
       if (!typeCode) continue;
-      if (!INHERITED_TYPE_EXPANSION_ALLOWLIST.has(typeCode)) continue;
+      // Complex types always expand one level. Primitive types expand only the
+      // specific children a source profile pins (e.g. canonical.value) — and only
+      // when we have a source oracle to gate them; otherwise we'd invent value rows.
+      if (!isExpandableComplexType(typeCode) && sourcePaths.size === 0) continue;
 
       const templates = await buildTypeElementTemplates(typeCode, resolver, maxDepth, templatesCache);
       for (const template of templates) {
@@ -318,9 +325,18 @@ async function expandInheritedTypeElements(
 
         const child = cloneInheritedElement(template, childPath);
         const key = elementKey(child);
-        if (seen.has(key)) continue;
+        const existingIndex = indexByKey.get(key);
+        if (existingIndex !== undefined) {
+          // Constrained child already present (e.g. mustSupport-only). Fill in the
+          // datatype-derived type when the constraint did not restate it.
+          const existing = result[existingIndex];
+          if ((!existing.type || existing.type.length === 0) && child.type) {
+            existing.type = child.type;
+          }
+          continue;
+        }
+        indexByKey.set(key, result.length);
         result.push(child);
-        seen.add(key);
       }
     }
   }
@@ -432,6 +448,32 @@ function rehydrateChoiceSliceMarkers(
   return target;
 }
 
+// A FHIR snapshot must not contain two elements with the same (path, sliceName).
+// Choice narrowing can yield both the `value[x]` base row and a rewritten variant
+// row at the same key; collapse them, keeping the first (richer) row and filling
+// any fields it is missing from later duplicates.
+function dedupeElements(elements: StructureDefinitionElement[]): StructureDefinitionElement[] {
+  const byKey = new Map<string, StructureDefinitionElement>();
+  const order: string[] = [];
+
+  for (const element of elements) {
+    const key = elementKey(element);
+    const existing = byKey.get(key);
+    if (!existing) {
+      byKey.set(key, element);
+      order.push(key);
+      continue;
+    }
+    for (const [field, value] of Object.entries(element)) {
+      if (value !== undefined && (existing as Record<string, unknown>)[field] === undefined) {
+        (existing as Record<string, unknown>)[field] = value;
+      }
+    }
+  }
+
+  return order.map((key) => byKey.get(key) as StructureDefinitionElement);
+}
+
 export async function generateSnapshot(
   structureDefinition: StructureDefinition,
   options: SnapshotGenerationOptions,
@@ -447,19 +489,22 @@ export async function generateSnapshot(
   const generatedElements =
     asStructureDefinition.differential?.element || [{ path: structureDefinition.type }];
   const sourceElements = structureDefinition.snapshot?.element || structureDefinition.differential?.element;
+  // Rewrite typed choice paths (valueQuantity.*) to source [x]-style BEFORE datatype
+  // expansion. This way a constrained choice-variant child already occupies its key,
+  // so expansion fills only its type instead of appending a generic duplicate.
+  const sourceStyledElements = rewriteChoicePathsToSourceStyle(structureDefinition, generatedElements);
   const expandedElements = await expandInheritedTypeElements(
-    generatedElements,
+    sourceStyledElements,
     options.resolver,
     maxDepth,
     sourceElements,
   );
-  const sourceStyledElements = rewriteChoicePathsToSourceStyle(structureDefinition, expandedElements);
-  const snapshotElements = rehydrateChoiceSliceMarkers(structureDefinition, sourceStyledElements);
+  const snapshotElements = rehydrateChoiceSliceMarkers(structureDefinition, expandedElements);
 
   return {
     ...structureDefinition,
     snapshot: {
-      element: snapshotElements,
+      element: dedupeElements(snapshotElements),
     },
   };
 }

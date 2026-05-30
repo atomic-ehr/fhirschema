@@ -1,7 +1,18 @@
 import type { FHIRSchema, FHIRSchemaElement } from '../converter/types';
 
-const merge = (base?: FhirSchemaNode, overlay?: FhirSchemaNode): FhirSchemaNode | undefined => {
-  if ((base === overlay) === undefined) return;
+interface MergeOptions {
+  // Union `required` / `excluded` arrays across the chain instead of letting the
+  // last overlay replace them. Needed for snapshot generation (a base requirement
+  // must survive a derived layer that does not restate it). Off by default to keep
+  // the validator's established overlay semantics.
+  unionArrays?: boolean;
+}
+
+const merge = (
+  base?: FhirSchemaNode,
+  overlay?: FhirSchemaNode,
+  options: MergeOptions = {},
+): FhirSchemaNode | undefined => {
   if (base === undefined) return overlay;
   if (overlay === undefined) return base;
 
@@ -13,7 +24,7 @@ const merge = (base?: FhirSchemaNode, overlay?: FhirSchemaNode): FhirSchemaNode 
       : keys.reduce(
           (acc, k) => ({
             ...acc,
-            [k]: merge(obj1?.[k], obj2?.[k]),
+            [k]: merge(obj1?.[k], obj2?.[k], options),
           }),
           {},
         );
@@ -30,10 +41,19 @@ const merge = (base?: FhirSchemaNode, overlay?: FhirSchemaNode): FhirSchemaNode 
     overlay.slicing && { slicing: { ...overlay.slicing, slices: slices } },
   );
 
+  if (options.unionArrays) {
+    const unionArr = (a?: string[], b?: string[]): string[] | undefined =>
+      a || b ? [...new Set([...(a || []), ...(b || [])])] : undefined;
+    const required = unionArr(base.required, overlay.required);
+    const excluded = unionArr(base.excluded, overlay.excluded);
+    if (required) result.required = required;
+    if (excluded) result.excluded = excluded;
+  }
+
   return result;
 };
 
-type FhirSchemaNode = Pick<FHIRSchemaElement, 'elements' | 'slicing'> &
+type FhirSchemaNode = Pick<FHIRSchemaElement, 'elements' | 'slicing' | 'required' | 'excluded'> &
   Partial<Pick<FHIRSchema, 'name' | 'base' | 'url'>>;
 
 export { merge };
