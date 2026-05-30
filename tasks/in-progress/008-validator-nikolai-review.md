@@ -32,12 +32,13 @@ Status legend: ☐ todo · ◐ partial · ☑ done · ⊘ n/a
   emit point/log hook; `strict` reads from `ctx.opts`. (`path` + schemaSet kept as
   scope-local params — Nikolai's "можно убрать" was optional and they're per-scope.)
   Public `validate(ctx, …)` signature unchanged. Behavior-preserving (530 green).
-- ☐ **A2. Inner-resource resolution.** (a) extract a named helper
-  `innerResourceResolution` that runs BEFORE the object walk; (b) gate on "the field's
-  type is-a `Resource`" (inheritance), not the `atRoot` flag — an element literally
-  named `resourceType` must not be mishandled; (c) on recursion, INHERIT the schemaSet
-  (don't reset to `[]`) — needed for Bundle slices; (d) consider collecting all inner
-  resources in one pass.
+- ☑ **A2. Inner-resource resolution.** Extracted `tryInnerResource()` (runs before the
+  object walk). Gated on `isResourceType(pickType(overlays))` — the element's type
+  is-a Resource — not the `atRoot` flag, so a field literally named `resourceType` on a
+  non-resource type stays an ordinary element. The inner walk inherits the outer
+  overlays (so a Bundle/profile constraint on the resource slot applies) plus the inner
+  resource's own chain. Tests: `inner-resource.yaml`. (One-pass collection (d) deferred —
+  current per-scope resolution is correct; one-pass is an optimization.)
 - ☐ **A3. Corner-case dispatcher.** Pull Bundle (fullUrl, integrity) + Extension out of
   the main flow into two dispatchers: by `currentResourceType` (Bundle) and by
   `currentDataType` (Extension). Keep `walkObject` generic.

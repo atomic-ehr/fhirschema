@@ -201,6 +201,50 @@ function runValidation(ctx: Ctx, schemas: InputSchema[], data: unknown): void {
   }
 }
 
+// Re-validate a nested object that fills a Resource-typed slot and carries its
+// own `resourceType`, as if it were a root. Returns true when it handled the
+// scope (the caller then stops). Gated on the scope's *element type being a
+// Resource* — not the bare presence of a `resourceType` key — so a plain field
+// named `resourceType` on a non-resource type stays an ordinary element.
+//
+// The outer overlays are inherited into the inner walk, so a constraint a
+// Bundle/profile imposes on this resource slot still applies to the inner
+// resource (then re-pathed under the current scope).
+function tryInnerResource(
+  ctx: Ctx,
+  overlays: Overlay[],
+  obj: Record<string, unknown>,
+  path: (string | number)[],
+): boolean {
+  if (typeof obj.resourceType !== 'string') return false;
+  const type = pickType(overlays);
+  if (!type || !isResourceType(ctx, type)) return false;
+  if (!ctx.resolve(obj.resourceType)) return false;
+
+  const innerCtx: Ctx = { ...ctx, issues: [], resource: obj };
+  const innerOverlays = collectSchemaSet(innerCtx, [], obj);
+  walkObject(innerCtx, [...overlays, ...innerOverlays], obj, [], true);
+  for (const i of innerCtx.issues) {
+    addIssue(ctx, { ...i, path: [...path, ...i.path] });
+  }
+  return true;
+}
+
+// Whether `type` is (or descends from) the FHIR `Resource` meta-type.
+function isResourceType(ctx: Ctx, type: string): boolean {
+  if (type === 'Resource' || type === 'DomainResource') return true;
+  let cur: FHIRSchema | undefined = ctx.resolve(type);
+  const seen = new Set<string>();
+  while (cur) {
+    if (cur.kind === 'resource') return true;
+    const key = cur.url ?? cur.name ?? '';
+    if (!key || seen.has(key)) break;
+    seen.add(key);
+    cur = cur.base ? ctx.resolve(cur.base) : undefined;
+  }
+  return false;
+}
+
 // ─── overlay collection ────────────────────────────────────────────────────
 
 // Build the SchemaSet for a validation in one place: the explicit input schemas
@@ -415,23 +459,9 @@ function walkObject(
   }
   const obj = data as Record<string, unknown>;
 
-  // Inner-resource walk: a nested object carrying its own `resourceType`
-  // (Bundle.entry.resource, Patient.contained[], Parameters.parameter.resource)
-  // gets re-validated as if it were the root — its own schema + meta.profile.
-  // The outer overlays do not constrain inner resources.
-  if (!atRoot && typeof obj.resourceType === 'string') {
-    const innerSchema = ctx.resolve(obj.resourceType);
-    if (innerSchema) {
-      // Re-validate the inner resource with its own SchemaSet and fresh issues,
-      // inheriting the system context + rootResource; re-path under this scope.
-      const innerCtx: Ctx = { ...ctx, issues: [], resource: obj };
-      runValidation(innerCtx, [], obj);
-      for (const i of innerCtx.issues) {
-        addIssue(ctx, { ...i, path: [...path, ...i.path] });
-      }
-      return;
-    }
-  }
+  // Inner-resource walk (Bundle.entry.resource, contained[], Parameters
+  // .parameter.resource). Handled before the rest of the scope.
+  if (!atRoot && tryInnerResource(ctx, overlays, obj, path)) return;
 
   // Bundle.entry.fullUrl must be an absolute URL (or `urn:uuid:`/`urn:oid:`).
   // FHIR Validator enforces this since ~2023 — previously unenforced.

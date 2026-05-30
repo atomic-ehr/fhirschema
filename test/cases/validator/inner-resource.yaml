@@ -1,0 +1,61 @@
+suite: Inner-resource resolution (Bundle.entry / contained / Parameters.parameter)
+
+# An inner resource is a nested object whose *declared element type is-a Resource*
+# (Bundle.entry.resource, contained[], Parameters.parameter.resource) and which
+# carries its own `resourceType`. It is re-validated as a root. The trigger is the
+# element type — NOT merely the presence of a `resourceType` key — so a plain
+# element literally named `resourceType` is validated as an ordinary field.
+
+tests:
+  # ─── (b) gate on element-type-is-a-Resource, not the bare key ─────────────
+  - desc: a non-resource complex type with a field named `resourceType` is NOT an inner resource
+    schemas:
+      - elements:
+          config: { type: Config }
+    registry:
+      - url: Config
+        name: Config
+        type: Config
+        kind: complex-type
+        class: complex-type
+        elements:
+          resourceType: { type: code }
+          value: { type: string }
+      - url: Patient
+        name: Patient
+        type: Patient
+        kind: resource
+        class: resource
+        elements:
+          id: { type: id }
+          active: { type: boolean }
+    # `Patient` IS resolvable — the old `obj.resourceType is string` gate would have
+    # mis-validated this Config as a Patient (value → unknown element). The
+    # element-type gate (Config is a complex-type, not a resource) prevents that.
+    data: { config: { resourceType: Patient, value: hello } }
+    valid: true
+
+  # ─── inner resource IS validated against its own schema ───────────────────
+  - desc: a Resource-typed slot with a resourceType is validated as that resource
+    schemas:
+      - elements:
+          entry: { type: Resource }
+    registry:
+      - url: Resource
+        name: Resource
+        type: Resource
+        kind: resource
+        class: resource
+        elements:
+          id: { type: id }
+      - url: Patient
+        name: Patient
+        type: Patient
+        kind: resource
+        class: resource
+        base: Resource
+        elements:
+          active: { type: boolean }
+    data: { entry: { resourceType: Patient, surprise: 1 } }
+    issues:
+      - { code: fs201, path: [entry, surprise] }
