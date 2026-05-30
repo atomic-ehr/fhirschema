@@ -194,7 +194,7 @@ export function checkPrimitive(type: string, value: unknown): PrimitiveCheck {
   }
 }
 
-export const PRIMITIVES = new Set<string>([
+export const PRIMITIVE_TYPES = new Set<string>([
   'boolean',
   'integer',
   'integer64',
@@ -219,5 +219,5 @@ export const PRIMITIVES = new Set<string>([
 ]);
 
 export function isPrimitiveType(type: string | undefined): boolean {
-  return type !== undefined && PRIMITIVES.has(type);
+  return type !== undefined && PRIMITIVE_TYPES.has(type);
 }

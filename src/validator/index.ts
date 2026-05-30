@@ -1,6 +1,6 @@
 import type { FHIRSchema, FHIRSchemaElement } from '../converter/types.js';
 import { FS, type FSCode } from './errors.js';
-import { checkPrimitive, isPrimitiveType, PRIMITIVES } from './primitives.js';
+import { checkPrimitive, isPrimitiveType, PRIMITIVE_TYPES } from './primitives.js';
 
 export { FS } from './errors.js';
 
@@ -731,7 +731,7 @@ function expandTypeOverlays(
   const out: Overlay[] = [...overlays];
   for (const o of overlays) {
     const type = o.el.type;
-    if (!type || isPrimitiveType(type) || PRIMITIVES.has(type)) continue;
+    if (!type || isPrimitiveType(type) || PRIMITIVE_TYPES.has(type)) continue;
     // Resolve named complex type into its element-def.
     const sch = ctx.resolve(type);
     if (!sch) {
