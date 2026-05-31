@@ -285,7 +285,10 @@ function buildElementExtension(element: ProcessingElement): ProcessingElement {
   return element;
 }
 
-function buildElementCardinality(element: ProcessingElement): ProcessingElement {
+function buildElementCardinality(
+  element: ProcessingElement,
+  explicitMax?: boolean,
+): ProcessingElement {
   if (element.url) {
     // Extension element, cardinality already handled
     return element;
@@ -313,6 +316,14 @@ function buildElementCardinality(element: ProcessingElement): ProcessingElement 
     if (maxValue && maxValue !== '*') {
       result.max = Number.parseInt(maxValue, 10);
     }
+  } else if (explicitMax && !isExcluded && maxValue && maxValue !== '*') {
+    // Snapshot mode: a constraint may tighten an inherited array down to max=1.
+    // The element looks scalar in isolation (max=1), but array-ness is hereditary
+    // and resolves at merge time — so preserve the explicit `max`; the base's
+    // `array: true` is folded in by the merge, yielding "an array with max 1".
+    // Off in the canonical translate (genuine scalars stay sparse); the reverse
+    // emits a non-array max=1 as an ordinary scalar anyway.
+    result.max = Number.parseInt(maxValue, 10);
   }
 
   if (isRequired) {
@@ -399,6 +410,7 @@ export function isRequiredElement(element: StructureDefinitionElement): boolean 
 export function transformElement(
   element: StructureDefinitionElement,
   structureDefinition: StructureDefinition,
+  options?: { explicitMaxCardinality?: boolean },
 ): FHIRSchemaElement {
   let transformed: ProcessingElement = preprocessElement(element) as ProcessingElement;
   transformed = stripElementMetadata(transformed as StructureDefinitionElement);
@@ -406,7 +418,7 @@ export function transformElement(
   transformed = buildElementConstraints(transformed);
   transformed = buildElementContentReference(transformed, structureDefinition);
   transformed = buildElementExtension(transformed);
-  transformed = buildElementCardinality(transformed);
+  transformed = buildElementCardinality(transformed, options?.explicitMaxCardinality);
   transformed = buildElementType(transformed, structureDefinition);
   transformed = processPatterns(transformed);
 

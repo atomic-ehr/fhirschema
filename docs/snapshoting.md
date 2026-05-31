@@ -127,17 +127,7 @@ rule that re-emits `System.String` + `fhir-type` for `Type.id` / `Extension.url`
 ~10 lines, no FHIRSchema-format change, no golden-test impact) — or simply normalize
 `System.*` away in the comparison before diffing.
 
-### 2. Array → scalar narrowing
-
-When a derived profile narrows an inherited `0..*` element to `0..1`, FHIRSchema's
-sparse cardinality cannot distinguish "constrained to 1" from "unconstrained scalar"
-(a max=1 constraint translates to *no* `array`/`max` field). The merged element can
-therefore keep `array: true`, yielding `0..*` instead of `0..1`. Recording `max` on
-scalars would diverge from the canonical FHIRSchema format and the golden output, so
-this is left as a representation limitation. Seen on a handful of profiles
-(`Coverage.payor`, `CareTeam.participant.role`, `DocumentReference.context.encounter`).
-
-### 3. Extension-definition internals
+### 2. Extension-definition internals
 
 Simple vs complex extension shaping is not yet reconstructed:
 `Extension.extension` (`0..0` for simple, `0..*` for complex), `Extension.value[x]`
@@ -145,6 +135,16 @@ Simple vs complex extension shaping is not yet reconstructed:
 
 ### Resolved
 
+- **Array → max narrowing** — when a constraint tightens an inherited `0..*` element
+  to max=1, the element looks scalar in isolation (the canonical translate drops
+  `array`/`max` for it). Array-ness is hereditary, so this used to keep `array: true`
+  with no `max`, emitting `0..*` instead of `0..1`. The snapshot pipeline now translates
+  the chain with `explicitMaxCardinality: true`, which preserves the literal `max` on
+  such an element; the base's `array: true` is folded in by the merge, yielding "an
+  array with max 1" → the reverse emits `0..1`/`1..1`. The *canonical* `translate` keeps
+  the flag off, so genuine scalars stay sparse and golden/roundtrip output is unchanged.
+  Fixed `Coverage.payor` and reduced US Core field-level mismatch.
+  (`test/unit/snapshot-array-max-narrowing.test.ts`)
 - **Resliced `value[x]` datatype children** — when a `value[x]` is constrained to
   different types under different parent slices (one CodeableConcept, one Quantity,
   one canonical, …), each variant's datatype children are now expanded. The

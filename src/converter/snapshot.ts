@@ -530,7 +530,7 @@ export async function generateSnapshot(
 ): Promise<StructureDefinition> {
   const maxDepth = options.maxDepth ?? 32;
   const chain = await buildResolvedBaseChain(structureDefinition, options.resolver, maxDepth);
-  const schemas = chain.map((sd) => translate(sd));
+  const schemas = chain.map((sd) => translate(sd, { explicitMaxCardinality: true }));
   const merged = foldSchemaChain(schemas);
   const asStructureDefinition = toStructureDefinition(merged, {
     status: structureDefinition.status,

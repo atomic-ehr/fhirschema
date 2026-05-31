@@ -236,7 +236,9 @@ export function translate(
     const actions = calculateActions(prevPath, enrichedPath);
 
     // Transform element
-    const transformedElement = transformElement(element, structureDefinition);
+    const transformedElement = transformElement(element, structureDefinition, {
+      explicitMaxCardinality: context?.explicitMaxCardinality,
+    });
     const elementWithIndex: Record<string, unknown> = { ...transformedElement, index: index++ };
 
     // Apply actions

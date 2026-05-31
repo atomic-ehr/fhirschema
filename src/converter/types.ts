@@ -528,6 +528,10 @@ export type Action =
 
 export interface ConversionContext {
   package_meta?: any;
+  // Snapshot mode: keep an explicit `max` on a non-array element (e.g. a
+  // constraint tightening an inherited array to max=1) instead of dropping it.
+  // The canonical translate leaves this off so genuine scalars stay sparse.
+  explicitMaxCardinality?: boolean;
 }
 
 // FHIR types
