@@ -275,7 +275,14 @@ function buildType(source: FHIRSchemaElement): StructureDefinitionElement['type'
     return [{ code: 'Extension', profile: [source.url] }];
   }
 
-  return [{ code: source.type }];
+  // canonical / CodeableReference carry their target profiles in `refers` too.
+  const typeEntry: NonNullable<StructureDefinitionElement['type']>[number] = {
+    code: source.type as string,
+  };
+  if (source.refers && source.refers.length > 0) {
+    typeEntry.targetProfile = source.refers;
+  }
+  return [typeEntry];
 }
 
 function hasMeaningfulFields(element: FHIRSchemaElement): boolean {

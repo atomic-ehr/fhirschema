@@ -55,6 +55,9 @@
     "derivedFrom": {
       "short": "Instantiates protocol or definition",
       "type": "canonical",
+      "refers": [
+        "http://hl7.org/fhir/StructureDefinition/Questionnaire"
+      ],
       "array": true,
       "index": 5
     },
@@ -425,6 +428,9 @@
         "answerValueSet": {
           "short": "Valueset containing permitted answers",
           "type": "canonical",
+          "refers": [
+            "http://hl7.org/fhir/StructureDefinition/ValueSet"
+          ],
           "index": 48
         },
         "answerOption": {

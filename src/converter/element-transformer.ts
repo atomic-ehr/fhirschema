@@ -121,17 +121,22 @@ function buildReferenceTargets(
   return refers.length > 0 ? [...new Set(refers)].sort() : undefined;
 }
 
+// Types whose `targetProfile` constrains what the value points at. Reference is the
+// classic one; canonical and CodeableReference carry it too (it constrains the
+// referenced resource's profile). All three collapse to a bare type code + `refers`.
+const TARGET_PROFILE_TYPES = new Set(['Reference', 'canonical', 'CodeableReference']);
+
 function preprocessElement(element: StructureDefinitionElement): StructureDefinitionElement {
   if (!element.type || element.type.length === 0) {
     return element;
   }
 
   const firstType = element.type[0];
-  if (firstType.code === 'Reference') {
+  if (TARGET_PROFILE_TYPES.has(firstType.code)) {
     const refers = buildReferenceTargets(element.type);
     return {
       ...element,
-      type: [{ code: 'Reference' }],
+      type: [{ code: firstType.code }],
       ...(refers && { refers }),
     };
   }
