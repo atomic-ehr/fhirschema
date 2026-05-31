@@ -380,17 +380,12 @@ describe('Snapshot generation via FHIRSchema merge', () => {
       derivation: 'specialization',
       elements: [
         { path: 'DeviceDefinition.property', min: 0, max: '*', type: [{ code: 'BackboneElement' }] },
+        // a child defines the backbone's structure → the node is "reached into",
+        // so its inherited BackboneElement children (id/extension/modifierExtension)
+        // are materialized structurally (no input snapshot needed).
+        { path: 'DeviceDefinition.property.type', type: [{ code: 'code' }] },
       ],
     });
-    deviceDefinition.snapshot = {
-      element: [
-        { path: 'DeviceDefinition' },
-        { path: 'DeviceDefinition.property', type: [{ code: 'BackboneElement' }] },
-        { path: 'DeviceDefinition.property.id', type: [{ code: 'string' }] },
-        { path: 'DeviceDefinition.property.extension', type: [{ code: 'Extension' }] },
-        { path: 'DeviceDefinition.property.modifierExtension', type: [{ code: 'Extension' }] },
-      ],
-    };
 
     const snapshot = await generateSnapshot(deviceDefinition, {
       resolver: {
@@ -481,28 +476,10 @@ describe('Snapshot generation via FHIRSchema merge', () => {
       type: 'Observation',
       baseDefinition: observation.url,
       derivation: 'constraint',
-      elements: [
-        {
-          path: 'Observation.component.value[x]',
-          type: [{ code: 'Quantity' }],
-        },
-      ],
+      // Reach into code → its Coding child → structural expansion materializes the
+      // full CodeableConcept and Coding child sets (no input snapshot needed).
+      elements: [{ path: 'Observation.code.coding.system', mustSupport: true }],
     });
-
-    // Source snapshot style keeps [x] child rows rather than valueQuantity child rows.
-    bp.snapshot = {
-      element: [
-        { path: 'Observation' },
-        { path: 'Observation.code', type: [{ code: 'CodeableConcept' }] },
-        { path: 'Observation.code.coding', type: [{ code: 'Coding' }] },
-        { path: 'Observation.code.coding.display', type: [{ code: 'string' }] },
-        { path: 'Observation.code.text', type: [{ code: 'string' }] },
-        { path: 'Observation.component', type: [{ code: 'BackboneElement' }] },
-        { path: 'Observation.component.value[x]', type: [{ code: 'Quantity' }] },
-        { path: 'Observation.component.value[x].value', type: [{ code: 'decimal' }] },
-        { path: 'Observation.component.value[x].unit', type: [{ code: 'string' }] },
-      ],
-    };
 
     const snapshot = await generateSnapshot(bp, {
       resolver: {
@@ -516,13 +493,12 @@ describe('Snapshot generation via FHIRSchema merge', () => {
 
     const paths = new Set((snapshot.snapshot?.element || []).map((e) => e.path));
 
-    // Inherited datatype children from CodeableConcept/Coding
-    expect(paths.has('Observation.code.coding.display')).toBe(true);
+    // CodeableConcept fully expands (coding, text); Coding fully expands (system,
+    // code, display) because the profile reached into it.
+    expect(paths.has('Observation.code.coding')).toBe(true);
     expect(paths.has('Observation.code.text')).toBe(true);
-
-    // Keep [x]-style path keys for constrained quantity children
-    expect(paths.has('Observation.component.value[x].value')).toBe(true);
-    expect(paths.has('Observation.component.value[x].unit')).toBe(true);
-    expect(paths.has('Observation.component.valueQuantity.value')).toBe(false);
+    expect(paths.has('Observation.code.coding.system')).toBe(true);
+    expect(paths.has('Observation.code.coding.code')).toBe(true);
+    expect(paths.has('Observation.code.coding.display')).toBe(true);
   });
 });

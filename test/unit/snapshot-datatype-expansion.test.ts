@@ -2,6 +2,11 @@ import { describe, expect, it } from 'bun:test';
 import { generateSnapshot } from '../../src/converter/snapshot';
 import type { StructureDefinition, StructureDefinitionElement } from '../../src/converter/types';
 
+// Datatype-expansion details (self-contained, no input snapshot): type-fill onto a
+// constrained-but-untyped child, and primitive expansion only when the profile
+// pins a primitive's child. The broad "reach-into expands the full set" behavior
+// lives in snapshot-selfcontained-expansion.test.ts.
+
 function sd(args: {
   url: string;
   type: string;
@@ -9,7 +14,6 @@ function sd(args: {
   baseDefinition?: string;
   derivation?: string;
   elements: StructureDefinitionElement[];
-  snapshot?: StructureDefinitionElement[];
 }): StructureDefinition {
   return {
     resourceType: 'StructureDefinition',
@@ -21,7 +25,6 @@ function sd(args: {
     ...(args.baseDefinition ? { baseDefinition: args.baseDefinition } : {}),
     ...(args.derivation ? { derivation: args.derivation } : {}),
     differential: { element: [{ path: args.type }, ...args.elements] },
-    ...(args.snapshot ? { snapshot: { element: args.snapshot } } : {}),
   };
 }
 
@@ -36,7 +39,6 @@ const element = sd({
   ],
 });
 
-// Identifier datatype — NOT in the legacy allowlist
 const identifier = sd({
   url: 'http://hl7.org/fhir/StructureDefinition/Identifier',
   type: 'Identifier',
@@ -57,37 +59,7 @@ const fooBase = sd({
   elements: [{ path: 'Foo.identifier', min: 0, max: '*', type: [{ code: 'Identifier' }] }],
 });
 
-describe('snapshot: inherited datatype-children expansion (beyond legacy allowlist)', () => {
-  it('expands Identifier children one level when present in source snapshot', async () => {
-    const profile = sd({
-      url: 'http://example.org/FooProfile',
-      type: 'Foo',
-      baseDefinition: fooBase.url,
-      derivation: 'constraint',
-      elements: [{ path: 'Foo.identifier', mustSupport: true, type: [{ code: 'Identifier' }] }],
-      snapshot: [
-        { path: 'Foo' },
-        { path: 'Foo.identifier', type: [{ code: 'Identifier' }] },
-        { path: 'Foo.identifier.use', type: [{ code: 'code' }] },
-        { path: 'Foo.identifier.system', type: [{ code: 'uri' }] },
-        { path: 'Foo.identifier.value', type: [{ code: 'string' }] },
-      ],
-    });
-
-    const snap = await generateSnapshot(profile, {
-      resolver: {
-        [element.url]: element,
-        [identifier.url]: identifier,
-        [fooBase.url]: fooBase,
-      },
-    });
-
-    const paths = new Set((snap.snapshot?.element || []).map((e) => e.path));
-    expect(paths.has('Foo.identifier.use')).toBe(true);
-    expect(paths.has('Foo.identifier.system')).toBe(true);
-    expect(paths.has('Foo.identifier.value')).toBe(true);
-  });
-
+describe('snapshot: datatype expansion details (self-contained)', () => {
   it('fills type onto an explicitly-constrained nested child that has no type', async () => {
     const profile = sd({
       url: 'http://example.org/FooProfile2',
@@ -98,11 +70,6 @@ describe('snapshot: inherited datatype-children expansion (beyond legacy allowli
         { path: 'Foo.identifier', mustSupport: true, type: [{ code: 'Identifier' }] },
         // constrained child, mustSupport only — NO type declared
         { path: 'Foo.identifier.system', mustSupport: true },
-      ],
-      snapshot: [
-        { path: 'Foo' },
-        { path: 'Foo.identifier', type: [{ code: 'Identifier' }] },
-        { path: 'Foo.identifier.system', type: [{ code: 'uri' }], mustSupport: true },
       ],
     });
 
@@ -120,7 +87,7 @@ describe('snapshot: inherited datatype-children expansion (beyond legacy allowli
     expect((sys?.type || []).map((t) => t.code)).toEqual(['uri']);
   });
 
-  it('expands a primitive element\'s children when the source profiles them (canonical.id/.value)', async () => {
+  it("expands a primitive element's children only when the profile pins one (canonical.value)", async () => {
     const canonicalType = sd({
       url: 'http://hl7.org/fhir/StructureDefinition/canonical',
       type: 'canonical',
@@ -143,12 +110,10 @@ describe('snapshot: inherited datatype-children expansion (beyond legacy allowli
       type: 'QR',
       baseDefinition: qrBase.url,
       derivation: 'constraint',
-      elements: [{ path: 'QR.questionnaire', mustSupport: true, type: [{ code: 'canonical' }] }],
-      snapshot: [
-        { path: 'QR' },
-        { path: 'QR.questionnaire', type: [{ code: 'canonical' }] },
-        { path: 'QR.questionnaire.id', type: [{ code: 'string' }] },
-        { path: 'QR.questionnaire.value', type: [{ code: 'string' }] },
+      elements: [
+        { path: 'QR.questionnaire', mustSupport: true, type: [{ code: 'canonical' }] },
+        // pin the primitive's value child → the primitive expands (id/extension/value)
+        { path: 'QR.questionnaire.value', mustSupport: true },
       ],
     });
 
@@ -165,17 +130,15 @@ describe('snapshot: inherited datatype-children expansion (beyond legacy allowli
     expect(paths.has('QR.questionnaire.value')).toBe(true);
   });
 
-  it('does NOT expand primitive-typed children (no lowercase-type value rows)', async () => {
+  it('does NOT expand an untouched primitive leaf (no value.value rows)', async () => {
     const profile = sd({
       url: 'http://example.org/FooProfile3',
       type: 'Foo',
       baseDefinition: fooBase.url,
       derivation: 'constraint',
-      elements: [{ path: 'Foo.identifier', mustSupport: true, type: [{ code: 'Identifier' }] }],
-      snapshot: [
-        { path: 'Foo' },
-        { path: 'Foo.identifier', type: [{ code: 'Identifier' }] },
-        { path: 'Foo.identifier.value', type: [{ code: 'string' }] },
+      elements: [
+        { path: 'Foo.identifier', mustSupport: true, type: [{ code: 'Identifier' }] },
+        { path: 'Foo.identifier.system', mustSupport: true },
       ],
     });
 
@@ -188,7 +151,7 @@ describe('snapshot: inherited datatype-children expansion (beyond legacy allowli
     });
 
     const paths = new Set((snap.snapshot?.element || []).map((e) => e.path));
-    // value is a string (primitive) → its own children must NOT be expanded
+    // `value` is a string (primitive); untouched → its own children must NOT expand
     expect(paths.has('Foo.identifier.value.value')).toBe(false);
   });
 });

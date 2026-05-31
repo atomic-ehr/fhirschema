@@ -306,6 +306,20 @@ async function expandInheritedTypeElements(
   const sourcePaths = new Set((sourceElements || []).map((element) => element.path));
   const choiceMappings = buildChoiceTypedPrefixMappings(generatedElements);
 
+  // Self-contained expansion gate: expand a datatype element's children only when
+  // the profile/base "reaches into" it — i.e. some merged element is a strict
+  // descendant. Matches FHIR (an untouched inherited datatype element is NOT
+  // expanded; touching any descendant materializes the type's full one-level child
+  // set, which then recurses down the touched spine). Derived from the merged
+  // element list, never from the input snapshot.
+  const reachedParents = new Set<string>();
+  for (const el of generatedElements) {
+    const parts = el.path.split('.');
+    for (let i = 1; i < parts.length; i += 1) {
+      reachedParents.add(parts.slice(0, i).join('.'));
+    }
+  }
+
   for (let index = 0; index < result.length; index += 1) {
     const element = result[index];
     if (!element.path.includes('.')) continue;
@@ -342,6 +356,11 @@ async function expandInheritedTypeElements(
     }
 
     if (!element.type) continue;
+    // Choice ([x]) elements are still bounded by the source oracle (handled in a
+    // later step); a non-choice datatype element expands structurally when the
+    // profile reaches into it.
+    const isChoice = element.path.includes('[x]');
+    if (!isChoice && !reachedParents.has(element.path)) continue;
     // Include the type signature in the anchor: a value[x] resliced per parent
     // slice yields several same-(path,sliceName) rows with different types
     // (e.g. one CodeableConcept, one canonical, one Quantity). Each must expand
@@ -352,10 +371,10 @@ async function expandInheritedTypeElements(
     for (const typeRef of element.type) {
       const typeCode = typeRef.code;
       if (!typeCode) continue;
-      // Complex types always expand one level. Primitive types expand only the
-      // specific children a source profile pins (e.g. canonical.value) — and only
-      // when we have a source oracle to gate them; otherwise we'd invent value rows.
-      if (!isExpandableComplexType(typeCode) && sourcePaths.size === 0) continue;
+      // For [x] children only: complex types expand one level, primitives expand
+      // only what a source profile pins (avoids inventing value rows without an
+      // oracle). Non-choice elements are already gated by `reachedParents` above.
+      if (isChoice && !isExpandableComplexType(typeCode) && sourcePaths.size === 0) continue;
 
       const templates = await buildTypeElementTemplates(typeCode, resolver, maxDepth, templatesCache);
       for (const template of templates) {
@@ -367,6 +386,7 @@ async function expandInheritedTypeElements(
 
         const childPath = `${element.path}.${suffix}`;
         if (
+          isChoice &&
           sourcePaths.size > 0 &&
           !sourceHasPathOrChoiceVariant(sourcePaths, childPath, choiceMappings)
         ) {
