@@ -232,18 +232,10 @@ function buildElementType(
       return { ...element, type: typeFromExt.valueUrl };
     }
 
-    // Normal type
+    // Normal type. (defaultType for logical models is captured in transformElement
+    // before stripElementMetadata removes element.extension.)
     const typeCode = firstType.code;
     const result: ProcessingElement = { ...element, type: typeCode };
-
-    // Add defaultType for logical models
-    if (structureDefinition.kind === 'logical') {
-      const defaultTypeExt = getExtension(element.extension, DEFAULT_TYPE_EXT);
-      if (defaultTypeExt?.valueCanonical) {
-        result.defaultType = defaultTypeExt.valueCanonical;
-      }
-    }
-
     return result;
   }
 
@@ -412,6 +404,13 @@ export function transformElement(
   structureDefinition: StructureDefinition,
   options?: { explicitMaxCardinality?: boolean },
 ): FHIRSchemaElement {
+  // Capture the logical-model default type before stripElementMetadata drops
+  // element.extension (where elementdefinition-defaulttype lives).
+  const defaultType =
+    structureDefinition.kind === 'logical'
+      ? getExtension(element.extension, DEFAULT_TYPE_EXT)?.valueCanonical
+      : undefined;
+
   let transformed: ProcessingElement = preprocessElement(element) as ProcessingElement;
   transformed = stripElementMetadata(transformed as StructureDefinitionElement);
   transformed = buildElementBinding(transformed, structureDefinition);
@@ -426,6 +425,10 @@ export function transformElement(
   transformed = buildElementCardinality(transformed, explicitMax);
   transformed = buildElementType(transformed, structureDefinition);
   transformed = processPatterns(transformed);
+
+  if (defaultType && transformed.defaultType === undefined) {
+    transformed.defaultType = defaultType;
+  }
 
   return transformed as FHIRSchemaElement;
 }
