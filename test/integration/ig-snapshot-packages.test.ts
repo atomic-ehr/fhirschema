@@ -225,6 +225,12 @@ async function compareSnapshots(target: PackageRef, dependencies: PackageRef[] =
   };
 }
 
+// These are SELF-CONTAINED (blind) baselines: generateSnapshot derives the snapshot
+// purely from the differential + resolved base chain and never reads the input SD's
+// own snapshot, so feeding the full SD here is equivalent to stripping it. US Core is
+// exact (67/67, P/R = 1.0); the cores are slightly lower — the honest cost of not
+// peeking at the answer. The underlying behaviors are pinned by hermetic unit tests
+// (test/unit/snapshot-*.test.ts); this is the coarse real-package regression net.
 describe('IG snapshot parity against package snapshots (cached from get-ig)', () => {
   it('FHIR R4 Core differential-based baseline', async () => {
     const totals = await compareSnapshots({ id: 'hl7.fhir.r4.core', version: '4.0.1' });
@@ -232,9 +238,9 @@ describe('IG snapshot parity against package snapshots (cached from get-ig)', ()
     expect(totals.generated + totals.failed).toBe(totals.profiles);
     expect(totals.failed).toBeLessThanOrEqual(4);
     expect(totals.generated).toBeGreaterThanOrEqual(649);
-    expect(totals.exactKeySetMatches).toBeGreaterThanOrEqual(624);
-    expect(totals.avgPrecision).toBeGreaterThanOrEqual(0.999);
-    expect(totals.avgRecall).toBeGreaterThanOrEqual(0.991);
+    expect(totals.exactKeySetMatches).toBeGreaterThanOrEqual(620);
+    expect(totals.avgPrecision).toBeGreaterThanOrEqual(0.99);
+    expect(totals.avgRecall).toBeGreaterThanOrEqual(0.98);
   });
 
   it('US Core differential-based snapshot parity', async () => {
@@ -269,10 +275,8 @@ describe('IG snapshot parity against package snapshots (cached from get-ig)', ()
     expect(totals.generated + totals.failed).toBe(totals.profiles);
     expect(totals.failed).toBe(0);
     expect(totals.generated).toBe(totals.profiles);
-    expect(totals.exactKeySetMatches).toBeGreaterThanOrEqual(12);
-    // Self-contained datatype expansion shifts this weakest case marginally;
-    // thresholds get re-baselined once the snapshot oracle is fully removed.
-    expect(totals.avgPrecision).toBeGreaterThanOrEqual(0.91);
+    expect(totals.exactKeySetMatches).toBeGreaterThanOrEqual(11);
+    expect(totals.avgPrecision).toBeGreaterThanOrEqual(0.9);
     expect(totals.avgRecall).toBeGreaterThanOrEqual(0.92);
   });
 
@@ -292,7 +296,7 @@ describe('IG snapshot parity against package snapshots (cached from get-ig)', ()
     expect(totals.failed).toBe(0);
     expect(totals.generated).toBe(totals.profiles);
     expect(totals.exactKeySetMatches).toBeGreaterThanOrEqual(6);
-    expect(totals.avgPrecision).toBe(1);
+    expect(totals.avgPrecision).toBeGreaterThanOrEqual(0.99);
     expect(totals.avgRecall).toBeGreaterThanOrEqual(0.99);
   });
 
@@ -306,10 +310,10 @@ describe('IG snapshot parity against package snapshots (cached from get-ig)', ()
         minRecall: number;
       }
     > = {
-      'hl7.fhir.r4.core': { minGenerated: 640, maxFailed: 10, minPrecision: 0.999, minRecall: 0.99 },
-      'hl7.fhir.r4b.core': { minGenerated: 640, maxFailed: 10, minPrecision: 0.999, minRecall: 0.99 },
-      'hl7.fhir.r5.core': { minGenerated: 280, maxFailed: 30, minPrecision: 0.997, minRecall: 0.97 },
-      'hl7.fhir.r6.core': { minGenerated: 220, maxFailed: 30, minPrecision: 0.997, minRecall: 0.96 },
+      'hl7.fhir.r4.core': { minGenerated: 640, maxFailed: 10, minPrecision: 0.99, minRecall: 0.98 },
+      'hl7.fhir.r4b.core': { minGenerated: 640, maxFailed: 10, minPrecision: 0.99, minRecall: 0.98 },
+      'hl7.fhir.r5.core': { minGenerated: 280, maxFailed: 30, minPrecision: 0.96, minRecall: 0.94 },
+      'hl7.fhir.r6.core': { minGenerated: 220, maxFailed: 30, minPrecision: 0.95, minRecall: 0.93 },
     };
 
     const cores = await discoverLatestCorePackages();

@@ -89,7 +89,11 @@ const resolver = {
 };
 
 describe('snapshot: resliced value[x] expands each slice type’s datatype children', () => {
-  it('expands both CodeableConcept and Quantity children when value[x] is resliced per type', async () => {
+  // Self-contained (no input snapshot): value[x] is resliced per type AND a child is
+  // constrained under each slice's value — reaching into each variant, so each one's
+  // datatype children expand under [x]-style paths. (Narrowing the type alone, with no
+  // child constraint, does NOT expand — matching real FHIR, e.g. CDeX Parameters.)
+  it('expands each reached slice type’s datatype children when value[x] is resliced per type', async () => {
     const profile = sd({
       url: 'http://example.org/ObsProfile',
       type: 'Observation',
@@ -103,19 +107,10 @@ describe('snapshot: resliced value[x] expands each slice type’s datatype child
         },
         { path: 'Observation.component', sliceName: 'cc' },
         { path: 'Observation.component.value[x]', type: [{ code: 'CodeableConcept' }] },
+        { path: 'Observation.component.value[x].coding', mustSupport: true }, // reach into CC
         { path: 'Observation.component', sliceName: 'qty' },
         { path: 'Observation.component.value[x]', type: [{ code: 'Quantity' }] },
-      ],
-      // Source oracle: both the CC child and the Quantity child are present.
-      snapshot: [
-        { path: 'Observation' },
-        { path: 'Observation.component', type: [{ code: 'BackboneElement' }] },
-        { path: 'Observation.component', sliceName: 'cc', type: [{ code: 'BackboneElement' }] },
-        { path: 'Observation.component.value[x]', type: [{ code: 'CodeableConcept' }] },
-        { path: 'Observation.component.value[x].coding', type: [{ code: 'Coding' }] },
-        { path: 'Observation.component', sliceName: 'qty', type: [{ code: 'BackboneElement' }] },
-        { path: 'Observation.component.value[x]', type: [{ code: 'Quantity' }] },
-        { path: 'Observation.component.value[x].comparator', type: [{ code: 'code' }] },
+        { path: 'Observation.component.value[x].comparator', mustSupport: true }, // reach into Quantity
       ],
     });
 

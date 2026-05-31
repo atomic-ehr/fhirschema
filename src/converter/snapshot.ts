@@ -34,14 +34,6 @@ export interface SnapshotGenerationOptions {
 
 const SD_IMPLEMENTS_URL = 'http://hl7.org/fhir/StructureDefinition/structuredefinition-implements';
 
-// A FHIR type is a complex type / datatype / resource (whose children are expanded
-// one level into the snapshot) iff its code starts with an uppercase letter.
-// Primitive types (string, code, uri, ...) start lowercase; they expand only the
-// specific children a source profile pins (gated per-child at the call site).
-function isExpandableComplexType(typeCode: string): boolean {
-  return /^[A-Z]/.test(typeCode);
-}
-
 const TYPE_TO_SUFFIX: Record<string, string> = {
   base64Binary: 'Base64Binary',
   boolean: 'Boolean',
@@ -295,7 +287,6 @@ async function expandInheritedTypeElements(
   generatedElements: StructureDefinitionElement[],
   resolver: StructureDefinitionResolver,
   maxDepth: number,
-  sourceElements?: StructureDefinitionElement[],
 ): Promise<StructureDefinitionElement[]> {
   const result = [...generatedElements];
   const indexByKey = new Map<string, number>();
@@ -303,8 +294,6 @@ async function expandInheritedTypeElements(
   const templatesCache = new Map<string, StructureDefinitionElement[]>();
   const processedAnchors = new Set<string>();
   const processedCref = new Set<string>();
-  const sourcePaths = new Set((sourceElements || []).map((element) => element.path));
-  const choiceMappings = buildChoiceTypedPrefixMappings(generatedElements);
 
   // Self-contained expansion gate: expand a datatype element's children only when
   // the profile/base "reaches into" it — i.e. some merged element is a strict
@@ -351,11 +340,11 @@ async function expandInheritedTypeElements(
     }
 
     if (!element.type) continue;
-    // Choice ([x]) elements are still bounded by the source oracle (handled in a
-    // later step); a non-choice datatype element expands structurally when the
-    // profile reaches into it.
-    const isChoice = element.path.includes('[x]');
-    if (!isChoice && !reachedParents.has(element.path)) continue;
+    if (!reachedParents.has(element.path)) continue;
+    // A still-ambiguous choice ([x] kept with >1 type) cannot be expanded — which
+    // datatype's children would apply is undecided. A narrowed [x] (one type) and
+    // any ordinary element expand normally.
+    if (element.path.includes('[x]') && element.type.length > 1) continue;
     // Include the type signature in the anchor: a value[x] resliced per parent
     // slice yields several same-(path,sliceName) rows with different types
     // (e.g. one CodeableConcept, one canonical, one Quantity). Each must expand
@@ -366,10 +355,6 @@ async function expandInheritedTypeElements(
     for (const typeRef of element.type) {
       const typeCode = typeRef.code;
       if (!typeCode) continue;
-      // For [x] children only: complex types expand one level, primitives expand
-      // only what a source profile pins (avoids inventing value rows without an
-      // oracle). Non-choice elements are already gated by `reachedParents` above.
-      if (isChoice && !isExpandableComplexType(typeCode) && sourcePaths.size === 0) continue;
 
       const templates = await buildTypeElementTemplates(typeCode, resolver, maxDepth, templatesCache);
       for (const template of templates) {
@@ -380,14 +365,6 @@ async function expandInheritedTypeElements(
         if (!suffix) continue;
 
         const childPath = `${element.path}.${suffix}`;
-        if (
-          isChoice &&
-          sourcePaths.size > 0 &&
-          !sourceHasPathOrChoiceVariant(sourcePaths, childPath, choiceMappings)
-        ) {
-          continue;
-        }
-
         const child = cloneInheritedElement(template, childPath);
         const key = elementKey(child);
         const existingIndex = indexByKey.get(key);
@@ -415,8 +392,8 @@ function toChoiceSuffix(typeCode: string): string {
 
 function buildChoiceTypedPrefixMappings(
   generatedElements: StructureDefinitionElement[],
-): Array<{ typedPrefix: string; choicePrefix: string }> {
-  const mappings: Array<{ typedPrefix: string; choicePrefix: string }> = [];
+): Array<{ typedPrefix: string; choicePrefix: string; typeCode: string }> {
+  const mappings: Array<{ typedPrefix: string; choicePrefix: string; typeCode: string }> = [];
 
   for (const element of generatedElements) {
     if (!element.path.includes('[x]') || !element.type) continue;
@@ -427,6 +404,7 @@ function buildChoiceTypedPrefixMappings(
       mappings.push({
         typedPrefix: `${choicePrefix}${toChoiceSuffix(typeCode)}`,
         choicePrefix: element.path,
+        typeCode,
       });
     }
   }
@@ -434,80 +412,118 @@ function buildChoiceTypedPrefixMappings(
   return mappings;
 }
 
-function sourceHasPathOrChoiceVariant(
-  sourcePaths: Set<string>,
-  candidatePath: string,
-  mappings: Array<{ typedPrefix: string; choicePrefix: string }>,
-): boolean {
-  if (sourcePaths.has(candidatePath)) return true;
+// A typed choice-variant row may omit its type (the differential leaves it implied
+// by the name, e.g. `component.valueQuantity` with no `type`). Infer the type from
+// the variant name so datatype expansion can materialize the variant's children.
+function fillChoiceVariantTypes(
+  elements: StructureDefinitionElement[],
+): StructureDefinitionElement[] {
+  const byTypedPrefix = new Map(
+    buildChoiceTypedPrefixMappings(elements).map((m) => [m.typedPrefix, m.typeCode]),
+  );
+  if (byTypedPrefix.size === 0) return elements;
 
-  for (const mapping of mappings) {
-    if (candidatePath === mapping.typedPrefix && sourcePaths.has(mapping.choicePrefix)) {
-      return true;
-    }
-    if (candidatePath.startsWith(`${mapping.typedPrefix}.`)) {
-      const choiceVariant = `${mapping.choicePrefix}${candidatePath.slice(mapping.typedPrefix.length)}`;
-      if (sourcePaths.has(choiceVariant)) return true;
-    }
-  }
-
-  return false;
+  return elements.map((element) => {
+    if (element.type && element.type.length > 0) return element;
+    const typeCode = byTypedPrefix.get(element.path);
+    return typeCode ? { ...element, type: [{ code: typeCode }] } : element;
+  });
 }
 
-function rewriteChoicePathsToSourceStyle(
-  source: StructureDefinition,
-  generatedElements: StructureDefinitionElement[],
+// FHIR snapshots represent a type-narrowed choice as a SLICE of the [x] element,
+// with [x]-style children — not as typed-variant paths. A differential authored as
+// `Observation.valueQuantity[.value]` becomes, in the snapshot:
+//   Observation.value[x]                             (base, kept as-is)
+//   Observation.value[x]  sliceName=valueQuantity    (the typed-variant slice)
+//   Observation.value[x].value, .comparator, …       ([x]-style children)
+// So map every typed-variant row back: the variant root becomes a `value[x]` slice
+// row, its children become `value[x].*`. The mapping is derived from the `value[x]`
+// base row the reverse converter keeps (all of its declared types), so no input
+// snapshot is needed. Run this AFTER expansion: the typed variant is single-typed,
+// so it expands cleanly first, then is renamed. Duplicate keys are merged by
+// dedupeElements.
+function normalizeChoicePathsToXStyle(
+  elements: StructureDefinitionElement[],
 ): StructureDefinitionElement[] {
-  const sourceElements = source.snapshot?.element || source.differential?.element || [];
-  const sourcePaths = new Set(sourceElements.map((element) => element.path));
-  const choiceMappings = buildChoiceTypedPrefixMappings(generatedElements);
-  if (choiceMappings.length === 0) return generatedElements;
+  const choiceMappings = buildChoiceTypedPrefixMappings(elements);
+  if (choiceMappings.length === 0) return elements;
+  // Paths that are themselves sliced (a slice row carries that path + a sliceName).
+  // A choice narrowed INSIDE a sliced parent (component:systolic → component.valueQuantity)
+  // does not get its own value[x] slice — its children just become value[x].* — whereas a
+  // choice narrowed at an unsliced position (Observation.valueQuantity) becomes value[x]:valueQuantity.
+  const slicedPaths = new Set(elements.filter((e) => e.sliceName).map((e) => e.path));
 
-  return generatedElements.map((element) => {
+  return elements.map((element) => {
     for (const mapping of choiceMappings) {
-      if (!element.path.startsWith(mapping.typedPrefix)) continue;
+      const isExact = element.path === mapping.typedPrefix;
+      if (!isExact && !element.path.startsWith(`${mapping.typedPrefix}.`)) continue;
 
-      const rewrittenPath =
-        element.path === mapping.typedPrefix
-          ? mapping.choicePrefix
-          : `${mapping.choicePrefix}${element.path.slice(mapping.typedPrefix.length)}`;
-
-      // Rewrite only when source uses [x]-style path and does not keep typed variant.
-      if (sourcePaths.has(rewrittenPath) && !sourcePaths.has(element.path)) {
-        return { ...element, path: rewrittenPath };
+      if (isExact) {
+        const parentPath = mapping.choicePrefix.slice(0, mapping.choicePrefix.lastIndexOf('.'));
+        if (slicedPaths.has(parentPath)) {
+          return { ...element, path: mapping.choicePrefix };
+        }
+        const sliceName = mapping.typedPrefix.slice(mapping.typedPrefix.lastIndexOf('.') + 1);
+        return { ...element, path: mapping.choicePrefix, sliceName };
       }
+      return {
+        ...element,
+        path: `${mapping.choicePrefix}${element.path.slice(mapping.typedPrefix.length)}`,
+      };
     }
     return element;
   });
 }
 
+// Choice slices (value[x]:valueString …) are author-declared in a differential —
+// the leaf's or an ancestor's in the resolved chain — never invented by
+// snapshotting. The translate→merge→reverse round-trip can drop the marker row, so
+// re-add it from the chain differentials (self-contained; CLAUDE.md: differential is
+// the source of truth).
 function rehydrateChoiceSliceMarkers(
-  source: StructureDefinition,
+  chainDifferentialElements: StructureDefinitionElement[],
   generatedElements: StructureDefinitionElement[],
 ): StructureDefinitionElement[] {
   const target = [...generatedElements];
   const seen = new Set(target.map((el) => elementKey(el)));
+  const choiceMappings = buildChoiceTypedPrefixMappings(generatedElements);
+  const slicedPaths = new Set(generatedElements.filter((e) => e.sliceName).map((e) => e.path));
 
-  const sourceElements = source.snapshot?.element || source.differential?.element || [];
-  for (const sourceElement of sourceElements) {
-    if (!sourceElement.path.includes('[x]') || !sourceElement.sliceName) {
-      continue;
-    }
-
-    const key = elementKey(sourceElement);
-    if (seen.has(key)) {
-      continue;
-    }
-
-    const marker = {
-      path: sourceElement.path,
-      sliceName: sourceElement.sliceName,
-      ...(sourceElement.type ? { type: sourceElement.type } : {}),
-      ...(sourceElement.min !== undefined ? { min: sourceElement.min } : {}),
-      ...(sourceElement.max !== undefined ? { max: sourceElement.max } : {}),
-    };
-    target.push(marker);
+  const addMarker = (
+    path: string,
+    sliceName: string,
+    src: StructureDefinitionElement,
+  ): void => {
+    const key = `${path}|${sliceName}`;
+    if (seen.has(key)) return;
+    target.push({
+      path,
+      sliceName,
+      ...(src.type ? { type: src.type } : {}),
+      ...(src.min !== undefined ? { min: src.min } : {}),
+      ...(src.max !== undefined ? { max: src.max } : {}),
+    });
     seen.add(key);
+  };
+
+  for (const src of chainDifferentialElements) {
+    // Already [x]-style slice rows declared in a differential.
+    if (src.path.includes('[x]') && src.sliceName) {
+      addMarker(src.path, src.sliceName, src);
+      continue;
+    }
+    // A typed choice-variant base row (Observation.valueCodeableConcept) declares a
+    // value[x]:variant slice. A childless variant is dropped by the reverse converter,
+    // so re-add the marker here. Suppress when narrowed inside a sliced parent (the
+    // per-slice narrowing does not get its own value[x] slice — see
+    // normalizeChoicePathsToXStyle).
+    const mapping = choiceMappings.find((m) => m.typedPrefix === src.path);
+    if (mapping) {
+      const parentPath = mapping.choicePrefix.slice(0, mapping.choicePrefix.lastIndexOf('.'));
+      if (slicedPaths.has(parentPath)) continue;
+      const sliceName = mapping.typedPrefix.slice(mapping.typedPrefix.lastIndexOf('.') + 1);
+      addMarker(mapping.choicePrefix, sliceName, src);
+    }
   }
 
   return target;
@@ -553,18 +569,19 @@ export async function generateSnapshot(
   });
   const generatedElements =
     asStructureDefinition.differential?.element || [{ path: structureDefinition.type }];
-  const sourceElements = structureDefinition.snapshot?.element || structureDefinition.differential?.element;
-  // Rewrite typed choice paths (valueQuantity.*) to source [x]-style BEFORE datatype
-  // expansion. This way a constrained choice-variant child already occupies its key,
-  // so expansion fills only its type instead of appending a generic duplicate.
-  const sourceStyledElements = rewriteChoicePathsToSourceStyle(structureDefinition, generatedElements);
+  // Expand FIRST (a typed choice variant like `valueQuantity` is single-typed, so it
+  // expands its datatype children cleanly), THEN normalize the typed-variant rows to
+  // [x]-style slices. Doing it in this order keeps the multi-typed `value[x]` base
+  // unexpanded while the chosen variant's children are materialized.
+  const typedElements = fillChoiceVariantTypes(generatedElements);
   const expandedElements = await expandInheritedTypeElements(
-    sourceStyledElements,
+    typedElements,
     options.resolver,
     maxDepth,
-    sourceElements,
   );
-  const snapshotElements = rehydrateChoiceSliceMarkers(structureDefinition, expandedElements);
+  const styledElements = normalizeChoicePathsToXStyle(expandedElements);
+  const chainDifferentialElements = chain.flatMap((sd) => sd.differential?.element || []);
+  const snapshotElements = rehydrateChoiceSliceMarkers(chainDifferentialElements, styledElements);
 
   return {
     ...structureDefinition,

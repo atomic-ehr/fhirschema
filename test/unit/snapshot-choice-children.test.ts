@@ -59,6 +59,8 @@ const observation = sd({
 });
 
 // Profile narrows value[x] to Quantity and requires the Quantity.value child.
+// The differential uses TYPED style (valueQuantity.value); the snapshot must come
+// out in canonical [x]-style. NO input snapshot (blind generation).
 const profile = sd({
   url: 'http://example.org/vital',
   type: 'Observation',
@@ -68,14 +70,6 @@ const profile = sd({
     { path: 'Observation.value[x]', min: 1, max: '1', type: [{ code: 'Quantity' }] },
     { path: 'Observation.valueQuantity.value', min: 1, max: '1', type: [{ code: 'decimal' }] },
   ],
-  // Source snapshot uses [x]-style child path rows.
-  snapshot: [
-    { path: 'Observation' },
-    { path: 'Observation.value[x]', min: 1, max: '1', type: [{ code: 'Quantity' }] },
-    { path: 'Observation.value[x].value', min: 1, max: '1', type: [{ code: 'decimal' }] },
-    { path: 'Observation.value[x].unit', min: 0, max: '1', type: [{ code: 'string' }] },
-    { path: 'Observation.value[x].system', min: 0, max: '1', type: [{ code: 'uri' }] },
-  ],
 });
 
 const resolver = {
@@ -84,12 +78,25 @@ const resolver = {
   [observation.url]: observation,
 };
 
-describe('snapshot: choice-variant datatype children', () => {
+describe('snapshot: choice-variant datatype children (self-contained)', () => {
   it('does not emit duplicate element keys', async () => {
     const snap = await generateSnapshot(profile, { resolver });
     const keys = (snap.snapshot?.element || []).map((e) => `${e.path}|${e.sliceName ?? ''}`);
     const dups = keys.filter((k, i) => keys.indexOf(k) !== i);
     expect([...new Set(dups)]).toEqual([]);
+  });
+
+  it('normalizes choice paths to [x]-style and expands the narrowed type fully (blind)', async () => {
+    const snap = await generateSnapshot(profile, { resolver });
+    const paths = new Set((snap.snapshot?.element || []).map((e) => e.path));
+
+    // Narrowed Quantity expands fully under [x]-style paths.
+    expect(paths.has('Observation.value[x].value')).toBe(true);
+    expect(paths.has('Observation.value[x].unit')).toBe(true);
+    expect(paths.has('Observation.value[x].system')).toBe(true);
+    // No typed valueQuantity rows leak into the snapshot.
+    expect(paths.has('Observation.valueQuantity')).toBe(false);
+    expect(paths.has('Observation.valueQuantity.value')).toBe(false);
   });
 
   it('keeps the constrained min on the choice child (no generic duplicate overriding it)', async () => {

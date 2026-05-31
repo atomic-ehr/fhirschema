@@ -126,9 +126,10 @@ describe('Snapshot generation via FHIRSchema merge', () => {
       }),
     );
 
+    // A typed-variant child normalizes to canonical [x]-style in the snapshot.
     expect(elements).toContainEqual(
       expect.objectContaining({
-        path: 'Observation.valueQuantity.unit',
+        path: 'Observation.value[x].unit',
       }),
     );
   });
