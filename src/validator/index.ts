@@ -410,6 +410,7 @@ function walk(ctx: Ctx, schemaSet: SchemaNode[], value: unknown, path: (string |
   // their own issues independently.
   checkPatterns(ctx, resolvedSchemas, value, path);
   checkFixed(ctx, resolvedSchemas, value, path);
+  checkValueConstraints(ctx, resolvedSchemas, value, path);
 
   // Terminology bindings (fs5xx). Pluggable; skipped if no engine wired.
   if (ctx.opts.terminology) {
@@ -1576,6 +1577,55 @@ function checkBindings(ctx: Ctx, schemaSet: SchemaNode[], value: unknown, path: 
         expected: b.valueSet,
         got: value,
       });
+    }
+  }
+}
+
+// ─── value constraints: maxLength + numeric minValue[x]/maxValue[x] ────────
+
+// Only the genuinely-numeric value[x] variants (integer64 is a string in FHIR).
+const NUMERIC_MIN_KEYS = [
+  'minValueInteger',
+  'minValueDecimal',
+  'minValueUnsignedInt',
+  'minValuePositiveInt',
+] as const;
+const NUMERIC_MAX_KEYS = [
+  'maxValueInteger',
+  'maxValueDecimal',
+  'maxValueUnsignedInt',
+  'maxValuePositiveInt',
+] as const;
+
+function checkValueConstraints(
+  ctx: Ctx,
+  schemaSet: SchemaNode[],
+  value: unknown,
+  path: (string | number)[],
+): void {
+  for (const o of schemaSet) {
+    const el = o.el as Record<string, unknown>;
+
+    if (typeof el.maxLength === 'number' && typeof value === 'string' && value.length > el.maxLength) {
+      addIssue(ctx, {
+        code: FS.STRING_TOO_LONG,
+        path,
+        schema: o.source,
+        expected: el.maxLength,
+        got: value.length,
+      });
+    }
+
+    if (typeof value !== 'number') continue;
+    for (const k of NUMERIC_MIN_KEYS) {
+      if (typeof el[k] === 'number' && value < (el[k] as number)) {
+        addIssue(ctx, { code: FS.VALUE_BELOW_MINIMUM, path, schema: o.source, expected: el[k], got: value });
+      }
+    }
+    for (const k of NUMERIC_MAX_KEYS) {
+      if (typeof el[k] === 'number' && value > (el[k] as number)) {
+        addIssue(ctx, { code: FS.VALUE_ABOVE_MAXIMUM, path, schema: o.source, expected: el[k], got: value });
+      }
     }
   }
 }

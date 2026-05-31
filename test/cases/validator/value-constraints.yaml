@@ -1,0 +1,60 @@
+suite: 'value constraints — maxLength (fs210), minValue[x] (fs211), maxValue[x] (fs212)'
+# Previously these ElementDefinition constraints survived into the IR as raw
+# passthrough keys but were never enforced (a real validation gap). Now enforced
+# for strings (maxLength) and numeric min/max values.
+
+tests:
+  # ─── maxLength ──────────────────────────────────────────────────────────
+  - desc: string within maxLength → valid
+    schemas:
+      - elements:
+          name: { type: string, maxLength: 5 }
+    data: { name: 'abcde' }
+    valid: true
+
+  - desc: string exceeding maxLength → fs210
+    schemas:
+      - elements:
+          name: { type: string, maxLength: 5 }
+    data: { name: 'abcdef' }
+    issues:
+      - { code: fs210, path: [name] }
+
+  - desc: maxLength does not apply to non-strings (no false positive)
+    schemas:
+      - elements:
+          count: { type: integer, maxLength: 2 }
+    data: { count: 12345 }
+    valid: true
+
+  # ─── minValue[x] (numeric) ──────────────────────────────────────────────
+  - desc: integer at the minimum → valid
+    schemas:
+      - elements:
+          count: { type: integer, minValueInteger: 1 }
+    data: { count: 1 }
+    valid: true
+
+  - desc: integer below minValueInteger → fs211
+    schemas:
+      - elements:
+          count: { type: integer, minValueInteger: 1 }
+    data: { count: 0 }
+    issues:
+      - { code: fs211, path: [count] }
+
+  # ─── maxValue[x] (numeric) ──────────────────────────────────────────────
+  - desc: decimal at the maximum → valid
+    schemas:
+      - elements:
+          score: { type: decimal, maxValueDecimal: 10 }
+    data: { score: 10 }
+    valid: true
+
+  - desc: decimal above maxValueDecimal → fs212
+    schemas:
+      - elements:
+          score: { type: decimal, maxValueDecimal: 10 }
+    data: { score: 10.5 }
+    issues:
+      - { code: fs212, path: [score] }

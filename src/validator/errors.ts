@@ -40,6 +40,9 @@ export const FS = {
   EXCLUDED_ELEMENT: 'fs207',
   UNEXPECTED_EMPTY_OBJECT: 'fs208',
   UNEXPECTED_EMPTY_ARRAY: 'fs209',
+  STRING_TOO_LONG: 'fs210',
+  VALUE_BELOW_MINIMUM: 'fs211',
+  VALUE_ABOVE_MAXIMUM: 'fs212',
 
   // fs3xx — cardinality
   REQUIRED: 'fs301',

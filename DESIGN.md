@@ -1034,6 +1034,9 @@ Literal validation (JSON type correct, value invalid):
 | fs207 | excluded-element  | Field prohibited by `excluded[]` (from `max: "0"` in profile) is present in data |
 | fs208 | unexpected-empty-object | A non-root object is `{}` (empty). FHIR JSON forbids empty objects |
 | fs209 | unexpected-empty-array  | An array field is `[]` (empty). FHIR JSON forbids empty arrays — omit the field |
+| fs210 | string-too-long   | String value longer than `maxLength` |
+| fs211 | value-below-minimum | Numeric value below `minValue[x]` (integer/decimal/unsignedInt/positiveInt) |
+| fs212 | value-above-maximum | Numeric value above `maxValue[x]` (integer/decimal/unsignedInt/positiveInt) |
 
 ### fs3xx — Cardinality
 
