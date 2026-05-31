@@ -590,11 +590,33 @@ export async function generateSnapshot(
   const styledElements = normalizeChoicePathsToXStyle(expandedElements);
   const chainDifferentialElements = chain.flatMap((sd) => sd.differential?.element || []);
   const snapshotElements = rehydrateChoiceSliceMarkers(chainDifferentialElements, styledElements);
+  const finalElements = dedupeElements(snapshotElements);
+
+  if (options.preserveSource) {
+    synthesizeSnapshotFields(finalElements);
+  }
 
   return {
     ...structureDefinition,
     snapshot: {
-      element: dedupeElements(snapshotElements),
+      element: finalElements,
     },
   };
+}
+
+// Field-faithful snapshot metadata that FHIR's generator fills from the base
+// definitions (not present in any differential): a path-based `id` on every row, and
+// `isModifier: false` on every non-root element that did not declare it. (`base` —
+// the originating type's path + cardinality — needs originating-definition tracking and
+// is handled separately.)
+function synthesizeSnapshotFields(elements: StructureDefinitionElement[]): void {
+  for (const el of elements) {
+    const e = el as Record<string, unknown>;
+    if (e.id === undefined) {
+      e.id = el.sliceName ? `${el.path}:${el.sliceName}` : el.path;
+    }
+    if (el.path.includes('.') && e.isModifier === undefined) {
+      e.isModifier = false;
+    }
+  }
 }

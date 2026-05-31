@@ -76,4 +76,14 @@ describe('snapshot: opt-in field-faithful documentation', () => {
     expect(bar.mustSupport).toBe(true); // the profile's own constraint still applies
     expect(bar.fhir).toBeUndefined(); // restored to top-level, no sidecar leak
   });
+
+  it('preserveSource synthesizes a path-based id and fills isModifier:false', async () => {
+    const bar = await barOf(true);
+    expect(bar.id).toBe('Foo.bar');
+    expect(bar.isModifier).toBe(false);
+    // default leaves these off
+    const lean = await barOf(false);
+    expect(lean.id).toBeUndefined();
+    expect(lean.isModifier).toBeUndefined();
+  });
 });
