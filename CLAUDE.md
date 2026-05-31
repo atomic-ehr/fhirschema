@@ -59,6 +59,12 @@ under `test/fixtures/<pkg>[@version]/` (gitignored) by
   peeking) and the validator is **snapshot-less** (resolves inheritance at
   runtime via `ctx.resolve`). These two properties are load-bearing; if a
   proposed change would violate either, stop and discuss.
+* The snapshot generator is **self-contained**: it derives the snapshot purely
+  from the input's `differential.element` + the resolved base chain and **never
+  reads the input SD's own `snapshot`**. Inherited structure (datatype children,
+  cref recursion, choice slices) is reconstructed structurally via `ctx.resolve`,
+  not copied from the shipped snapshot. Also load-bearing — guarded by
+  `test/unit/snapshot-ignores-input-snapshot.test.ts`.
 * Error codes follow the `fsNNN` scheme defined in DESIGN.md §13. Codes are
   stable identifiers; tests assert on `code` + `path`, never on messages.
 * Conversion rule: `StructureDefinition -> FHIRSchema` always uses

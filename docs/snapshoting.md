@@ -14,19 +14,22 @@ derived profile" becomes a simple recursive merge of FHIRSchema nodes. We transl
 every link of the base chain, merge, then translate the result back to a snapshot
 element list.
 
-> Conversion rule (see `CLAUDE.md`): `StructureDefinition → FHIRSchema` always uses
-> `differential.element` as the source of truth. `snapshot.element`, when present on
-> the input, is used **only** as an oracle for which datatype children to expand and
-> for choice-path style — never as conversion input.
+> **Self-contained.** `generateSnapshot` derives the snapshot **purely** from the
+> input's `differential.element` plus the resolved base chain (each resolved through
+> `ctx.resolve`). It **never reads the input SD's own `snapshot`** — feeding a bogus
+> one changes nothing (guarded by `test/unit/snapshot-ignores-input-snapshot.test.ts`).
+> This mirrors the validator's snapshot-less property: everything inherited is resolved
+> structurally at generation time, not copied from an answer key.
 
 ## Pipeline
 
 Implemented in `src/converter/snapshot.ts`:
 
-1. **`buildBaseChain`** — walk `baseDefinition` from leaf to root, plus any profiles
-   referenced by `structuredefinition-implements` extensions. Returns base→leaf order.
-   Each link must have a `differential.element` (`ensureDifferential`).
-2. **`translate`** (`src/converter/index.ts`) — each SD differential → FHIRSchema.
+1. **`buildResolvedBaseChain`** — walk `baseDefinition` from leaf to root, plus any
+   profiles referenced by `structuredefinition-implements` extensions. Returns
+   base→leaf order. Each link must have a `differential.element` (`ensureDifferential`).
+2. **`translate`** (`src/converter/index.ts`) — each SD differential → FHIRSchema
+   (snapshot mode passes `{ explicitMaxCardinality: true }`, see "array → max" below).
 3. **`foldSchemaChain`** — fold the chain with `mergeFHIRSchema` (`src/converter/merge.ts`)
    in base→leaf order. Snapshot mode passes `{ unionArrays: true }` so `required` /
    `excluded` are **unioned** across the chain (a base requirement must survive a
@@ -35,37 +38,53 @@ Implemented in `src/converter/snapshot.ts`:
    `slicing.slices` merge recursively.
 4. **`toStructureDefinition`** (`src/converter/to-structure-definition.ts`) — merged FHIRSchema → SD
    differential-style element list (the reverse converter).
-5. **`rewriteChoicePathsToSourceStyle`** — rewrite typed choice paths
-   (`valueQuantity.*`) to the source's `[x]` style (`value[x].*`). Done *before*
-   expansion so a constrained variant child already occupies its key.
-6. **`expandInheritedTypeElements`** — expand each element's type one level into its
-   datatype children (e.g. `identifier` → `identifier.system`, `.value`, …), gated by
-   presence in the source path set. Complex types expand by default; primitive types
-   expand only the specific children the source pins (e.g. `canonical.value`). When a
-   constrained child already exists, only its missing `type` is filled in.
-7. **`rehydrateChoiceSliceMarkers`** — restore `value[x]:variant` slice marker rows.
-8. **`dedupeElements`** — collapse any duplicate `(path, sliceName)` rows (choice
+5. **`fillChoiceVariantTypes`** — a typed choice-variant row may omit its type
+   (`component.valueQuantity` with no `type`); infer it from the variant name so the
+   next step can expand it.
+6. **`expandInheritedTypeElements`** — the structural expander. An element's datatype
+   children are materialized **iff the profile "reaches into" it** — i.e. some merged
+   element is a strict descendant (`reachedParents`). When it does, the type's *full*
+   one-level child set is resolved via `ctx.resolve` and added, recursing down the
+   touched spine; an untouched inherited datatype element is left unexpanded (matching
+   FHIR). The same gate bounds `contentReference` recursion (a nested cref expands only
+   if it too is reached into — no depth cap needed) and primitive expansion (a
+   primitive's `.value`/`.id` appear only when a child is pinned). A still-multi-typed
+   `[x]` is skipped (ambiguous). A constrained-but-untyped child has its type filled.
+7. **`normalizeChoicePathsToXStyle`** — FHIR snapshots use canonical `[x]`-style choice
+   paths, not typed variants. Rename `valueQuantity[.child]` → `value[x][.child]`; a
+   type-narrowed choice at an unsliced position becomes a `value[x]:valueQuantity`
+   **slice** with `value[x].*` children, while one narrowed inside a sliced parent
+   (`component:systolic`) just gets `value[x].*` children. The mapping comes from the
+   `value[x]` base row the reverse converter keeps — no input snapshot needed.
+8. **`rehydrateChoiceSliceMarkers`** — re-add `value[x]:variant` markers from the
+   **chain differentials** (a childless variant is dropped by the reverse converter),
+   with the same sliced-parent suppression.
+9. **`dedupeElements`** — collapse any duplicate `(path, sliceName)` rows (choice
    narrowing can produce a base `value[x]` row and a rewritten variant row at the same
    key). Duplicate element ids are invalid FHIR, so this is an output invariant.
 
 ## Parity against official distribution snapshots
 
-The IG packages ship official snapshots, so we generate ours and diff element key-sets
-(`path|sliceName`). Measured against cached packages
-(`scripts/compare-uscore-snapshots.ts`, `test/integration/ig-snapshot-packages.test.ts`):
+The IG packages ship official snapshots, so we generate ours **blind** (the input
+snapshot is ignored) and diff element key-sets (`path|sliceName`). Measured against
+cached packages (`test/integration/ig-snapshot-packages.test.ts`):
 
 | package | profiles | exact key-set | precision | recall |
 | --- | --- | --- | --- | --- |
 | hl7.fhir.us.core 8.0.0-ballot | 67 | **67** | 1.000 | 1.000 |
-| hl7.fhir.us.davinci-cdex 2.1.0 | 8 | 6 | 1.000 | 0.995 |
-| hl7.fhir.us.davinci-hrex 1.1.0 | 14 | 12 | 0.926 | 0.929 |
-| hl7.fhir.r4.core 4.0.1 | 649 | 626 | 1.000 | 0.992 |
-| hl7.fhir.r4b.core 4.3.0 | 645 | 622 | 1.000 | 0.992 |
-| hl7.fhir.r5.core 5.0.0 | 295 | 261 | 0.997 | 0.982 |
-| hl7.fhir.r6.core 6.0.0-ballot | 229 | 197 | 0.997 | 0.976 |
+| hl7.fhir.us.davinci-cdex 2.1.0 | 8 | 6 | 0.996 | 0.993 |
+| hl7.fhir.us.davinci-hrex 1.1.0 | 14 | 11 | 0.911 | 0.929 |
+| hl7.fhir.r4.core 4.0.1 | 653 | 624 | 0.994 | 0.985 |
+| hl7.fhir.r4b.core 4.3.0 | 649 | 621 | 0.994 | 0.985 |
+| hl7.fhir.r5.core 5.0.0 | 305 | 260 | 0.965 | 0.949 |
+| hl7.fhir.r6.core 6.0.0-ballot4 | 239 | 196 | 0.956 | 0.935 |
 
 - **precision** = generated keys also in official / generated keys (no invented rows).
 - **recall** = generated keys also in official / official keys (no missing rows).
+- These are the **honest self-contained** numbers (no input-snapshot oracle). US Core
+  is exact; the cores are slightly lower — the cost of deriving everything structurally
+  rather than peeking at the shipped snapshot. The earlier "1.000 precision" figures
+  for the cores were oracle-assisted.
 
 ### How to reproduce
 
@@ -145,25 +164,37 @@ Simple vs complex extension shaping is not yet reconstructed:
   the flag off, so genuine scalars stay sparse and golden/roundtrip output is unchanged.
   Fixed `Coverage.payor` and reduced US Core field-level mismatch.
   (`test/unit/snapshot-array-max-narrowing.test.ts`)
+- **Input-snapshot oracle removed** — datatype/primitive/contentReference expansion
+  and choice-path styling were previously gated/styled by reading the input SD's own
+  `snapshot`. All of that is now derived structurally from the differential + resolved
+  base chain (the `reachedParents` "reach-into" rule, full type expansion via
+  `ctx.resolve`, deterministic `[x]`-style normalization, slice markers from the chain
+  differentials). `generateSnapshot` no longer reads `structureDefinition.snapshot`.
+  US Core stays 67/67 exact, fully self-contained.
 - **Resliced `value[x]` datatype children** — when a `value[x]` is constrained to
-  different types under different parent slices (one CodeableConcept, one Quantity,
-  one canonical, …), each variant's datatype children are now expanded. The
-  per-anchor expansion key includes the element's type signature, so same-path rows
-  no longer collapse to the first type. Fixed CDex (8/8) and mCODE (53/53).
+  different types under different parent slices, each *reached-into* variant's datatype
+  children expand (the per-anchor expansion key includes the element's type signature,
+  so same-path rows don't collapse to the first type).
 - **`contentReference` recursion** (recursive backbones like
-  `Parameters.parameter.part.part`) — now expanded one level per reference, gated by
-  source. Fixed DaVinci PDex (37/37) and CDex.
+  `Parameters.parameter.part.part`) — expanded per reference, bounded structurally by
+  `reachedParents` (a nested cref expands only if it is itself reached into).
 
 ## Tests
 
-- Unit (targeted, one root cause each):
-  `test/unit/snapshot-datatype-expansion.test.ts`,
-  `snapshot-choice-children.test.ts`,
+- Self-containment (the load-bearing invariant):
+  `test/unit/snapshot-ignores-input-snapshot.test.ts` — a bogus input snapshot must not
+  change the output.
+- Structural expansion (blind, one root cause each):
+  `test/unit/snapshot-selfcontained-expansion.test.ts` (reach-into rule),
+  `snapshot-datatype-expansion.test.ts` (type-fill, primitive policy),
+  `snapshot-choice-children.test.ts` / `snapshot-resliced-choice.test.ts` (choice
+  normalization), `snapshot-content-reference.test.ts` (cref bound),
+  `snapshot-array-max-narrowing.test.ts`,
   `reverse-slice-type.test.ts`, `reverse-slice-cardinality.test.ts`,
   `reverse-extension-slot.test.ts`, `merge-fhirschema.test.ts`.
 - Generator/reverse/roundtrip: `test/unit/snapshot-generator.test.ts`,
   `reverse-converter.test.ts`, `test/golden/roundtrip.test.ts`.
-- Integration parity (cached packages): `test/integration/ig-snapshot-packages.test.ts`.
+- Integration parity, blind (cached packages): `test/integration/ig-snapshot-packages.test.ts`.
 
 See also `docs/reverse-converter-corner-cases.md`,
 `spec/sd-fs-snapshot-generation-algorithm.md`, `spec/fs-to-sd-converter-algorithm.md`.
