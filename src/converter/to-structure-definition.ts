@@ -506,11 +506,22 @@ function addElementTree(
   rootUrl: string,
   required: string[] | undefined,
   options: ReverseConversionOptions,
+  excluded?: string[],
 ): void {
   const requiredSet = new Set(required || []);
+  const excludedSet = new Set(excluded || []);
 
   for (const [name, child] of Object.entries(elementMap)) {
     if (child.choiceOf) {
+      continue;
+    }
+
+    // A simple extension forbids sub-extensions (Extension.extension max=0). The base's
+    // inherited `extension 0..*` slot survives the merge, so skip its normal emission and
+    // let appendExcludedRows emit the 0..0 row. Scoped to extension slots: for other
+    // names a stale merge-union exclusion is harmlessly masked by dedupe (the real row
+    // wins), and skipping there would wrongly drop a re-included element's children.
+    if (excludedSet.has(name) && (name === 'extension' || name === 'modifierExtension')) {
       continue;
     }
 
@@ -570,6 +581,7 @@ function addElementTree(
             rootUrl,
             choiceVariant.required,
             options,
+            choiceVariant.excluded,
           );
         }
       }
@@ -659,6 +671,7 @@ function addElementTree(
               rootUrl,
               schema.required,
               options,
+              schema.excluded,
             );
           }
         }
@@ -674,6 +687,7 @@ function addElementTree(
         rootUrl,
         child.required,
         options,
+        child.excluded,
       );
     }
     // Nested prohibitions under this node (max=0 hoisted into child.excluded[]).
@@ -704,6 +718,7 @@ export function toStructureDefinition(
       schema.url,
       schema.required,
       options || {},
+      schema.excluded,
     );
   }
   // Top-level prohibitions (max=0 hoisted to schema.excluded[]).
