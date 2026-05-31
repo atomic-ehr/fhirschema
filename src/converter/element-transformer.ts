@@ -197,18 +197,29 @@ function buildElementConstraints(element: ProcessingElement): ProcessingElement 
 
   // Handle array constraint case
   const constraintArray = element.constraint as
-    | Array<{ key: string; expression: string; human: string; severity: string }>
+    | Array<{
+        key: string;
+        expression: string;
+        human: string;
+        severity: string;
+        suppress?: boolean;
+      }>
     | undefined;
   if (!constraintArray || constraintArray.length === 0) {
     return element;
   }
 
-  const constraints: Record<string, { expression: string; human: string; severity: string }> = {};
+  const constraints: Record<
+    string,
+    { expression: string; human: string; severity: string; suppress?: boolean }
+  > = {};
   for (const constraint of constraintArray) {
     constraints[constraint.key] = {
       expression: constraint.expression,
       human: constraint.human,
       severity: constraint.severity,
+      // R5: carry the suppression flag so the validator can skip an inherited invariant.
+      ...(constraint.suppress !== undefined ? { suppress: constraint.suppress } : {}),
     };
   }
 

@@ -1,0 +1,44 @@
+suite: 'constraint.suppress (R5) — a suppressed invariant is not evaluated'
+# R5 ElementDefinition.constraint.suppress = true means a derived profile suppresses
+# an inherited invariant. The validator must skip it (across the whole schema set, so a
+# suppression on one layer silences the base layer's same-keyed constraint).
+defaults:
+  useFhirpath: true
+
+tests:
+  - desc: a constraint marked suppress:true is not evaluated (would otherwise fail)
+    schemas:
+      - elements: { name: { type: string } }
+        constraint:
+          rule-1:
+            expression: 'name.exists()'
+            human: 'name must be present'
+            severity: 'error'
+            suppress: true
+    data: {}
+    valid: true
+
+  - desc: control — same constraint without suppress fires fs601
+    schemas:
+      - elements: { name: { type: string } }
+        constraint:
+          rule-1:
+            expression: 'name.exists()'
+            human: 'name must be present'
+            severity: 'error'
+    data: {}
+    issues:
+      - { code: fs601, path: [] }
+
+  - desc: a suppression on one schema-set node silences the base node's same key
+    schemas:
+      - elements: { name: { type: string } }
+        constraint:
+          rule-1:
+            expression: 'name.exists()'
+            human: 'name must be present'
+            severity: 'error'
+      - constraint:
+          rule-1: { suppress: true }
+    data: {}
+    valid: true

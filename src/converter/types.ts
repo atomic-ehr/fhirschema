@@ -450,6 +450,7 @@ export type FHIRSchemaElement = {
       expression: string;
       human: string;
       severity: string;
+      suppress?: boolean;
     }
   >;
   elements?: Record<string, FHIRSchemaElement>;
@@ -515,6 +516,7 @@ export interface FHIRSchema {
       expression: string;
       human: string;
       severity: string;
+      suppress?: boolean;
     }
   >;
 }

@@ -1395,11 +1395,24 @@ function checkConstraints(
 ): void {
   const engine = ctx.opts.fhirpath;
   if (!engine) return;
+
+  // R5 constraint.suppress: a suppression on any schema-set node silences that key
+  // everywhere (so a derived profile can suppress an inherited invariant).
+  const suppressed = new Set<string>();
+  for (const o of schemaSet) {
+    const constraints = (o.el as { constraint?: Record<string, ConstraintDef> }).constraint;
+    if (!constraints) continue;
+    for (const [key, c] of Object.entries(constraints)) {
+      if (c?.suppress) suppressed.add(key);
+    }
+  }
+
   for (const o of schemaSet) {
     const constraints = (o.el as { constraint?: Record<string, ConstraintDef> }).constraint;
     if (!constraints) continue;
     for (const [key, c] of Object.entries(constraints)) {
       if (DROPPED_CONSTRAINTS.has(key)) continue;
+      if (suppressed.has(key)) continue;
       if (!c?.expression) continue;
       let result: unknown[];
       try {
@@ -1432,7 +1445,12 @@ function checkConstraints(
   }
 }
 
-type ConstraintDef = { expression?: string; human?: string; severity?: string };
+type ConstraintDef = {
+  expression?: string;
+  human?: string;
+  severity?: string;
+  suppress?: boolean;
+};
 
 /** FHIRPath truthy: non-empty collection whose first element is not `false`. */
 function isFHIRPathTruthy(result: unknown[]): boolean {

@@ -231,13 +231,16 @@ export function translate(
   if (Array.isArray(rootElement?.constraint) && rootElement.constraint.length > 0) {
     const rootConstraints: Record<
       string,
-      { expression: string; human: string; severity: string }
+      { expression: string; human: string; severity: string; suppress?: boolean }
     > = {};
     for (const c of rootElement.constraint) {
       rootConstraints[c.key] = {
         expression: c.expression,
         human: c.human,
         severity: c.severity,
+        ...((c as { suppress?: boolean }).suppress !== undefined
+          ? { suppress: (c as { suppress?: boolean }).suppress }
+          : {}),
       };
     }
     (header as Record<string, unknown>).constraint = rootConstraints;
