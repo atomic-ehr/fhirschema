@@ -65,8 +65,39 @@ function buildSchemaHeader(
   // Package metadata
   if (context?.package_meta) header.package_meta = context.package_meta;
 
+  // Opt-in: stash dropped SD-level publishing/documentation metadata under `fhir`.
+  if (context?.preserveSource) {
+    const sd = structureDefinition as unknown as Record<string, unknown>;
+    const sidecar: Record<string, unknown> = {};
+    for (const key of SD_SIDECAR_FIELDS) {
+      if (sd[key] !== undefined) sidecar[key] = sd[key];
+    }
+    if (Object.keys(sidecar).length > 0) header.fhir = sidecar;
+  }
+
   return header;
 }
+
+// SD-level fields with no normalized home in the FHIRSchema header.
+const SD_SIDECAR_FIELDS = [
+  'id',
+  'title',
+  'status',
+  'experimental',
+  'date',
+  'publisher',
+  'contact',
+  'useContext',
+  'jurisdiction',
+  'purpose',
+  'copyright',
+  'keyword',
+  'fhirVersion',
+  'mapping',
+  'context',
+  'contextInvariant',
+  'identifier',
+] as const;
 
 function computeSchemaClass(structureDefinition: StructureDefinition): string {
   if (structureDefinition.kind === 'resource' && structureDefinition.derivation === 'constraint') {

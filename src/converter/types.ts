@@ -502,6 +502,9 @@ export interface FHIRSchema {
   package_version?: string;
   package_id?: string;
   package_meta?: PackageMeta;
+  // Opt-in (preserveSource) SD-level sidecar: publishing/documentation metadata
+  // with no normalized home (title, date, publisher, context, …).
+  fhir?: Record<string, unknown>;
   elements?: { [key in string]: FHIRSchemaElement };
   required?: string[];
   excluded?: string[];

@@ -709,7 +709,7 @@ export function toStructureDefinition(
   // Top-level prohibitions (max=0 hoisted to schema.excluded[]).
   appendExcludedRows(differential, schema.type, schema.excluded);
 
-  return {
+  const result: StructureDefinition = {
     resourceType: 'StructureDefinition',
     url: schema.url,
     version: schema.version,
@@ -728,4 +728,18 @@ export function toStructureDefinition(
       element: differential,
     },
   };
+
+  // Restore opt-in SD-level metadata (preserveSource). IR-derived header fields win;
+  // the sidecar fills the rest (title, date, publisher, …) and the real status.
+  if (schema.fhir) {
+    const out = result as unknown as Record<string, unknown>;
+    for (const [key, value] of Object.entries(schema.fhir)) {
+      if (out[key] === undefined) out[key] = value;
+    }
+    if (schema.fhir.status !== undefined) {
+      result.status = schema.fhir.status as StructureDefinition['status'];
+    }
+  }
+
+  return result;
 }
