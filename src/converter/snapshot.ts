@@ -30,6 +30,10 @@ export type StructureDefinitionResolver =
 export interface SnapshotGenerationOptions {
   resolver: StructureDefinitionResolver;
   maxDepth?: number;
+  // Opt-in field-faithful snapshot: carry inherited documentation/metadata through the
+  // chain (via the `fhir` sidecar) and synthesize the structural snapshot fields
+  // (id, base, isModifier:false). Off by default — the default snapshot stays lean.
+  preserveSource?: boolean;
 }
 
 const SD_IMPLEMENTS_URL = 'http://hl7.org/fhir/StructureDefinition/structuredefinition-implements';
@@ -563,7 +567,9 @@ export async function generateSnapshot(
 ): Promise<StructureDefinition> {
   const maxDepth = options.maxDepth ?? 32;
   const chain = await buildResolvedBaseChain(structureDefinition, options.resolver, maxDepth);
-  const schemas = chain.map((sd) => translate(sd, { explicitMaxCardinality: true }));
+  const schemas = chain.map((sd) =>
+    translate(sd, { explicitMaxCardinality: true, preserveSource: options.preserveSource }),
+  );
   const merged = foldSchemaChain(schemas);
   const asStructureDefinition = toStructureDefinition(merged, {
     status: structureDefinition.status,

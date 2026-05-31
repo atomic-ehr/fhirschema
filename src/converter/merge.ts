@@ -47,6 +47,15 @@ export const mergeFHIRSchema = (
     overlay.slicing && { slicing: { ...overlay.slicing, slices: slices } },
   );
 
+  // The preserveSource `fhir` sidecar is documentation: shallow-merge it key-wise so a
+  // base's inherited docs (definition/comment/…) survive when the overlay restates only
+  // some of them, instead of the overlay's sidecar replacing the base's wholesale.
+  const baseFhir = (base as { fhir?: Record<string, unknown> }).fhir;
+  const overlayFhir = (overlay as { fhir?: Record<string, unknown> }).fhir;
+  if (baseFhir || overlayFhir) {
+    (result as Record<string, unknown>).fhir = { ...baseFhir, ...overlayFhir };
+  }
+
   if (options.unionArrays) {
     const unionArr = (a?: string[], b?: string[]): string[] | undefined =>
       a || b ? [...new Set([...(a || []), ...(b || [])])] : undefined;
