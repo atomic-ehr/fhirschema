@@ -128,6 +128,23 @@ function buildPatternFields(
   };
 }
 
+function buildFixedFields(
+  fixed: FHIRSchemaElement['fixed'],
+): Partial<StructureDefinitionElement> {
+  if (!fixed) {
+    return {};
+  }
+
+  const resolvedType = fixed.type || inferPatternType(fixed.value);
+  const suffix = toFHIRTypeSuffix(resolvedType);
+  if (!suffix) {
+    return {};
+  }
+  return {
+    [`fixed${suffix}`]: fixed.value,
+  };
+}
+
 function buildConstraintArray(
   constraint: FHIRSchemaElement['constraint'],
 ): StructureDefinitionElement['constraint'] {
@@ -278,6 +295,7 @@ function hasMeaningfulFields(element: FHIRSchemaElement): boolean {
       short ||
       binding ||
       pattern ||
+      element.fixed ||
       (constraint && Object.keys(constraint).length > 0) ||
       choiceOf ||
       (choices && choices.length > 0) ||
@@ -300,6 +318,7 @@ function hasVariantSpecificFields(element: FHIRSchemaElement, allowShortSignal: 
   if (element.refers && element.refers.length > 0) return true;
   if (element.binding) return true;
   if (element.pattern) return true;
+  if (element.fixed) return true;
   if (element.constraint) {
     const meaningfulConstraintKeys = Object.keys(element.constraint).filter(
       (key) => key !== 'ele-1' && key !== 'ext-1',
@@ -394,6 +413,7 @@ function buildBaseElement(
   }
 
   Object.assign(element, buildPatternFields(source.pattern));
+  Object.assign(element, buildFixedFields(source.fixed));
 
   // Preserve already-normalized fixed/default/pattern fields as-is.
   for (const [key, value] of Object.entries(source)) {
@@ -412,6 +432,7 @@ function buildBaseElement(
     'short',
     'binding',
     'pattern',
+    'fixed',
     'constraint',
     'elements',
     'choiceOf',
