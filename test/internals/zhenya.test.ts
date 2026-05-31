@@ -6,7 +6,11 @@
 import { describe, expect, it } from 'bun:test';
 import { parsePath } from '../../src/converter/path-parser.js';
 import { validate, type ValidateContext } from '../../src/validator/index.js';
-import { buildResolverMap, loadPackageFixtures } from '../test-helpers.js';
+import {
+  buildResolverMap,
+  loadPackageFixtures,
+  packageFixturesAvailable,
+} from '../test-helpers.js';
 
 describe('parsePath', () => {
   it('simple path', () => {
@@ -14,11 +18,15 @@ describe('parsePath', () => {
   });
 });
 
-describe('playground: validate() direct call', () => {
-  const base = buildResolverMap(loadPackageFixtures('hl7.fhir.r4.core'));
-  const ctx: ValidateContext = { resolve: (ref) => base.get(ref) };
+// Skip (not fail) when r4 fixtures are absent, per the repo convention — a clean
+// checkout / CI runs `bun test` without prepare-fixtures. The fixture load lives
+// inside the guarded `it` so the describe body never throws when fixtures are missing.
+const hasR4 = packageFixturesAvailable('hl7.fhir.r4.core');
 
-  it('quick smoke: valid Patient.name', () => {
+describe('playground: validate() direct call', () => {
+  it.skipIf(!hasR4)('quick smoke: valid Patient.name', () => {
+    const base = buildResolverMap(loadPackageFixtures('hl7.fhir.r4.core'));
+    const ctx: ValidateContext = { resolve: (ref) => base.get(ref) };
     const r = validate(ctx, [], {
       resourceType: 'Patient',
       name: [{ family: 'Smith', given: ['John', 'A.'] }],
