@@ -132,7 +132,10 @@ function normalizeSchema(schema: unknown, visited = new WeakSet<object>()): unkn
   }
 
   if (schema && typeof schema === 'object') {
-    // Check for circular reference
+    // Cut only TRUE cycles (an object that is its own ancestor). `visited` tracks
+    // the current ancestor chain — we add on the way down and delete on the way back
+    // up — so a shared/DAG reference (e.g. a slice's pattern value, which is also
+    // referenced by the generated `match`) is preserved, not corrupted into a string.
     if (visited.has(schema)) {
       return '[Circular Reference]';
     }
@@ -167,6 +170,7 @@ function normalizeSchema(schema: unknown, visited = new WeakSet<object>()): unkn
       }
     }
 
+    visited.delete(schema);
     return normalized;
   }
 
