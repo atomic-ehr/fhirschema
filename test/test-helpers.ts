@@ -308,7 +308,7 @@ export function buildResolverMap(schemas: FHIRSchema[]): Map<string, FHIRSchema>
  * deep-match. Extra keys in `actual` are allowed. Arrays must match length
  * and order. Returns null on match, otherwise a human-readable mismatch path.
  */
-export function subsetMatch(expected: unknown, actual: unknown, path: string = ''): string | null {
+export function subsetMatch(expected: unknown, actual: unknown, path = ''): string | null {
   if (Array.isArray(expected)) {
     if (!Array.isArray(actual)) return `${path}: expected array, got ${typeof actual}`;
     if (expected.length !== actual.length)

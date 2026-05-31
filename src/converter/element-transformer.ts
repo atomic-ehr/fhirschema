@@ -215,10 +215,7 @@ function buildElementConstraints(element: ProcessingElement): ProcessingElement 
   return { ...element, constraint: constraints };
 }
 
-function buildElementType(
-  element: ProcessingElement,
-  structureDefinition: StructureDefinition,
-): ProcessingElement {
+function buildElementType(element: ProcessingElement): ProcessingElement {
   if (!element.type || (Array.isArray(element.type) && element.type.length === 0)) {
     return element;
   }
@@ -428,7 +425,7 @@ export function transformElement(
   // `category:slice 1..1` row must not make the parent `category` 1..1).
   const explicitMax = options?.explicitMaxCardinality && !element.sliceName;
   transformed = buildElementCardinality(transformed, explicitMax);
-  transformed = buildElementType(transformed, structureDefinition);
+  transformed = buildElementType(transformed);
   transformed = processPatterns(transformed);
 
   if (defaultType && transformed.defaultType === undefined) {

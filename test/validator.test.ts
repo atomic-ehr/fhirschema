@@ -80,7 +80,6 @@ import {
   loadSuites,
   packageFixturesAvailable,
   subsetMatch,
-  type ValidatorCase,
   type ValidatorSuite,
 } from './test-helpers.js';
 

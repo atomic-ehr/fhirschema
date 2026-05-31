@@ -290,7 +290,9 @@ async function expandInheritedTypeElements(
 ): Promise<StructureDefinitionElement[]> {
   const result = [...generatedElements];
   const indexByKey = new Map<string, number>();
-  result.forEach((el, i) => indexByKey.set(elementKey(el), i));
+  result.forEach((el, i) => {
+    indexByKey.set(elementKey(el), i);
+  });
   const templatesCache = new Map<string, StructureDefinitionElement[]>();
   const processedAnchors = new Set<string>();
   const processedCref = new Set<string>();
