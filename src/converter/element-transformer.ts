@@ -418,7 +418,12 @@ export function transformElement(
   transformed = buildElementConstraints(transformed);
   transformed = buildElementContentReference(transformed, structureDefinition);
   transformed = buildElementExtension(transformed);
-  transformed = buildElementCardinality(transformed, options?.explicitMaxCardinality);
+  // explicitMax never applies to a slice row: a slice's `max` belongs to its
+  // `slicing.slices[name]` wrapper (carried independently). Leaking it onto the
+  // parent element node would wrongly narrow the sliced array (e.g. a lone
+  // `category:slice 1..1` row must not make the parent `category` 1..1).
+  const explicitMax = options?.explicitMaxCardinality && !element.sliceName;
+  transformed = buildElementCardinality(transformed, explicitMax);
   transformed = buildElementType(transformed, structureDefinition);
   transformed = processPatterns(transformed);
 

@@ -73,4 +73,44 @@ describe('snapshot: profile narrowing an array max to 1 keeps max=1 (array with 
     const bar = (snap.snapshot?.element || []).find((e) => e.path === 'Foo.bar');
     expect(bar?.max).toBe('1');
   });
+
+  // A lone slice row (max=1) on an inherited array must constrain only the
+  // slice — the base sliced element stays an array (0..*). The slice's `max`
+  // must not leak onto the parent element node. Reproduces the US Core lab
+  // shape: the slicing is defined on an ancestor; the leaf differential carries
+  // ONLY the `bar:s 1..1` slice row (no base `bar` row to reset the parent).
+  it('a lone slice row tightened to max=1 keeps the base sliced element at 0..*', async () => {
+    const mid = sd({
+      url: 'http://example.org/FooMid',
+      type: 'Foo',
+      baseDefinition: base.url,
+      derivation: 'constraint',
+      elements: [
+        { path: 'Foo.bar', slicing: { discriminator: [{ type: 'pattern', path: '$this' }], rules: 'open' } },
+        { path: 'Foo.bar', sliceName: 's' },
+      ],
+    });
+    const leaf = sd({
+      url: 'http://example.org/FooLeaf',
+      type: 'Foo',
+      baseDefinition: mid.url,
+      derivation: 'constraint',
+      // ONLY the lone slice row — the array + slicing come from ancestors.
+      elements: [{ path: 'Foo.bar', sliceName: 's', min: 1, max: '1', type: [{ code: 'string' }] }],
+      snapshot: [
+        { path: 'Foo' },
+        { path: 'Foo.bar', min: 0, max: '*', type: [{ code: 'string' }] },
+        { path: 'Foo.bar', sliceName: 's', min: 1, max: '1', type: [{ code: 'string' }] },
+      ],
+    });
+
+    const snap = await generateSnapshot(leaf, {
+      resolver: { [base.url]: base, [mid.url]: mid },
+    });
+    const rows = (snap.snapshot?.element || []).filter((e) => e.path === 'Foo.bar');
+    const baseRow = rows.find((e) => !e.sliceName);
+    const sliceRow = rows.find((e) => e.sliceName === 's');
+    expect(baseRow?.max).toBe('*'); // base array unchanged (not narrowed to 1)
+    expect(sliceRow?.max).toBe('1'); // slice constrained
+  });
 });
