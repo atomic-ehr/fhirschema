@@ -242,6 +242,7 @@ export function translate(
     // Transform element
     const transformedElement = transformElement(element, structureDefinition, {
       explicitMaxCardinality: context?.explicitMaxCardinality,
+      preserveSource: context?.preserveSource,
     });
     const elementWithIndex: Record<string, unknown> = { ...transformedElement, index: index++ };
 

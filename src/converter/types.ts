@@ -465,6 +465,9 @@ export type FHIRSchemaElement = {
   extensions?: Record<string, FHIRSchemaElement>;
   required?: string[];
   excluded?: string[];
+  // Opt-in (preserveSource) sidecar: raw FHIR fields with no normalized home
+  // (documentation/metadata). Ignored by the validator; restored by the reverse.
+  fhir?: Record<string, unknown>;
   _required?: boolean; // Internal flag
   index?: number; // For tracking element order
 } & {
@@ -532,6 +535,11 @@ export interface ConversionContext {
   // constraint tightening an inherited array to max=1) instead of dropping it.
   // The canonical translate leaves this off so genuine scalars stay sparse.
   explicitMaxCardinality?: boolean;
+  // Opt-in lossless mode: stash the documentation/metadata fields that the
+  // validation IR otherwise drops (definition, comment, mapping, …) under a
+  // namespaced `fhir` sidecar on each node, so a single SD round-trips without
+  // polluting the default (clean) schema. Off by default.
+  preserveSource?: boolean;
 }
 
 // FHIR types

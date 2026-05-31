@@ -436,6 +436,16 @@ function buildBaseElement(
   Object.assign(element, buildPatternFields(source.pattern));
   Object.assign(element, buildFixedFields(source.fixed));
 
+  // Restore opt-in preserved metadata (preserveSource). Normalized fields already on
+  // the element win — the sidecar only carries fields with no normalized home.
+  if (source.fhir) {
+    for (const [key, value] of Object.entries(source.fhir)) {
+      if ((element as Record<string, unknown>)[key] === undefined) {
+        (element as Record<string, unknown>)[key] = value;
+      }
+    }
+  }
+
   // Preserve already-normalized fixed/default/pattern fields as-is.
   for (const [key, value] of Object.entries(source)) {
     if (/^(fixed|defaultValue|pattern)[A-Z]/.test(key)) {
@@ -445,6 +455,7 @@ function buildBaseElement(
 
   // Preserve unknown passthrough fields that are neither structural nor derived.
   const structuralKeys = new Set([
+    'fhir',
     'type',
     'array',
     'min',

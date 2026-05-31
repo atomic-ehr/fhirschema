@@ -401,10 +401,35 @@ export function isRequiredElement(element: StructureDefinitionElement): boolean 
   return element.min === 1;
 }
 
+// Non-structural ElementDefinition fields with no normalized home in the IR. Under
+// preserveSource they are stashed verbatim under `fhir` instead of being discarded.
+const SIDECAR_FIELDS = [
+  'id',
+  'definition',
+  'comment',
+  'requirements',
+  'alias',
+  'mapping',
+  'example',
+  'condition',
+] as const;
+
+function collectSidecar(
+  element: StructureDefinitionElement,
+): Record<string, unknown> | undefined {
+  const sidecar: Record<string, unknown> = {};
+  for (const key of SIDECAR_FIELDS) {
+    const value = (element as Record<string, unknown>)[key];
+    if (value !== undefined) sidecar[key] = value;
+  }
+  if (element.extension) sidecar.extension = element.extension;
+  return Object.keys(sidecar).length > 0 ? sidecar : undefined;
+}
+
 export function transformElement(
   element: StructureDefinitionElement,
   structureDefinition: StructureDefinition,
-  options?: { explicitMaxCardinality?: boolean },
+  options?: { explicitMaxCardinality?: boolean; preserveSource?: boolean },
 ): FHIRSchemaElement {
   // Capture the logical-model default type before stripElementMetadata drops
   // element.extension (where elementdefinition-defaulttype lives).
@@ -412,6 +437,8 @@ export function transformElement(
     structureDefinition.kind === 'logical'
       ? getExtension(element.extension, DEFAULT_TYPE_EXT)?.valueCanonical
       : undefined;
+
+  const sidecar = options?.preserveSource ? collectSidecar(element) : undefined;
 
   let transformed: ProcessingElement = preprocessElement(element) as ProcessingElement;
   transformed = stripElementMetadata(transformed as StructureDefinitionElement);
@@ -430,6 +457,10 @@ export function transformElement(
 
   if (defaultType && transformed.defaultType === undefined) {
     transformed.defaultType = defaultType;
+  }
+
+  if (sidecar) {
+    transformed.fhir = sidecar;
   }
 
   return transformed as FHIRSchemaElement;
