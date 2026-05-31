@@ -62,7 +62,14 @@
                   "short": "Systolic Blood Pressure Code",
                   "pattern": {
                     "type": "CodeableConcept",
-                    "value": "[Circular Reference]"
+                    "value": {
+                      "coding": [
+                        {
+                          "system": "http://loinc.org",
+                          "code": "8480-6"
+                        }
+                      ]
+                    }
                   },
                   "mustSupport": true,
                   "type": "CodeableConcept",
@@ -139,7 +146,14 @@
                   "short": "Diastolic Blood Pressure Code",
                   "pattern": {
                     "type": "CodeableConcept",
-                    "value": "[Circular Reference]"
+                    "value": {
+                      "coding": [
+                        {
+                          "system": "http://loinc.org",
+                          "code": "8462-4"
+                        }
+                      ]
+                    }
                   },
                   "mustSupport": true,
                   "type": "CodeableConcept",

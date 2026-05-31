@@ -165,6 +165,20 @@ function buildConstraintArray(
   }));
 }
 
+// Re-emit prohibited children (max=0 hoisted into a node's excluded[]) as explicit
+// max=0 rows under `parentPath`. Their original tree position is lost in the hoist,
+// so they are appended at the end of their level.
+function appendExcludedRows(
+  elements: StructureDefinitionElement[],
+  parentPath: string,
+  excluded: string[] | undefined,
+): void {
+  if (!excluded) return;
+  for (const name of excluded) {
+    elements.push({ path: `${parentPath}.${name}`, min: 0, max: '0' });
+  }
+}
+
 function buildBinding(
   binding: FHIRSchemaElement['binding'],
 ): StructureDefinitionElement['binding'] {
@@ -644,6 +658,8 @@ function addElementTree(
         options,
       );
     }
+    // Nested prohibitions under this node (max=0 hoisted into child.excluded[]).
+    appendExcludedRows(elements, elementPath, child.excluded);
   }
 }
 
@@ -653,7 +669,13 @@ export function toStructureDefinition(
 ): StructureDefinition {
   const status = options?.status ?? 'active';
   const rootMax = schema.type === 'Extension' ? '1' : '*';
-  const differential: StructureDefinitionElement[] = [{ path: schema.type, min: 0, max: rootMax }];
+  const rootElement: StructureDefinitionElement = { path: schema.type, min: 0, max: rootMax };
+  // Resource-level invariants live at the schema root; restore them on the root row.
+  const rootConstraints = buildConstraintArray(schema.constraint);
+  if (rootConstraints) {
+    rootElement.constraint = rootConstraints;
+  }
+  const differential: StructureDefinitionElement[] = [rootElement];
 
   if (schema.elements) {
     addElementTree(
@@ -666,6 +688,8 @@ export function toStructureDefinition(
       options || {},
     );
   }
+  // Top-level prohibitions (max=0 hoisted to schema.excluded[]).
+  appendExcludedRows(differential, schema.type, schema.excluded);
 
   return {
     resourceType: 'StructureDefinition',
