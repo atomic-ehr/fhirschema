@@ -326,13 +326,14 @@ async function expandInheritedTypeElements(
 
     // contentReference: a recursive backbone (e.g. Parameters.parameter.part →
     // #Parameters.parameter) defines its children elsewhere. Surface the
-    // referenced node's direct children under this element, one level. Source
-    // gating bounds the recursion (a nested cref expands only as far as the
-    // source snapshot pins it).
+    // referenced node's direct children under this element, one level — only when
+    // the profile reaches into this cref node. `reachedParents` bounds the
+    // recursion structurally: a nested cref (part.part) expands only if it too is
+    // reached into, so there is no need for a source oracle or a depth cap.
     if (element.contentReference && !processedCref.has(element.path)) {
       processedCref.add(element.path);
       const refPath = element.contentReference.split('#')[1];
-      if (refPath) {
+      if (refPath && reachedParents.has(element.path)) {
         for (const refChild of directChildren(result, refPath)) {
           // Recursion copies the referenced node's structure, not a profile's
           // reslices of it — skip slice rows (they'd produce phantom resliced
@@ -340,12 +341,6 @@ async function expandInheritedTypeElements(
           if (refChild.sliceName) continue;
           const suffix = refChild.path.slice(refPath.length + 1);
           const childPath = `${element.path}.${suffix}`;
-          if (
-            sourcePaths.size > 0 &&
-            !sourceHasPathOrChoiceVariant(sourcePaths, childPath, choiceMappings)
-          ) {
-            continue;
-          }
           const child = cloneInheritedElement(refChild, childPath);
           const key = elementKey(child);
           if (indexByKey.has(key)) continue;

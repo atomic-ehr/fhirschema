@@ -46,30 +46,27 @@ const base = sd({
 });
 
 describe('snapshot: contentReference children expansion (recursive backbone)', () => {
-  it('expands a contentReference element’s children one level (gated by source)', async () => {
+  it('expands a contentReference element’s children when reached into (blind), bounded by constraints', async () => {
+    // Profile reaches into param.part (constrains part.name) → the referenced
+    // node's children surface under param.part. NO input snapshot.
     const profile = sd({
       url: 'http://example.org/ParamsProfile',
       type: 'Params',
       baseDefinition: base.url,
       derivation: 'constraint',
-      elements: [{ path: 'Params.param', mustSupport: true, type: [{ code: 'BackboneElement' }] }],
-      snapshot: [
-        { path: 'Params' },
-        { path: 'Params.param', type: [{ code: 'BackboneElement' }] },
-        { path: 'Params.param.name', type: [{ code: 'string' }] },
-        { path: 'Params.param.part', type: [{ code: 'BackboneElement' }], contentReference: '#Params.param' },
-        // referenced children of param, surfaced under param.part:
-        { path: 'Params.param.part.name', type: [{ code: 'string' }] },
-        { path: 'Params.param.part.part', type: [{ code: 'BackboneElement' }], contentReference: '#Params.param' },
+      elements: [
+        { path: 'Params.param', mustSupport: true, type: [{ code: 'BackboneElement' }] },
+        { path: 'Params.param.part.name', mustSupport: true },
       ],
     });
 
     const snap = await generateSnapshot(profile, { resolver: { [base.url]: base } });
     const paths = new Set((snap.snapshot?.element || []).map((e) => e.path));
 
-    expect(paths.has('Params.param.part.name')).toBe(true);
-    expect(paths.has('Params.param.part.part')).toBe(true);
-    // recursion is bounded by the source: no param.part.part.name (source lacks it)
+    expect(paths.has('Params.param.part.name')).toBe(true); // reached → surfaced
+    expect(paths.has('Params.param.part.part')).toBe(true); // sibling cref surfaced
+    // recursion is bounded structurally: param.part.part is NOT reached into,
+    // so it is not expanded further (no param.part.part.name).
     expect(paths.has('Params.param.part.part.name')).toBe(false);
   });
 });
