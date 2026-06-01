@@ -287,6 +287,20 @@ async function buildTypeElementTemplates(
   return templates;
 }
 
+// Documentation/flag fields a constrained datatype child inherits from its type template
+// (preserveSource) when the profile did not restate them. Structural fields (type, min,
+// max, binding, slicing, …) are NOT here — the profile's values win.
+const TEMPLATE_INHERITED_FIELDS = [
+  'short',
+  'definition',
+  'comment',
+  'requirements',
+  'mapping',
+  'alias',
+  'isSummary',
+  'example',
+] as const;
+
 // base[x] for an element materialized from a type template: the template's own path is
 // the type-relative base path (Identifier.system, Element.id), and its cardinality is the
 // original (base) cardinality.
@@ -388,13 +402,19 @@ async function expandInheritedTypeElements(
         const existingIndex = indexByKey.get(key);
         if (existingIndex !== undefined) {
           // Constrained child already present (e.g. mustSupport-only). Fill in the
-          // datatype-derived type, and the base, when the constraint did not restate them.
+          // datatype-derived type, base, and (preserveSource) the template's
+          // documentation/flags the constraint did not restate — otherwise a touched
+          // datatype child loses the type's short/definition/isSummary/etc.
           const existing = result[existingIndex] as Record<string, unknown>;
           if ((!existing.type || (existing.type as unknown[]).length === 0) && child.type) {
             existing.type = child.type;
           }
-          if (preserveSource && existing.base === undefined) {
-            existing.base = templateBase(template);
+          if (preserveSource) {
+            if (existing.base === undefined) existing.base = templateBase(template);
+            for (const field of TEMPLATE_INHERITED_FIELDS) {
+              const v = (template as Record<string, unknown>)[field];
+              if (v !== undefined && existing[field] === undefined) existing[field] = v;
+            }
           }
           continue;
         }
@@ -609,7 +629,7 @@ export async function generateSnapshot(
   const finalElements = dedupeElements(snapshotElements);
 
   if (options.preserveSource) {
-    synthesizeSnapshotFields(finalElements, buildBaseMap(chain));
+    synthesizeSnapshotFields(finalElements, buildBaseMap(chain), structureDefinition.type);
   }
 
   return {
@@ -628,21 +648,40 @@ export async function generateSnapshot(
 function synthesizeSnapshotFields(
   elements: StructureDefinitionElement[],
   baseMap: Map<string, { path: string; min: number; max: string }>,
+  rootType: string,
 ): void {
+  // Snapshot rows of a slice (e.g. component:systolic) inherit their non-slice sibling's
+  // base + summary/modifier flags, captured here before any defaulting below.
+  const siblingByPath = new Map<
+    string,
+    { base?: unknown; isSummary?: unknown; isModifier?: unknown }
+  >();
+  for (const el of elements) {
+    if (el.sliceName) continue;
+    const e = el as Record<string, unknown>;
+    siblingByPath.set(el.path, { base: e.base, isSummary: e.isSummary, isModifier: e.isModifier });
+  }
+
   for (const el of elements) {
     const e = el as Record<string, unknown>;
     if (e.id === undefined) {
       e.id = el.sliceName ? `${el.path}:${el.sliceName}` : el.path;
     }
-    if (el.path.includes('.') && e.isModifier === undefined) {
-      e.isModifier = false;
+    const sib = el.sliceName ? siblingByPath.get(el.path) : undefined;
+    // isModifier / isSummary on every non-root element: inherit the base element's value
+    // (slices), else default false (FHIR fills these; `true` already rode in from the
+    // differential / type template).
+    if (el.path.includes('.')) {
+      if (e.isModifier === undefined) e.isModifier = sib?.isModifier ?? false;
+      if (e.isSummary === undefined) e.isSummary = sib?.isSummary ?? false;
     }
-    // base for chain-defined elements (datatype/cref children already got theirs from
-    // the template during expansion). Keyed by the type-relative suffix.
     if (e.base === undefined) {
-      const dot = el.path.indexOf('.');
-      if (dot !== -1) {
-        const b = baseMap.get(el.path.slice(dot + 1));
+      if (!el.path.includes('.')) {
+        e.base = { path: rootType, min: 0, max: '*' }; // root element
+      } else if (sib?.base !== undefined) {
+        e.base = sib.base; // slice inherits the base element's (derived) base
+      } else {
+        const b = baseMap.get(el.path.slice(el.path.indexOf('.') + 1));
         if (b) e.base = { path: b.path, min: b.min, max: b.max };
       }
     }
