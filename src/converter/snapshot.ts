@@ -287,10 +287,20 @@ async function buildTypeElementTemplates(
   return templates;
 }
 
+// base[x] for an element materialized from a type template: the template's own path is
+// the type-relative base path (Identifier.system, Element.id), and its cardinality is the
+// original (base) cardinality.
+function templateBase(
+  template: StructureDefinitionElement,
+): { path: string; min: number; max: string } {
+  return { path: template.path, min: template.min ?? 0, max: template.max ?? '1' };
+}
+
 async function expandInheritedTypeElements(
   generatedElements: StructureDefinitionElement[],
   resolver: StructureDefinitionResolver,
   maxDepth: number,
+  preserveSource = false,
 ): Promise<StructureDefinitionElement[]> {
   const result = [...generatedElements];
   const indexByKey = new Map<string, number>();
@@ -337,6 +347,7 @@ async function expandInheritedTypeElements(
           const suffix = refChild.path.slice(refPath.length + 1);
           const childPath = `${element.path}.${suffix}`;
           const child = cloneInheritedElement(refChild, childPath);
+          if (preserveSource) (child as Record<string, unknown>).base = templateBase(refChild);
           const key = elementKey(child);
           if (indexByKey.has(key)) continue;
           indexByKey.set(key, result.length);
@@ -372,14 +383,18 @@ async function expandInheritedTypeElements(
 
         const childPath = `${element.path}.${suffix}`;
         const child = cloneInheritedElement(template, childPath);
+        if (preserveSource) (child as Record<string, unknown>).base = templateBase(template);
         const key = elementKey(child);
         const existingIndex = indexByKey.get(key);
         if (existingIndex !== undefined) {
           // Constrained child already present (e.g. mustSupport-only). Fill in the
-          // datatype-derived type when the constraint did not restate it.
-          const existing = result[existingIndex];
-          if ((!existing.type || existing.type.length === 0) && child.type) {
+          // datatype-derived type, and the base, when the constraint did not restate them.
+          const existing = result[existingIndex] as Record<string, unknown>;
+          if ((!existing.type || (existing.type as unknown[]).length === 0) && child.type) {
             existing.type = child.type;
+          }
+          if (preserveSource && existing.base === undefined) {
+            existing.base = templateBase(template);
           }
           continue;
         }
@@ -586,6 +601,7 @@ export async function generateSnapshot(
     typedElements,
     options.resolver,
     maxDepth,
+    options.preserveSource,
   );
   const styledElements = normalizeChoicePathsToXStyle(expandedElements);
   const chainDifferentialElements = chain.flatMap((sd) => sd.differential?.element || []);
@@ -593,7 +609,7 @@ export async function generateSnapshot(
   const finalElements = dedupeElements(snapshotElements);
 
   if (options.preserveSource) {
-    synthesizeSnapshotFields(finalElements);
+    synthesizeSnapshotFields(finalElements, buildBaseMap(chain));
   }
 
   return {
@@ -609,7 +625,10 @@ export async function generateSnapshot(
 // `isModifier: false` on every non-root element that did not declare it. (`base` —
 // the originating type's path + cardinality — needs originating-definition tracking and
 // is handled separately.)
-function synthesizeSnapshotFields(elements: StructureDefinitionElement[]): void {
+function synthesizeSnapshotFields(
+  elements: StructureDefinitionElement[],
+  baseMap: Map<string, { path: string; min: number; max: string }>,
+): void {
   for (const el of elements) {
     const e = el as Record<string, unknown>;
     if (e.id === undefined) {
@@ -618,5 +637,32 @@ function synthesizeSnapshotFields(elements: StructureDefinitionElement[]): void 
     if (el.path.includes('.') && e.isModifier === undefined) {
       e.isModifier = false;
     }
+    // base for chain-defined elements (datatype/cref children already got theirs from
+    // the template during expansion). Keyed by the type-relative suffix.
+    if (e.base === undefined) {
+      const dot = el.path.indexOf('.');
+      if (dot !== -1) {
+        const b = baseMap.get(el.path.slice(dot + 1));
+        if (b) e.base = { path: b.path, min: b.min, max: b.max };
+      }
+    }
   }
+}
+
+// For each element suffix (path minus its type prefix), the path + ORIGINAL cardinality
+// from the rootmost base-chain link that introduces it — i.e. its FHIR `base`.
+function buildBaseMap(
+  chain: StructureDefinition[],
+): Map<string, { path: string; min: number; max: string }> {
+  const map = new Map<string, { path: string; min: number; max: string }>();
+  for (const sd of chain) {
+    for (const el of sd.differential?.element || []) {
+      const dot = el.path.indexOf('.');
+      if (dot === -1) continue; // root element
+      const suffix = el.path.slice(dot + 1);
+      if (map.has(suffix)) continue; // rootmost (first) definition wins
+      map.set(suffix, { path: el.path, min: el.min ?? 0, max: el.max ?? '1' });
+    }
+  }
+  return map;
 }
