@@ -1,7 +1,8 @@
 # FHIRSchema
 
+[![npm canary](https://img.shields.io/npm/v/@atomic-ehr/fhirschema/canary.svg?label=canary)](https://www.npmjs.com/package/@atomic-ehr/fhirschema/v/canary)
+[![npm version](https://img.shields.io/npm/v/@atomic-ehr/fhirschema.svg)](https://www.npmjs.com/package/@atomic-ehr/fhirschema)
 [![CI](https://github.com/atomic-ehr/fhirschema/actions/workflows/ci.yml/badge.svg)](https://github.com/atomic-ehr/fhirschema/actions/workflows/ci.yml)
-[![npm](https://img.shields.io/npm/v/@atomic-ehr/fhirschema)](https://www.npmjs.com/package/@atomic-ehr/fhirschema)
 
 TypeScript implementation of FHIRSchema converter and validator.
 
