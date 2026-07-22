@@ -1,5 +1,9 @@
 import { calculateActions } from './action-calculator.js';
-import { expandChoiceElement, isChoiceElement } from './choice-handler.js';
+import {
+  collapseChoiceTypeSlicing,
+  expandChoiceElement,
+  isChoiceElement,
+} from './choice-handler.js';
 import { transformElement } from './element-transformer.js';
 import { enrichPath, parsePath } from './path-parser.js';
 import { applyActions } from './stack-processor.js';
@@ -185,7 +189,7 @@ export function translate(
   }
 
   const header = buildResourceHeader(structureDefinition, context);
-  const elements = getDifferential(structureDefinition);
+  const elements = collapseChoiceTypeSlicing(getDifferential(structureDefinition));
 
   // Note: Root element constraints are not included in the output
 
@@ -217,8 +221,16 @@ export function translate(
     const actions = calculateActions(prevPath, enrichedPath);
 
     // Transform element
-    const transformedElement = transformElement(element, structureDefinition);
-    const elementWithIndex: Record<string, unknown> = { ...transformedElement, index: index++ };
+    const transformedElement = transformElement(element, structureDefinition) as Record<
+      string,
+      unknown
+    >;
+    // Slicing metadata from collapsed choice type slicing becomes plain slicing
+    // on the choice declaration (rules/discriminator, no slices)
+    const { _choiceSlicing, ...transformedRest } = transformedElement;
+    const elementWithIndex: Record<string, unknown> = _choiceSlicing
+      ? { ...transformedRest, slicing: _choiceSlicing, index: index++ }
+      : { ...transformedRest, index: index++ };
 
     // Apply actions
     stack = applyActions(stack, actions, elementWithIndex);
