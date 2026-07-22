@@ -998,4 +998,69 @@ describe('Converter Algorithm Tests', () => {
       });
     });
   });
+
+  describe('choice type slicing', () => {
+    // Mirrors profiles like KBV_PR_Base_Condition_Diagnosis (kbv.basis), which
+    // slice a choice element by type ($this discriminator) with open rules to
+    // attach per-variant constraints without restricting the choice.
+    const openOnsetSlicing: Partial<StructureDefinitionElement>[] = [
+      {
+        path: 'Test.onset[x]',
+        slicing: { discriminator: [{ type: 'type', path: '$this' }], rules: 'open' },
+      },
+      {
+        path: 'Test.onset[x]',
+        sliceName: 'onsetPeriod',
+        min: 0,
+        max: '1',
+        type: [{ code: 'Period' }],
+      },
+      {
+        path: 'Test.onset[x]',
+        sliceName: 'onsetAge',
+        min: 0,
+        max: '1',
+        type: [{ code: 'Age' }],
+      },
+    ];
+
+    it('keeps every declared slice variant as a choice', () => {
+      const result = translate(createTestStructureDefinition(openOnsetSlicing));
+
+      expect(result.elements?.onset?.choices).toEqual(['onsetPeriod', 'onsetAge']);
+      expect(result.elements?.onsetPeriod).toMatchObject({ type: 'Period', choiceOf: 'onset' });
+      expect(result.elements?.onsetAge).toMatchObject({ type: 'Age', choiceOf: 'onset' });
+    });
+
+    it('preserves open slicing rules and discriminator on the choice element', () => {
+      const result = translate(createTestStructureDefinition(openOnsetSlicing));
+
+      expect(result.elements?.onset?.slicing?.rules).toBe('open');
+      expect(result.elements?.onset?.slicing?.discriminator).toEqual([
+        { type: 'type', path: '$this' },
+      ]);
+    });
+
+    it('preserves closed slicing rules on the choice element', () => {
+      // Closed type slicing (e.g. KBV Apgar Score value[x]) forbids variants
+      // without a slice, so consumers must be able to see rules: closed.
+      const result = translate(
+        createTestStructureDefinition([
+          {
+            path: 'Test.value[x]',
+            slicing: { discriminator: [{ type: 'type', path: '$this' }], rules: 'closed' },
+            type: [{ code: 'CodeableConcept' }],
+          },
+          {
+            path: 'Test.value[x]',
+            sliceName: 'valueCodeableConcept',
+            max: '1',
+            type: [{ code: 'CodeableConcept' }],
+          },
+        ]),
+      );
+
+      expect(result.elements?.value?.slicing?.rules).toBe('closed');
+    });
+  });
 });
