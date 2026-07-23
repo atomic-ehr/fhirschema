@@ -1024,12 +1024,42 @@ describe('Converter Algorithm Tests', () => {
       },
     ];
 
-    it('keeps every declared slice variant as a choice', () => {
+    it('materializes slice variants without narrowing choices for an untyped root', () => {
       const result = translate(createTestStructureDefinition(openOnsetSlicing));
 
-      expect(result.elements?.onset?.choices).toEqual(['onsetPeriod', 'onsetAge']);
+      // Open slices are additive: without an explicit type ceiling on the root,
+      // the inherited choice set stays in effect, so no `choices` is emitted.
+      expect(result.elements?.onset?.choices).toBeUndefined();
       expect(result.elements?.onsetPeriod).toMatchObject({ type: 'Period', choiceOf: 'onset' });
       expect(result.elements?.onsetAge).toMatchObject({ type: 'Age', choiceOf: 'onset' });
+    });
+
+    it('derives choices from the explicit type ceiling of a sliced root', () => {
+      const result = translate(
+        createTestStructureDefinition([
+          {
+            path: 'Test.value[x]',
+            slicing: { discriminator: [{ type: 'type', path: '$this' }], rules: 'open' },
+            type: [{ code: 'Quantity' }, { code: 'CodeableConcept' }],
+          },
+          {
+            path: 'Test.value[x]',
+            sliceName: 'valueQuantity',
+            max: '1',
+            type: [{ code: 'Quantity' }],
+          },
+        ]),
+      );
+
+      expect(result.elements?.value?.choices).toEqual(['valueQuantity', 'valueCodeableConcept']);
+      expect(result.elements?.valueQuantity).toMatchObject({
+        type: 'Quantity',
+        choiceOf: 'value',
+      });
+      expect(result.elements?.valueCodeableConcept).toMatchObject({
+        type: 'CodeableConcept',
+        choiceOf: 'value',
+      });
     });
 
     it('preserves open slicing rules and discriminator on the choice element', () => {
@@ -1061,6 +1091,38 @@ describe('Converter Algorithm Tests', () => {
       );
 
       expect(result.elements?.value?.slicing?.rules).toBe('closed');
+    });
+
+    it('emits no choices for an untyped closed-sliced root', () => {
+      // Without a type restatement on the root, `choices` stays absent even
+      // under closed rules: the materialized slice variants plus rules: closed
+      // are the signal that unlisted variants are forbidden. Consumers must
+      // intersect with the variant elements, not with `choices`.
+      const result = translate(
+        createTestStructureDefinition([
+          {
+            path: 'Test.onset[x]',
+            slicing: { discriminator: [{ type: 'type', path: '$this' }], rules: 'closed' },
+          },
+          {
+            path: 'Test.onset[x]',
+            sliceName: 'onsetPeriod',
+            max: '1',
+            type: [{ code: 'Period' }],
+          },
+          {
+            path: 'Test.onset[x]',
+            sliceName: 'onsetAge',
+            max: '1',
+            type: [{ code: 'Age' }],
+          },
+        ]),
+      );
+
+      expect(result.elements?.onset?.choices).toBeUndefined();
+      expect(result.elements?.onset?.slicing?.rules).toBe('closed');
+      expect(result.elements?.onsetPeriod).toMatchObject({ type: 'Period', choiceOf: 'onset' });
+      expect(result.elements?.onsetAge).toMatchObject({ type: 'Age', choiceOf: 'onset' });
     });
   });
 });
