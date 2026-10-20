@@ -267,15 +267,19 @@ function buildElementExtension(element: ProcessingElement): ProcessingElement {
       ...element,
       url: extUrl,
     };
-    // An unbounded '*' must not leak through; a bounded max is parsed below
-    if (element.max === '*') delete result.max;
 
     if (element.min) {
       result.min = element.min;
     }
-    if (element.max && element.max !== '*') {
+    // Repeating extension elements carry array like any other element; an
+    // unbounded '*' is expressed by array alone, a bounded max stays numeric
+    if (element.max === '*') {
+      delete result.max;
+      result.array = true;
+    } else if (element.max) {
       const maxStr = typeof element.max === 'string' ? element.max : String(element.max);
       result.max = Number.parseInt(maxStr, 10);
+      if (result.max >= 2) result.array = true;
     }
 
     return result;
