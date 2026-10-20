@@ -1205,6 +1205,25 @@ describe('Converter Algorithm Tests', () => {
       );
 
       expect(result.elements?.extension?.max).toBeUndefined();
+      expect(result.elements?.extension?.array).toBe(true);
+    });
+
+    it('marks a repeating bounded extension slice as an array', () => {
+      const result = translate(
+        createTestStructureDefinition([
+          {
+            path: 'Test.extension',
+            sliceName: 'adherence',
+            max: '5',
+            type: [
+              { code: 'Extension', profile: ['http://test.org/StructureDefinition/adherence'] },
+            ],
+          },
+        ]),
+      );
+
+      expect(result.elements?.extension?.max).toBe(5);
+      expect(result.elements?.extension?.array).toBe(true);
     });
 
     it('keeps a bounded max on an extension slice', () => {
@@ -1222,6 +1241,7 @@ describe('Converter Algorithm Tests', () => {
       );
 
       expect(result.elements?.extension?.max).toBe(1);
+      expect(result.elements?.extension?.array).toBeUndefined();
     });
   });
 });
