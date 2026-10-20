@@ -782,7 +782,12 @@ describe('Converter Algorithm Tests', () => {
 
       // coding is an array element (max: *), so match should wrap it in an array
       expect(result.elements?.category.slicing?.slices?.VSCat.match).toEqual({
-        coding: [{ code: 'vital-signs', system: 'http://terminology.hl7.org/CodeSystem/observation-category' }],
+        coding: [
+          {
+            code: 'vital-signs',
+            system: 'http://terminology.hl7.org/CodeSystem/observation-category',
+          },
+        ],
       });
     });
 
@@ -1123,6 +1128,85 @@ describe('Converter Algorithm Tests', () => {
       expect(result.elements?.onset?.slicing?.rules).toBe('closed');
       expect(result.elements?.onsetPeriod).toMatchObject({ type: 'Period', choiceOf: 'onset' });
       expect(result.elements?.onsetAge).toMatchObject({ type: 'Age', choiceOf: 'onset' });
+    });
+
+    it('collapses type slices whose root the differential omits', () => {
+      // Mirrors sdc-questionnaire-render Questionnaire.item.answerOption: FHIR implies
+      // type/$this slicing on choice elements, so the slices come without a root.
+      const result = translate(
+        createTestStructureDefinition([
+          { path: 'Test.value[x]', sliceName: 'valueString', max: '1', type: [{ code: 'string' }] },
+          { path: 'Test.value[x]', sliceName: 'valueCoding', max: '1', type: [{ code: 'Coding' }] },
+          { path: 'Test.value[x].display', short: 'Option display' },
+        ]),
+      );
+
+      expect(result.elements?.value).toBeUndefined();
+      expect(result.elements?.['value[x]']).toBeUndefined();
+      expect(result.elements?.valueString).toMatchObject({ type: 'string', choiceOf: 'value' });
+      expect(result.elements?.valueCoding).toMatchObject({ type: 'Coding', choiceOf: 'value' });
+      expect(result.elements?.valueCoding?.elements?.display).toMatchObject({
+        short: 'Option display',
+      });
+    });
+
+    it('collapses type slices after a root that leaves the slicing implied', () => {
+      const result = translate(
+        createTestStructureDefinition([
+          { path: 'Test.value[x]', type: [{ code: 'Quantity' }, { code: 'CodeableConcept' }] },
+          {
+            path: 'Test.value[x]',
+            sliceName: 'valueQuantity',
+            max: '1',
+            type: [{ code: 'Quantity' }],
+          },
+        ]),
+      );
+
+      expect(result.elements?.value?.choices).toEqual(['valueQuantity', 'valueCodeableConcept']);
+      expect(result.elements?.value?.slicing).toBeUndefined();
+      expect(result.elements?.valueQuantity).toMatchObject({ type: 'Quantity', choiceOf: 'value' });
+      expect(result.elements?.valueCodeableConcept).toMatchObject({
+        type: 'CodeableConcept',
+        choiceOf: 'value',
+      });
+    });
+  });
+
+  describe('extension cardinality', () => {
+    it('drops an unbounded max on an extension slice', () => {
+      const result = translate(
+        createTestStructureDefinition([
+          {
+            path: 'Test.extension',
+            sliceName: 'adherence',
+            min: 0,
+            max: '*',
+            type: [
+              { code: 'Extension', profile: ['http://test.org/StructureDefinition/adherence'] },
+            ],
+          },
+        ]),
+      );
+
+      expect(result.elements?.extension?.max).toBeUndefined();
+    });
+
+    it('keeps a bounded max on an extension slice', () => {
+      const result = translate(
+        createTestStructureDefinition([
+          {
+            path: 'Test.extension',
+            sliceName: 'adherence',
+            max: '1',
+            type: [
+              { code: 'Extension', profile: ['http://test.org/StructureDefinition/adherence'] },
+            ],
+          },
+        ]),
+      );
+
+      expect(result.elements?.extension?.max).toBe(1);
     });
   });
 });
