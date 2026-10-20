@@ -263,12 +263,12 @@ function buildElementExtension(element: ProcessingElement): ProcessingElement {
       return element;
     }
 
-    // max is re-added below only when bounded: an unbounded '*' must not leak through
-    const { max: _max, ...rest } = element;
     const result: ProcessingElement = {
-      ...rest,
+      ...element,
       url: extUrl,
     };
+    // An unbounded '*' must not leak through; a bounded max is parsed below
+    if (element.max === '*') delete result.max;
 
     if (element.min) {
       result.min = element.min;
