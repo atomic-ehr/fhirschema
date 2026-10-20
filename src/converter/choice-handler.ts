@@ -24,9 +24,8 @@ function canonicalToName(url: string): string {
   return parts[parts.length - 1];
 }
 
-function isChoiceTypeSlicingRoot(element: StructureDefinitionElement): boolean {
-  if (!element.path.endsWith('[x]') || element.sliceName) return false;
-  const discriminator = element.slicing?.discriminator;
+function isTypeThisSlicing(slicing: StructureDefinitionElement['slicing']): boolean {
+  const discriminator = slicing?.discriminator;
   return (
     !!discriminator &&
     discriminator.length === 1 &&
@@ -36,11 +35,30 @@ function isChoiceTypeSlicingRoot(element: StructureDefinitionElement): boolean {
 }
 
 /**
- * Collapse type slicing on choice elements ($this type discriminator) into the
- * plain choice representation: the sliced element becomes the choice declaration
- * (keeping the slicing metadata so open/closed rules survive), and each slice
- * becomes a regular typed variant element. Children of a slice are re-parented
- * under its variant element.
+ * Where a run of choice type slicing starts: `root` for the choice element itself
+ * (slicing declared by $this type, or left implied before its type slices), `slice`
+ * for a type slice whose root the differential omits — FHIR implies type/$this
+ * open slicing on choice elements, so neither form has to declare it.
+ */
+function choiceTypeSlicingStart(
+  elements: StructureDefinitionElement[],
+  i: number,
+): 'root' | 'slice' | undefined {
+  const element = elements[i];
+  if (!element.path.endsWith('[x]')) return undefined;
+  if (element.sliceName) return element.type?.length === 1 ? 'slice' : undefined;
+  if (element.slicing) return isTypeThisSlicing(element.slicing) ? 'root' : undefined;
+  const next = elements[i + 1];
+  return next?.path === element.path && next.sliceName ? 'root' : undefined;
+}
+
+/**
+ * Collapse type slicing on choice elements ($this type discriminator, declared or
+ * implied) into the plain choice representation: the sliced element becomes the
+ * choice declaration (keeping declared slicing metadata so open/closed rules
+ * survive), and each slice becomes a regular typed variant element. Children of
+ * a slice are re-parented under its variant element. A differential that omits
+ * the root yields only the variants.
  *
  * `choices` is derived only from the explicit ElementDefinition.type ceiling —
  * never from slice names. Slices constrain types the element already allows, so
@@ -56,7 +74,8 @@ export function collapseChoiceTypeSlicing(
 
   while (i < elements.length) {
     const element = elements[i];
-    if (!isChoiceTypeSlicingRoot(element)) {
+    const start = choiceTypeSlicingStart(elements, i);
+    if (!start) {
       result.push(element);
       i++;
       continue;
@@ -65,14 +84,15 @@ export function collapseChoiceTypeSlicing(
     const rootPath = element.path;
     const basePath = rootPath.replace(/\[x\]$/, '');
     const fieldName = basePath.split('.').pop() || '';
-    const { slicing, type, ...rootRest } = element;
+    const { slicing, type, ...rootRest } =
+      start === 'root' ? element : ({} as StructureDefinitionElement);
 
     const choices = (type || []).map((t) => fieldName + capitalize(canonicalToName(t.code)));
     const slicedVariants = new Set<string>();
     const collapsed: StructureDefinitionElement[] = [];
     let variantPath: string | undefined;
 
-    let j = i + 1;
+    let j = start === 'root' ? i + 1 : i;
     for (; j < elements.length && elements[j].path.startsWith(rootPath); j++) {
       const el = elements[j];
       if (el.path === rootPath && el.sliceName && el.type?.length === 1) {
@@ -89,12 +109,14 @@ export function collapseChoiceTypeSlicing(
       }
     }
 
-    result.push({
-      ...rootRest,
-      path: basePath,
-      ...(choices.length > 0 ? { choices } : {}),
-      _choiceSlicing: slicing,
-    });
+    if (start === 'root') {
+      result.push({
+        ...rootRest,
+        path: basePath,
+        ...(choices.length > 0 ? { choices } : {}),
+        _choiceSlicing: slicing,
+      });
+    }
 
     // Explicit root types without a matching slice keep plain variant elements,
     // mirroring expandChoiceElement for unsliced choice elements.
