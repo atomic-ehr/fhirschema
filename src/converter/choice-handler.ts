@@ -14,6 +14,8 @@ export function isChoiceElement(element: StructureDefinitionElement): boolean {
   return false;
 }
 
+const FIXED_OR_PATTERN_KEY = /^(fixed|pattern)[A-Z]/;
+
 function capitalize(str: string): string {
   if (!str) return str;
   return str.charAt(0).toUpperCase() + str.slice(1);
@@ -148,8 +150,12 @@ export function expandChoiceElement(
   // Create the parent choice element
   const choices = element.type.map((t) => fieldName + capitalize(canonicalToName(t.code)));
   const { type, binding, ...restElement } = element;
+  // A fixed[x]/pattern[x] value is typed, so it constrains the variants, not the declaration
+  const declarationRest = Object.fromEntries(
+    Object.entries(restElement).filter(([key]) => !FIXED_OR_PATTERN_KEY.test(key)),
+  );
   const parentElement: StructureDefinitionElement = {
-    ...restElement,
+    ...declarationRest,
     path: basePath,
     choices: choices, // Preserve original order
   };
