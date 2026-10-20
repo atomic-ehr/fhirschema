@@ -1173,6 +1173,21 @@ describe('Converter Algorithm Tests', () => {
     });
   });
 
+  describe('choice fixed values', () => {
+    it('keeps a fixed[x] value on the variant, not on the choice declaration', () => {
+      // Mirrors cqf-isEmptyList: Extension.value[x] narrowed to boolean with fixedBoolean.
+      const result = translate(
+        createTestStructureDefinition([
+          { path: 'Test.value[x]', min: 1, type: [{ code: 'boolean' }], fixedBoolean: true },
+        ] as Partial<StructureDefinitionElement>[]),
+      );
+
+      expect(result.elements?.value?.choices).toEqual(['valueBoolean']);
+      expect(result.elements?.value?.fixed).toBeUndefined();
+      expect(result.elements?.valueBoolean?.fixed).toEqual({ type: 'boolean', value: true });
+    });
+  });
+
   describe('extension cardinality', () => {
     it('drops an unbounded max on an extension slice', () => {
       const result = translate(
