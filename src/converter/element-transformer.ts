@@ -263,8 +263,10 @@ function buildElementExtension(element: ProcessingElement): ProcessingElement {
       return element;
     }
 
+    // max is re-added below only when bounded: an unbounded '*' must not leak through
+    const { max: _max, ...rest } = element;
     const result: ProcessingElement = {
-      ...element,
+      ...rest,
       url: extUrl,
     };
 
