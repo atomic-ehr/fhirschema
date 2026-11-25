@@ -141,10 +141,7 @@ function buildMatchForSlice(slicing: SlicingConfig, sliceSchema: ProcessingObjec
  * `{ coding: { code: "x", system: "y" } }` but `coding` is an array element,
  * so we need `{ coding: [{ code: "x", system: "y" }] }`.
  */
-function wrapArrayElements(
-  match: Record<string, unknown>,
-  schema: ProcessingObject,
-): void {
+function wrapArrayElements(match: Record<string, unknown>, schema: ProcessingObject): void {
   const elements = schema.elements as Record<string, ProcessingObject> | undefined;
   if (!elements) return;
 
